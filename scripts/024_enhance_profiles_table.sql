@@ -1,0 +1,22 @@
+-- Add new columns to profiles table
+ALTER TABLE profiles 
+ADD COLUMN IF NOT EXISTS first_name TEXT,
+ADD COLUMN IF NOT EXISTS last_name TEXT,
+ADD COLUMN IF NOT EXISTS contact_number TEXT,
+ADD COLUMN IF NOT EXISTS height INTEGER,
+ADD COLUMN IF NOT EXISTS weight INTEGER,
+ADD COLUMN IF NOT EXISTS skin_tone TEXT,
+ADD COLUMN IF NOT EXISTS hair_color TEXT,
+ADD COLUMN IF NOT EXISTS occupation TEXT,
+ADD COLUMN IF NOT EXISTS hobbies TEXT[],
+ADD COLUMN IF NOT EXISTS address_1 TEXT,
+ADD COLUMN IF NOT EXISTS address_2 TEXT,
+ADD COLUMN IF NOT EXISTS zip_code TEXT,
+ADD COLUMN IF NOT EXISTS referral_barcode TEXT UNIQUE,
+ADD COLUMN IF NOT EXISTS referral_count INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS free_activities_earned INTEGER DEFAULT 0;
+
+-- Generate referral barcodes for existing users
+UPDATE profiles 
+SET referral_barcode = 'REF-' || UPPER(SUBSTRING(MD5(id::TEXT) FROM 1 FOR 8))
+WHERE referral_barcode IS NULL;
