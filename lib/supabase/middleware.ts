@@ -52,19 +52,25 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && !isAuthRoute && !isOnboardingRoute) {
-    const { data: waiver } = await supabase.from("waivers").select("id").eq("user_id", user.id).maybeSingle()
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
 
-    if (!waiver && request.nextUrl.pathname !== "/onboarding/waiver") {
-      const url = request.nextUrl.clone()
-      url.pathname = "/onboarding/waiver"
-      return NextResponse.redirect(url)
+    // Skip waiver check for admins and moderators
+    if (profile?.role !== "admin" && profile?.role !== "moderator") {
+      const { data: waiver } = await supabase.from("waivers").select("id").eq("user_id", user.id).maybeSingle()
+
+      if (!waiver && request.nextUrl.pathname !== "/onboarding/waiver") {
+        const url = request.nextUrl.clone()
+        url.pathname = "/onboarding/waiver"
+        return NextResponse.redirect(url)
+      }
     }
   }
 
   if (user && request.nextUrl.pathname.startsWith("/admin")) {
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
 
-    if (profile?.role !== "admin") {
+    // Allow admins and moderators to access admin routes
+    if (profile?.role !== "admin" && profile?.role !== "moderator") {
       const url = request.nextUrl.clone()
       url.pathname = "/dashboard"
       return NextResponse.redirect(url)
