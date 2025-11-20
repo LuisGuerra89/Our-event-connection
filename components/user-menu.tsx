@@ -35,11 +35,25 @@ export function UserMenu({ userName, userPhoto }: UserMenuProps) {
 
   const handleSignOut = async () => {
     setIsLoading(true)
-    const supabase = createClient()
-    
-    await supabase.auth.signOut()
-    router.push("/")
-    router.refresh()
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+      })
+      
+      if (response.ok) {
+        // Esperar un momento y luego redirigir al home
+        setTimeout(() => {
+          router.push("/")
+          setIsLoading(false)
+        }, 500)
+      } else {
+        console.error("Logout failed")
+        setIsLoading(false)
+      }
+    } catch (err) {
+      console.error("Sign out error:", err)
+      setIsLoading(false)
+    }
   }
 
   return (

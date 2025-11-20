@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Check, CreditCard } from "lucide-react"
+import { Check, CreditCard, CheckCircle } from "lucide-react"
 import Link from "next/link"
 
 interface MembershipPlansListProps {
@@ -16,6 +16,51 @@ export function MembershipPlansList({ initialPlans }: MembershipPlansListProps) 
   const [plans, setPlans] = useState(initialPlans)
   const [showAll, setShowAll] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [userSubscriptions, setUserSubscriptions] = useState<any[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchUserSubscriptions = async () => {
+      const supabase = createClient()
+      
+      // Get current user - force refresh
+      const { data: { user }, error } = await supabase.auth.getUser()
+      
+      console.log("Current user:", user?.id, "Error:", error)
+      
+      if (user) {
+        setUserId(user.id)
+        
+        // Get user's active subscriptions
+        const { data: subscriptions, error: subError } = await supabase
+          .from("user_subscriptions")
+          .select("plan_id, status")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+        
+        console.log("User subscriptions loaded:", { userId: user.id, subscriptions, subError })
+        setUserSubscriptions(subscriptions || [])
+      } else {
+        // No user logged in
+        console.log("No user logged in, clearing subscriptions")
+        setUserId(null)
+        setUserSubscriptions([])
+      }
+    }
+    
+    fetchUserSubscriptions()
+    
+    // Subscribe to auth changes to refresh when user logs in/out
+    const supabase = createClient()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, "Session user:", session?.user?.id)
+      await fetchUserSubscriptions()
+    })
+    
+    return () => {
+      subscription?.unsubscribe()
+    }
+  }, [])
 
   const loadAllPlans = async () => {
     setIsLoading(true)
@@ -35,6 +80,11 @@ export function MembershipPlansList({ initialPlans }: MembershipPlansListProps) 
   }
 
   const displayedPlans = showAll ? plans : plans.slice(0, 6)
+  
+  // Check if user has an active subscription for a plan
+  const hasActivePlan = (planId: string) => {
+    return userSubscriptions.some(sub => sub.plan_id === planId && sub.status === "active")
+  }
 
   const getPlanTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
@@ -56,51 +106,67 @@ export function MembershipPlansList({ initialPlans }: MembershipPlansListProps) 
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {displayedPlans.map((plan) => (
-          <Card key={plan.id} className="flex flex-col">
-            <CardHeader>
-              <div className="flex items-start justify-between mb-2">
-                <Badge variant="secondary">{getPlanTypeLabel(plan.plan_type)}</Badge>
-                {plan.auto_renewal && (
-                  <Badge variant="outline" className="text-xs">Auto-Renew</Badge>
+        {displayedPlans.map((plan) => {
+          const isCurrentPlan = hasActivePlan(plan.id)
+          
+          return (
+            <Card key={plan.id} className={`flex flex-col ${isCurrentPlan ? 'ring-2 ring-primary' : ''}`}>
+              <CardHeader>
+                <div className="flex items-start justify-between mb-2">
+                  <Badge variant="secondary">{getPlanTypeLabel(plan.plan_type)}</Badge>
+                  <div className="flex gap-2">
+                    {isCurrentPlan && (
+                      <Badge variant="default" className="bg-green-600">Current Plan</Badge>
+                    )}
+                    {plan.auto_renewal && !isCurrentPlan && (
+                      <Badge variant="outline" className="text-xs">Auto-Renew</Badge>
+                    )}
+                  </div>
+                </div>
+                <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                <CardDescription>{plan.description}</CardDescription>
+              </CardHeader>
+
+              <CardContent className="flex-1">
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">${Number(plan.price).toFixed(2)}</span>
+                  {plan.duration_days && (
+                    <span className="text-muted-foreground ml-2">
+                      / {plan.duration_days} {plan.duration_days === 1 ? 'day' : 'days'}
+                    </span>
+                  )}
+                </div>
+
+                {plan.features && Array.isArray(plan.features) && plan.features.length > 0 && (
+                  <ul className="space-y-2">
+                    {plan.features.map((feature: string, index: number) => (
+                      <li key={index} className="flex items-start gap-2 text-sm">
+                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
                 )}
-              </div>
-              <CardTitle className="text-2xl">{plan.name}</CardTitle>
-              <CardDescription>{plan.description}</CardDescription>
-            </CardHeader>
+              </CardContent>
 
-            <CardContent className="flex-1">
-              <div className="mb-6">
-                <span className="text-4xl font-bold">${Number(plan.price).toFixed(2)}</span>
-                {plan.duration_days && (
-                  <span className="text-muted-foreground ml-2">
-                    / {plan.duration_days} {plan.duration_days === 1 ? 'day' : 'days'}
-                  </span>
+              <CardFooter>
+                {isCurrentPlan ? (
+                  <Button disabled className="w-full" size="lg" variant="secondary">
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Current Plan
+                  </Button>
+                ) : (
+                  <Button asChild className="w-full" size="lg">
+                    <Link href={`/membership/${plan.id}`}>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Subscribe Now
+                    </Link>
+                  </Button>
                 )}
-              </div>
-
-              {plan.features && Array.isArray(plan.features) && plan.features.length > 0 && (
-                <ul className="space-y-2">
-                  {plan.features.map((feature: string, index: number) => (
-                    <li key={index} className="flex items-start gap-2 text-sm">
-                      <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-
-            <CardFooter>
-              <Button asChild className="w-full" size="lg">
-                <Link href={`/membership/${plan.id}`}>
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Subscribe Now
-                </Link>
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
+              </CardFooter>
+            </Card>
+          )
+        })}
       </div>
 
       {!showAll && plans.length > 6 && (
