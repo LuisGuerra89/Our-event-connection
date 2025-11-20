@@ -26,7 +26,7 @@ export async function PublicHeader() {
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-2 md:gap-4">
         <Logo />
         
         {/* Desktop Navigation */}
@@ -55,7 +55,7 @@ export async function PublicHeader() {
         </nav>
         
         {/* Auth Section */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4 ml-auto">
           {user && profile ? (
             <>
               <NotificationBell userId={user.id} />
@@ -66,10 +66,10 @@ export async function PublicHeader() {
             </>
           ) : (
             <>
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
                 <Link href="/auth/login">Sign In</Link>
               </Button>
-              <Button asChild>
+              <Button size="sm" asChild>
                 <Link href="/auth/sign-up">Get Started</Link>
               </Button>
             </>
