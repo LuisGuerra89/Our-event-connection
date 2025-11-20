@@ -14,6 +14,10 @@ CREATE TABLE IF NOT EXISTS contact_submissions (
 ALTER TABLE contact_submissions ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "contact_submissions_insert_all" ON contact_submissions;
+DROP POLICY IF EXISTS "contact_submissions_select_admin" ON contact_submissions;
+DROP POLICY IF EXISTS "contact_submissions_update_admin" ON contact_submissions;
+
 CREATE POLICY "contact_submissions_insert_all" ON contact_submissions FOR INSERT WITH CHECK (true);
 CREATE POLICY "contact_submissions_select_admin" ON contact_submissions FOR SELECT USING (is_admin());
 CREATE POLICY "contact_submissions_update_admin" ON contact_submissions FOR UPDATE USING (is_admin());

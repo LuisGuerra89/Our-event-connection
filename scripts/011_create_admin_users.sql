@@ -16,6 +16,12 @@ CREATE TABLE IF NOT EXISTS admin_users (
 -- Enable RLS
 ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "admin_users_select_admin" ON admin_users;
+DROP POLICY IF EXISTS "admin_users_insert_admin" ON admin_users;
+DROP POLICY IF EXISTS "admin_users_update_admin" ON admin_users;
+DROP POLICY IF EXISTS "admin_users_delete_admin" ON admin_users;
+
 -- Policies
 CREATE POLICY "admin_users_select_admin" ON admin_users FOR SELECT USING (is_admin());
 CREATE POLICY "admin_users_insert_admin" ON admin_users FOR INSERT WITH CHECK (is_admin());

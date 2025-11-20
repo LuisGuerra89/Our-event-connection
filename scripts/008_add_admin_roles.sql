@@ -7,6 +7,15 @@ create index if not exists profiles_role_idx on public.profiles(role);
 
 -- Update RLS policies to allow admins to manage all data
 
+-- Drop existing policies if they exist
+drop policy if exists "profiles_admin_all" on public.profiles;
+drop policy if exists "events_admin_all" on public.events;
+drop policy if exists "waivers_admin_select" on public.waivers;
+drop policy if exists "event_attendees_admin_all" on public.event_attendees;
+drop policy if exists "matches_admin_select" on public.matches;
+drop policy if exists "user_attributes_admin_all" on public.user_attributes;
+drop policy if exists "user_preferences_admin_all" on public.user_preferences;
+
 -- Admin can view all profiles
 create policy "profiles_admin_all"
   on public.profiles for all

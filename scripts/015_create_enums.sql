@@ -15,6 +15,12 @@ CREATE TABLE IF NOT EXISTS enums (
 -- Enable RLS
 ALTER TABLE enums ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "enums_select_all" ON enums;
+DROP POLICY IF EXISTS "enums_insert_admin" ON enums;
+DROP POLICY IF EXISTS "enums_update_admin" ON enums;
+DROP POLICY IF EXISTS "enums_delete_admin" ON enums;
+
 -- Policies
 CREATE POLICY "enums_select_all" ON enums FOR SELECT USING (auth.role() = 'authenticated');
 CREATE POLICY "enums_insert_admin" ON enums FOR INSERT WITH CHECK (is_admin());

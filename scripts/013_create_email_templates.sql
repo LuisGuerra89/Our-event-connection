@@ -27,6 +27,14 @@ ALTER TABLE email_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE email_recipients ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "email_templates_select_admin" ON email_templates;
+DROP POLICY IF EXISTS "email_templates_update_admin" ON email_templates;
+DROP POLICY IF EXISTS "email_templates_insert_admin" ON email_templates;
+DROP POLICY IF EXISTS "email_recipients_select_admin" ON email_recipients;
+DROP POLICY IF EXISTS "email_recipients_insert_admin" ON email_recipients;
+DROP POLICY IF EXISTS "email_recipients_update_admin" ON email_recipients;
+DROP POLICY IF EXISTS "email_recipients_delete_admin" ON email_recipients;
+
 CREATE POLICY "email_templates_select_admin" ON email_templates FOR SELECT USING (is_admin());
 CREATE POLICY "email_templates_update_admin" ON email_templates FOR UPDATE USING (is_admin());
 CREATE POLICY "email_templates_insert_admin" ON email_templates FOR INSERT WITH CHECK (is_admin());

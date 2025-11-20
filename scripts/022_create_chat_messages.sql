@@ -25,6 +25,13 @@ ALTER TABLE chat_conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "chat_conversations_select_own" ON chat_conversations;
+DROP POLICY IF EXISTS "chat_conversations_insert_own" ON chat_conversations;
+DROP POLICY IF EXISTS "chat_conversations_update_own" ON chat_conversations;
+DROP POLICY IF EXISTS "chat_messages_select_conversation" ON chat_messages;
+DROP POLICY IF EXISTS "chat_messages_insert_own" ON chat_messages;
+DROP POLICY IF EXISTS "chat_messages_update_own" ON chat_messages;
+
 CREATE POLICY "chat_conversations_select_own" ON chat_conversations 
   FOR SELECT USING (auth.uid() = user1_id OR auth.uid() = user2_id);
 CREATE POLICY "chat_conversations_insert_own" ON chat_conversations 

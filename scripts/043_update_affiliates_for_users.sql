@@ -14,6 +14,12 @@ ADD COLUMN IF NOT EXISTS total_earnings DECIMAL(10,2) DEFAULT 0.00;
 -- Update RLS policies to allow users to view their own affiliate status
 DROP POLICY IF EXISTS "affiliates_select_all" ON affiliates;
 DROP POLICY IF EXISTS "affiliates_insert_admin" ON affiliates;
+DROP POLICY IF EXISTS "affiliates_update_admin" ON affiliates;
+DROP POLICY IF EXISTS "affiliates_delete_admin" ON affiliates;
+DROP POLICY IF EXISTS "affiliates_select_approved" ON affiliates;
+DROP POLICY IF EXISTS "affiliates_insert_own" ON affiliates;
+DROP POLICY IF EXISTS "affiliates_update_own" ON affiliates;
+DROP POLICY IF EXISTS "affiliates_admin_all" ON affiliates;
 
 -- Allow everyone to view approved affiliates
 CREATE POLICY "affiliates_select_approved" ON affiliates 

@@ -14,6 +14,12 @@ CREATE TABLE IF NOT EXISTS cms_content (
 -- Enable RLS
 ALTER TABLE cms_content ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "cms_content_select_all" ON cms_content;
+DROP POLICY IF EXISTS "cms_content_insert_admin" ON cms_content;
+DROP POLICY IF EXISTS "cms_content_update_admin" ON cms_content;
+DROP POLICY IF EXISTS "cms_content_delete_admin" ON cms_content;
+
 -- Policies
 CREATE POLICY "cms_content_select_all" ON cms_content FOR SELECT USING (true);
 CREATE POLICY "cms_content_insert_admin" ON cms_content FOR INSERT WITH CHECK (is_admin());

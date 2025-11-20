@@ -31,6 +31,16 @@ ALTER TABLE subscription_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_subscriptions ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "subscription_plans_select_all" ON subscription_plans;
+DROP POLICY IF EXISTS "subscription_plans_insert_admin" ON subscription_plans;
+DROP POLICY IF EXISTS "subscription_plans_update_admin" ON subscription_plans;
+DROP POLICY IF EXISTS "subscription_plans_delete_admin" ON subscription_plans;
+DROP POLICY IF EXISTS "user_subscriptions_select_own" ON user_subscriptions;
+DROP POLICY IF EXISTS "user_subscriptions_insert_own" ON user_subscriptions;
+DROP POLICY IF EXISTS "user_subscriptions_update_own" ON user_subscriptions;
+DROP POLICY IF EXISTS "user_subscriptions_select_admin" ON user_subscriptions;
+DROP POLICY IF EXISTS "user_subscriptions_update_admin" ON user_subscriptions;
+
 CREATE POLICY "subscription_plans_select_all" ON subscription_plans FOR SELECT USING (true);
 CREATE POLICY "subscription_plans_insert_admin" ON subscription_plans FOR INSERT WITH CHECK (is_admin());
 CREATE POLICY "subscription_plans_update_admin" ON subscription_plans FOR UPDATE USING (is_admin());

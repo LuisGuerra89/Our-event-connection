@@ -17,6 +17,12 @@ CREATE TABLE IF NOT EXISTS affiliates (
 -- Enable RLS
 ALTER TABLE affiliates ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "affiliates_select_all" ON affiliates;
+DROP POLICY IF EXISTS "affiliates_insert_admin" ON affiliates;
+DROP POLICY IF EXISTS "affiliates_update_admin" ON affiliates;
+DROP POLICY IF EXISTS "affiliates_delete_admin" ON affiliates;
+
 -- Policies
 CREATE POLICY "affiliates_select_all" ON affiliates FOR SELECT USING (true);
 CREATE POLICY "affiliates_insert_admin" ON affiliates FOR INSERT WITH CHECK (is_admin());

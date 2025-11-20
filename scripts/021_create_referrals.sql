@@ -14,6 +14,12 @@ CREATE TABLE IF NOT EXISTS referrals (
 -- Enable RLS
 ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "referrals_select_own" ON referrals;
+DROP POLICY IF EXISTS "referrals_insert_own" ON referrals;
+DROP POLICY IF EXISTS "referrals_select_admin" ON referrals;
+DROP POLICY IF EXISTS "referrals_update_admin" ON referrals;
+
 -- Policies
 CREATE POLICY "referrals_select_own" ON referrals FOR SELECT USING (auth.uid() = referrer_id OR auth.uid() = referred_id);
 CREATE POLICY "referrals_insert_own" ON referrals FOR INSERT WITH CHECK (auth.uid() = referrer_id);

@@ -32,6 +32,15 @@ ALTER TABLE privileges ENABLE ROW LEVEL SECURITY;
 ALTER TABLE role_privileges ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "roles_select_admin" ON roles;
+DROP POLICY IF EXISTS "roles_insert_admin" ON roles;
+DROP POLICY IF EXISTS "roles_update_admin" ON roles;
+DROP POLICY IF EXISTS "roles_delete_admin" ON roles;
+DROP POLICY IF EXISTS "privileges_select_admin" ON privileges;
+DROP POLICY IF EXISTS "role_privileges_select_admin" ON role_privileges;
+DROP POLICY IF EXISTS "role_privileges_insert_admin" ON role_privileges;
+DROP POLICY IF EXISTS "role_privileges_delete_admin" ON role_privileges;
+
 CREATE POLICY "roles_select_admin" ON roles FOR SELECT USING (is_admin());
 CREATE POLICY "roles_insert_admin" ON roles FOR INSERT WITH CHECK (is_admin());
 CREATE POLICY "roles_update_admin" ON roles FOR UPDATE USING (is_admin());

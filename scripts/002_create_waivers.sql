@@ -14,6 +14,11 @@ create table if not exists public.waivers (
 alter table public.waivers enable row level security;
 
 -- RLS Policies for waivers
+drop policy if exists "waivers_select_own" on public.waivers;
+drop policy if exists "waivers_insert_own" on public.waivers;
+drop policy if exists "waivers_update_own" on public.waivers;
+drop policy if exists "waivers_delete_own" on public.waivers;
+
 create policy "waivers_select_own"
   on public.waivers for select
   using (auth.uid() = user_id);

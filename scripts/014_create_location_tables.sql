@@ -37,6 +37,19 @@ ALTER TABLE states ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cities ENABLE ROW LEVEL SECURITY;
 
 -- Policies (allow read for all authenticated users, write for admins)
+DROP POLICY IF EXISTS "countries_select_all" ON countries;
+DROP POLICY IF EXISTS "countries_insert_admin" ON countries;
+DROP POLICY IF EXISTS "countries_update_admin" ON countries;
+DROP POLICY IF EXISTS "countries_delete_admin" ON countries;
+DROP POLICY IF EXISTS "states_select_all" ON states;
+DROP POLICY IF EXISTS "states_insert_admin" ON states;
+DROP POLICY IF EXISTS "states_update_admin" ON states;
+DROP POLICY IF EXISTS "states_delete_admin" ON states;
+DROP POLICY IF EXISTS "cities_select_all" ON cities;
+DROP POLICY IF EXISTS "cities_insert_admin" ON cities;
+DROP POLICY IF EXISTS "cities_update_admin" ON cities;
+DROP POLICY IF EXISTS "cities_delete_admin" ON cities;
+
 CREATE POLICY "countries_select_all" ON countries FOR SELECT USING (auth.role() = 'authenticated');
 CREATE POLICY "countries_insert_admin" ON countries FOR INSERT WITH CHECK (is_admin());
 CREATE POLICY "countries_update_admin" ON countries FOR UPDATE USING (is_admin());

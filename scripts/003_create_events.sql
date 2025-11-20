@@ -27,6 +27,11 @@ create table if not exists public.events (
 alter table public.events enable row level security;
 
 -- RLS Policies for events
+drop policy if exists "events_select_all" on public.events;
+drop policy if exists "events_insert_own" on public.events;
+drop policy if exists "events_update_own" on public.events;
+drop policy if exists "events_delete_own" on public.events;
+
 create policy "events_select_all"
   on public.events for select
   using (status = 'published' or auth.uid() = organizer_id);

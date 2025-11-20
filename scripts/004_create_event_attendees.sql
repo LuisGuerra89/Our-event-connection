@@ -13,6 +13,11 @@ create table if not exists public.event_attendees (
 alter table public.event_attendees enable row level security;
 
 -- RLS Policies for event_attendees
+drop policy if exists "event_attendees_select_own" on public.event_attendees;
+drop policy if exists "event_attendees_insert_own" on public.event_attendees;
+drop policy if exists "event_attendees_update_own" on public.event_attendees;
+drop policy if exists "event_attendees_delete_own" on public.event_attendees;
+
 create policy "event_attendees_select_own"
   on public.event_attendees for select
   using (auth.uid() = user_id);

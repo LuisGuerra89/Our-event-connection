@@ -22,6 +22,25 @@ begin
 end;
 $$;
 
+-- Drop new admin policies if they exist (for re-runs)
+drop policy if exists "profiles_admin_select" on public.profiles;
+drop policy if exists "profiles_admin_update" on public.profiles;
+drop policy if exists "profiles_admin_delete" on public.profiles;
+drop policy if exists "events_admin_select" on public.events;
+drop policy if exists "events_admin_insert" on public.events;
+drop policy if exists "events_admin_update" on public.events;
+drop policy if exists "events_admin_delete" on public.events;
+drop policy if exists "waivers_admin_select" on public.waivers;
+drop policy if exists "event_attendees_admin_select" on public.event_attendees;
+drop policy if exists "event_attendees_admin_insert" on public.event_attendees;
+drop policy if exists "event_attendees_admin_update" on public.event_attendees;
+drop policy if exists "event_attendees_admin_delete" on public.event_attendees;
+drop policy if exists "matches_admin_select" on public.matches;
+drop policy if exists "user_attributes_admin_select" on public.user_attributes;
+drop policy if exists "user_attributes_admin_update" on public.user_attributes;
+drop policy if exists "user_preferences_admin_select" on public.user_preferences;
+drop policy if exists "user_preferences_admin_update" on public.user_preferences;
+
 -- Recreate admin policies using the security definer function
 
 -- Profiles: Admin can manage all profiles

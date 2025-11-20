@@ -26,6 +26,14 @@ ALTER TABLE event_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_category_mapping ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "event_categories_select_all" ON event_categories;
+DROP POLICY IF EXISTS "event_categories_insert_admin" ON event_categories;
+DROP POLICY IF EXISTS "event_categories_update_admin" ON event_categories;
+DROP POLICY IF EXISTS "event_categories_delete_admin" ON event_categories;
+DROP POLICY IF EXISTS "event_category_mapping_select_all" ON event_category_mapping;
+DROP POLICY IF EXISTS "event_category_mapping_insert_admin" ON event_category_mapping;
+DROP POLICY IF EXISTS "event_category_mapping_delete_admin" ON event_category_mapping;
+
 CREATE POLICY "event_categories_select_all" ON event_categories FOR SELECT USING (true);
 CREATE POLICY "event_categories_insert_admin" ON event_categories FOR INSERT WITH CHECK (is_admin());
 CREATE POLICY "event_categories_update_admin" ON event_categories FOR UPDATE USING (is_admin());

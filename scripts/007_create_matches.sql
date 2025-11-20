@@ -12,6 +12,9 @@ create table if not exists public.matches (
 alter table public.matches enable row level security;
 
 -- RLS Policies for matches
+drop policy if exists "matches_select_own" on public.matches;
+drop policy if exists "matches_insert_system" on public.matches;
+
 create policy "matches_select_own"
   on public.matches for select
   using (auth.uid() = user_id);

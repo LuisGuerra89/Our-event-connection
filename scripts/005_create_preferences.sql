@@ -73,6 +73,11 @@ create table if not exists public.user_preferences (
 alter table public.user_preferences enable row level security;
 
 -- RLS Policies for user_preferences
+drop policy if exists "user_preferences_select_own" on public.user_preferences;
+drop policy if exists "user_preferences_insert_own" on public.user_preferences;
+drop policy if exists "user_preferences_update_own" on public.user_preferences;
+drop policy if exists "user_preferences_delete_own" on public.user_preferences;
+
 create policy "user_preferences_select_own"
   on public.user_preferences for select
   using (auth.uid() = user_id);

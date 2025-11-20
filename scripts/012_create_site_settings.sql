@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS site_settings (
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "site_settings_select_admin" ON site_settings;
+DROP POLICY IF EXISTS "site_settings_update_admin" ON site_settings;
+DROP POLICY IF EXISTS "site_settings_insert_admin" ON site_settings;
+
 CREATE POLICY "site_settings_select_admin" ON site_settings FOR SELECT USING (is_admin());
 CREATE POLICY "site_settings_update_admin" ON site_settings FOR UPDATE USING (is_admin());
 CREATE POLICY "site_settings_insert_admin" ON site_settings FOR INSERT WITH CHECK (is_admin());

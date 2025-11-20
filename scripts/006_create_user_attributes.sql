@@ -35,6 +35,11 @@ create table if not exists public.user_attributes (
 alter table public.user_attributes enable row level security;
 
 -- RLS Policies for user_attributes
+drop policy if exists "user_attributes_select_all" on public.user_attributes;
+drop policy if exists "user_attributes_insert_own" on public.user_attributes;
+drop policy if exists "user_attributes_update_own" on public.user_attributes;
+drop policy if exists "user_attributes_delete_own" on public.user_attributes;
+
 create policy "user_attributes_select_all"
   on public.user_attributes for select
   using (true);

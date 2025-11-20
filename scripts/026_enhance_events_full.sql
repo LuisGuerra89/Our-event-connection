@@ -33,6 +33,11 @@ CREATE TABLE IF NOT EXISTS public.event_photos (
 ALTER TABLE public.event_photos ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for event_photos
+DROP POLICY IF EXISTS "event_photos_select_all" ON public.event_photos;
+DROP POLICY IF EXISTS "event_photos_insert_admin" ON public.event_photos;
+DROP POLICY IF EXISTS "event_photos_update_admin" ON public.event_photos;
+DROP POLICY IF EXISTS "event_photos_delete_admin" ON public.event_photos;
+
 CREATE POLICY "event_photos_select_all"
   ON public.event_photos FOR SELECT
   USING (true);

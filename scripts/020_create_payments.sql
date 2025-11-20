@@ -21,6 +21,11 @@ CREATE TABLE IF NOT EXISTS payments (
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "payments_select_own" ON payments;
+DROP POLICY IF EXISTS "payments_insert_own" ON payments;
+DROP POLICY IF EXISTS "payments_select_admin" ON payments;
+DROP POLICY IF EXISTS "payments_update_admin" ON payments;
+
 CREATE POLICY "payments_select_own" ON payments FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "payments_insert_own" ON payments FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "payments_select_admin" ON payments FOR SELECT USING (is_admin());
