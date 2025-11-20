@@ -6,7 +6,9 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start",
+    "migrate": "node scripts/run-migrations.js",
+    "migrate:bash": "bash scripts/run-migrations.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

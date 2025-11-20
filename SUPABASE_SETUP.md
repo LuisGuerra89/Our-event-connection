@@ -1,63 +1,82 @@
-# Supabase Email Configuration
+# Supabase Setup Guide
 
-## Important: Configure Email Settings in Supabase Dashboard
+## Email Authentication Configuration
 
-For email confirmations to work properly, you need to configure the following in your Supabase project:
+For email confirmations to work properly, configure the following in your Supabase project:
 
-### 1. Email Authentication Settings
+### 1. Email Provider Settings
 
-Go to: **Authentication → Providers → Email**
+Navigate to: **Authentication → Providers → Email**
 
 - ✅ Enable email provider
 - ✅ Enable "Confirm email" (recommended for production)
 - For development, you can disable "Confirm email" to skip email verification
 
-### 2. Site URL Configuration
+### 2. URL Configuration
 
-Go to: **Authentication → URL Configuration**
+Navigate to: **Authentication → URL Configuration**
 
 Add the following URLs:
 
 **Site URL:**
-- Production: `https://v0-event-platform-with-ai.vercel.app`
+- Production: `https://our-event-connection.vercel.app` (or your custom domain)
 - Development: `http://localhost:3000`
 
-**Redirect URLs (add both):**
-- `https://v0-event-platform-with-ai.vercel.app/auth/callback`
+**Redirect URLs:**
+- `https://our-event-connection.vercel.app/auth/callback`
 - `http://localhost:3000/auth/callback`
 
 ### 3. Email Templates (Optional)
 
-Go to: **Authentication → Email Templates**
+Navigate to: **Authentication → Email Templates**
 
-You can customize the confirmation email template. Make sure it includes the `{{ .ConfirmationURL }}` variable.
+Customize the confirmation email template if needed. Ensure it includes the `{{ .ConfirmationURL }}` variable.
 
-### 4. Testing During Development
+### 4. Development vs Production
 
-If you want to skip email confirmation during development:
+**For Development:**
+- You can disable "Confirm email" to skip email verification
+- Users will be automatically confirmed upon signup
+- This speeds up testing workflows
 
-1. Go to **Authentication → Providers → Email**
-2. Toggle OFF "Confirm email"
-3. Users will be automatically confirmed upon signup
+**For Production:**
+- Always enable email confirmation for security
+- Configure a custom SMTP provider
 
-For production, always keep email confirmation enabled for security.
+### 5. Production Email Provider
 
-### 5. Email Provider (Production)
+For production deployments, configure a custom SMTP provider:
 
-For production, configure a custom SMTP provider:
-
-1. Go to **Project Settings → Auth → SMTP Settings**
+1. Navigate to: **Project Settings → Auth → SMTP Settings**
 2. Enable custom SMTP
-3. Configure with your email service (SendGrid, AWS SES, etc.)
+3. Configure with your email service provider:
+   - SendGrid
+   - AWS SES
+   - Mailgun
+   - Or your preferred SMTP service
 
-The default Supabase email service may have rate limits and deliverability issues.
+The default Supabase email service may have rate limits and deliverability issues in production.
 
----
+### 6. Environment Variables
 
-## Current Configuration
+Ensure your `.env.local` file contains:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+## Application Authentication Flow
 
 The app is configured to:
 - Redirect to `/auth/callback` after email confirmation
-- Handle the auth code exchange automatically
+- Exchange authentication code automatically
 - Redirect to `/onboarding/waiver` after successful confirmation
-- Show clear instructions on the verify-email page
+- Display clear instructions on the verify-email page
+
+## RLS (Row Level Security) Policies
+
+All tables have RLS policies enabled. The service role key has full access for administrative operations.
+
+See the migration scripts in `/scripts/` for detailed RLS policy configurations.
