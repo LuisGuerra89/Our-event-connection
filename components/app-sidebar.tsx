@@ -180,9 +180,21 @@ export function AppSidebar({ userRole, userName, userEmail }: AppSidebarProps) {
   const isAdmin = userRole === "admin"
 
   const handleSignOut = async () => {
-    const supabase = createBrowserClient()
-    await supabase.auth.signOut()
-    router.push("/auth/login")
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+      })
+      
+      if (response.ok) {
+        setTimeout(() => {
+          router.push("/")
+        }, 500)
+      } else {
+        console.error("Logout failed")
+      }
+    } catch (err) {
+      console.error("Sign out error:", err)
+    }
   }
 
   const navItems = isAdmin ? adminNavItems : userNavItems
