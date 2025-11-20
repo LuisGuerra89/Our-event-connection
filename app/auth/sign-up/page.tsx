@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { createClient } from "@/lib/supabase/client"
+import { createUserProfile } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -45,6 +46,20 @@ export default function SignUpPage() {
     console.log("[v0] Sign up attempt started")
 
     try {
+      // Check if email already exists in profiles table
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .eq("email", email)
+        .maybeSingle()
+
+      if (existingProfile) {
+        console.log("[v0] Email already exists in profiles:", email)
+        setError("Email already exists. Please use a different email or sign in instead.")
+        setIsLoading(false)
+        return
+      }
+
       const isProduction = typeof window !== "undefined" && window.location.hostname.includes("vercel.app")
       const redirectUrl = isProduction
         ? "https://v0-event-platform-with-ai.vercel.app/auth/callback"
@@ -70,6 +85,19 @@ export default function SignUpPage() {
       }
 
       console.log("[v0] Sign up successful:", data.user?.id, "email confirmed:", data.user?.email_confirmed_at)
+
+      // Create user profile automatically
+      if (data.user?.id) {
+        try {
+          console.log("[v0] Creating user profile in database")
+          await createUserProfile(data.user.id, email, fullName, referralCode || undefined)
+          console.log("[v0] User profile created successfully")
+        } catch (profileError) {
+          console.error("[v0] Error creating profile:", profileError)
+          // Profile creation error is non-fatal - user can still verify email
+          // The profile will be created when they confirm their email
+        }
+      }
 
       console.log("[v0] Redirecting to verify-email page")
       router.push("/auth/verify-email")
