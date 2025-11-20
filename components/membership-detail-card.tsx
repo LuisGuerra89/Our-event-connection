@@ -1,17 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { loadStripe } from "@stripe/stripe-js"
+import { Elements } from "@stripe/react-stripe-js"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Check, CreditCard, ArrowLeft, AlertCircle, Gift } from "lucide-react"
+import { Check, ArrowLeft, AlertCircle, Gift, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { StripeCheckoutForm } from "@/components/stripe-checkout-form"
+
+// Initialize Stripe
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "")
 
 interface MembershipDetailCardProps {
   plan: any
@@ -29,38 +32,49 @@ export function MembershipDetailCard({
   freeEventsEarned,
 }: MembershipDetailCardProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const [autoRenew, setAutoRenew] = useState(plan.auto_renewal)
-  const [cardNumber, setCardNumber] = useState("")
-  const [cardExpiry, setCardExpiry] = useState("")
-  const [cardCvv, setCardCvv] = useState("")
-  const [cardName, setCardName] = useState("")
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\s/g, "")
-    const formattedValue = value.replace(/(\d{4})/g, "$1 ").trim()
-    setCardNumber(formattedValue)
-  }
-
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, "")
-    if (value.length >= 2) {
-      value = value.slice(0, 2) + "/" + value.slice(2, 4)
+  // Initialize Stripe checkout when component mounts
+  useEffect(() => {
+    if (!existingSubscription && !clientSecret) {
+      initializeCheckout()
     }
-    setCardExpiry(value)
-  }
+  }, [existingSubscription])
 
-  const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, "").slice(0, 4)
-    setCardCvv(value)
-  }
+  const initializeCheckout = async () => {
+    setIsLoading(true)
+    setError(null)
 
-  const handleSubscribe = async () => {
-    if (!cardNumber || !cardExpiry || !cardCvv || !cardName) {
-      alert("Please fill in all payment details")
-      return
+    try {
+      const response = await fetch("/api/stripe/create-payment-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId: plan.id,
+          amount: plan.price,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to initialize checkout")
+      }
+
+      setClientSecret(data.clientSecret)
+      setPaymentIntentId(data.paymentIntentId)
+    } catch (err) {
+      console.error("Checkout initialization error:", err)
+      setError(err instanceof Error ? err.message : "Failed to initialize checkout")
+    } finally {
+      setIsLoading(false)
     }
+  }
 
+  const handlePaymentSuccess = useCallback(async () => {
     setIsLoading(true)
     const supabase = createClient()
 
@@ -78,32 +92,33 @@ export function MembershipDetailCard({
         plan_id: plan.id,
         start_date: startDate.toISOString(),
         end_date: plan.duration_days ? endDate.toISOString() : null,
-        auto_renew: autoRenew,
+        auto_renew: plan.auto_renewal,
         status: "active",
+        stripe_payment_intent_id: paymentIntentId,
       })
 
       if (subError) throw subError
 
-      // Record payment
-      const { error: paymentError } = await supabase.from("payments").insert({
-        user_id: userId,
-        amount: plan.price,
-        payment_type: "subscription",
-        payment_status: "completed",
-        payment_method: "card",
-        reference_id: plan.id,
-      })
+      // Update payment record to success
+      if (paymentIntentId) {
+        await supabase
+          .from("payments")
+          .update({ payment_status: "success" })
+          .eq("transaction_id", paymentIntentId)
+      }
 
-      if (paymentError) console.error("Payment record error:", paymentError)
-
+      console.log("Payment successful, redirecting to success page")
       router.push("/membership/success")
     } catch (err) {
       console.error("Subscription error:", err)
-      alert("Failed to process subscription. Please try again.")
-    } finally {
+      setError("Failed to activate subscription. Please contact support.")
       setIsLoading(false)
     }
-  }
+  }, [userId, plan, paymentIntentId, router])
+
+  const handlePaymentError = useCallback((errorMsg: string) => {
+    setError(errorMsg)
+  }, [])
 
   const handleCancelSubscription = async () => {
     if (!confirm("Are you sure you want to cancel your subscription? It will remain active until the end of the current period.")) {
@@ -267,75 +282,50 @@ export function MembershipDetailCard({
               </div>
             ) : (
               <div className="space-y-4">
-                <div>
-                  <Label htmlFor="cardName">Cardholder Name</Label>
-                  <Input
-                    id="cardName"
-                    placeholder="John Doe"
-                    value={cardName}
-                    onChange={(e) => setCardName(e.target.value)}
-                  />
-                </div>
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
 
-                <div>
-                  <Label htmlFor="cardNumber">Card Number</Label>
-                  <Input
-                    id="cardNumber"
-                    placeholder="1234 5678 9012 3456"
-                    value={cardNumber}
-                    onChange={handleCardNumberChange}
-                    maxLength={19}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="cardExpiry">Expiry Date</Label>
-                    <Input
-                      id="cardExpiry"
-                      placeholder="MM/YY"
-                      value={cardExpiry}
-                      onChange={handleExpiryChange}
-                      maxLength={5}
-                    />
+                {isLoading && !clientSecret ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <span className="ml-2">Initializing checkout...</span>
                   </div>
-                  <div>
-                    <Label htmlFor="cardCvv">CVV</Label>
-                    <Input
-                      id="cardCvv"
-                      placeholder="123"
-                      value={cardCvv}
-                      onChange={handleCvvChange}
-                      maxLength={4}
-                      type="password"
+                ) : clientSecret ? (
+                  <Elements
+                    stripe={stripePromise}
+                    options={{
+                      clientSecret,
+                      appearance: {
+                        theme: "stripe",
+                      },
+                    }}
+                  >
+                    <StripeCheckoutForm
+                      clientSecret={clientSecret}
+                      planName={plan.name}
+                      planPrice={parseFloat(plan.price)}
+                      onSuccess={handlePaymentSuccess}
+                      onError={handlePaymentError}
                     />
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="autoRenew"
-                    checked={autoRenew}
-                    onCheckedChange={(checked) => setAutoRenew(checked as boolean)}
-                  />
-                  <Label htmlFor="autoRenew" className="text-sm cursor-pointer">
-                    Enable auto-renewal (cancel anytime)
-                  </Label>
-                </div>
-
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="text-xs">
-                    By subscribing, you agree to our terms. Your subscription will{" "}
-                    {autoRenew ? "automatically renew" : "not renew"} unless cancelled.
-                  </AlertDescription>
-                </Alert>
+                  </Elements>
+                ) : (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Failed to initialize payment. Please refresh the page.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
             )}
           </CardContent>
 
           <CardFooter>
-            {existingSubscription ? (
+            {existingSubscription && (
               <Button
                 variant="destructive"
                 onClick={handleCancelSubscription}
@@ -343,17 +333,6 @@ export function MembershipDetailCard({
                 className="w-full"
               >
                 {isLoading ? "Processing..." : "Cancel Subscription"}
-              </Button>
-            ) : (
-              <Button onClick={handleSubscribe} disabled={isLoading} className="w-full" size="lg">
-                {isLoading ? (
-                  "Processing..."
-                ) : (
-                  <>
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Subscribe for ${Number(plan.price).toFixed(2)}
-                  </>
-                )}
               </Button>
             )}
           </CardFooter>
