@@ -24,11 +24,33 @@ export async function GET(request: Request) {
       const { data: { user } } = await supabase.auth.getUser()
       
       if (user) {
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select("is_profile_complete")
+          .select("is_profile_complete, role")
           .eq("id", user.id)
-          .single()
+          .maybeSingle()
+
+        console.log("[v0] User profile retrieved:", { user_id: user.id, profile, error: profileError })
+
+        // If user is admin or moderator, redirect to admin dashboard directly
+        if (profile && (profile.role === "admin" || profile.role === "moderator")) {
+          console.log("[v0] User is admin/moderator, redirecting to /admin")
+          return NextResponse.redirect(new URL("/admin", request.url))
+        }
+
+        // Fallback: check if user is in admin_users table (for newly created admins)
+        if (!profile) {
+          const { data: adminUser } = await supabase
+            .from("admin_users")
+            .select("id")
+            .eq("user_id", user.id)
+            .maybeSingle()
+
+          if (adminUser) {
+            console.log("[v0] User found in admin_users table, redirecting to /admin")
+            return NextResponse.redirect(new URL("/admin", request.url))
+          }
+        }
 
         // If social login user hasn't completed profile, redirect to complete profile page
         if (profile && profile.is_profile_complete === false) {

@@ -28,6 +28,7 @@ export function CreateAdminUserForm({ roles }: { roles: Role[] }) {
     lastName: "",
     mobile: "",
     roleId: "",
+    role: "admin",
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,6 +39,16 @@ export function CreateAdminUserForm({ roles }: { roles: Role[] }) {
       toast({
         title: "Error",
         description: "Passwords do not match",
+        variant: "destructive",
+      })
+      setIsLoading(false)
+      return
+    }
+
+    if (!formData.roleId) {
+      toast({
+        title: "Error",
+        description: "Please select a role",
         variant: "destructive",
       })
       setIsLoading(false)
@@ -125,9 +136,23 @@ export function CreateAdminUserForm({ roles }: { roles: Role[] }) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="role">Role *</Label>
+          <Label htmlFor="userRole">User Role *</Label>
           <Select
-            required
+            value={formData.role}
+            onValueChange={(value) => setFormData({ ...formData, role: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select user role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="moderator">Moderator</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="role">Position *</Label>
+          <Select
             value={formData.roleId}
             onValueChange={(value) => setFormData({ ...formData, roleId: value })}
           >
