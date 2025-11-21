@@ -59,11 +59,11 @@ export function AffiliatesHero() {
             </div>
           </div>
 
-          <div className="pt-6 flex gap-4 justify-center">
-            <Button size="lg" asChild>
+          <div className="pt-6 flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" asChild className="w-full sm:w-auto">
               <Link href="#affiliates">View All Partners</Link>
             </Button>
-            <Button size="lg" variant="outline" asChild>
+            <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
               <Link href="/affiliates/apply">Apply as a Partner</Link>
             </Button>
           </div>

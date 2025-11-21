@@ -97,14 +97,16 @@ export default async function HomePage() {
         {/* Events Near You */}
         <section className="py-16">
           <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-12">
+            <div className="flex flex-col gap-4 mb-12">
               <div>
                 <h2 className="text-3xl font-bold mb-2">Events Near You</h2>
                 <p className="text-muted-foreground">Discover local events based on your location</p>
               </div>
-              <Button variant="outline" asChild>
-                <Link href="/events?nearby=true">View All</Link>
-              </Button>
+              <div className="flex justify-start">
+                <Button variant="outline" asChild>
+                  <Link href="/events?nearby=true">View All</Link>
+                </Button>
+              </div>
             </div>
             <EventsNearYou fallbackEvents={nearbyEventsFallback} />
           </div>
@@ -114,14 +116,16 @@ export default async function HomePage() {
         {upcomingEvents && upcomingEvents.length > 0 && (
           <section className="py-16 bg-muted/30">
             <div className="container mx-auto px-4">
-              <div className="flex items-center justify-between mb-12">
+              <div className="flex flex-col gap-4 mb-12">
                 <div>
                   <h2 className="text-3xl font-bold mb-2">Upcoming Events</h2>
                   <p className="text-muted-foreground">Join our next events</p>
                 </div>
-                <Button variant="outline" asChild>
-                  <Link href="/events/upcoming">View All</Link>
-                </Button>
+                <div className="flex justify-start">
+                  <Button variant="outline" asChild>
+                    <Link href="/events/upcoming">View All</Link>
+                  </Button>
+                </div>
               </div>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {upcomingEvents.map((event) => (
