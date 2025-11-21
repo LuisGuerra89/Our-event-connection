@@ -35,19 +35,20 @@ export default async function ApplyAffiliatePage() {
   console.log("Affiliates Data:", affiliatesData)
   console.log("Affiliates Count:", affiliatesData?.length)
 
-  // Prioritize pending applications, then approved, then rejected
+  // Only load existing affiliate if status is "pending" (for editing)
+  // If approved, allow them to create a new application
   let existingAffiliate = null
   if (affiliatesData && affiliatesData.length > 0) {
-    // First, try to find a pending application
-    existingAffiliate = affiliatesData.find((a) => a.approval_status === "pending")
-    
-    // If no pending, use the first one (most recent)
-    if (!existingAffiliate) {
-      existingAffiliate = affiliatesData[0]
+    const pendingAffiliate = affiliatesData.find((a) => a.approval_status === "pending")
+    if (pendingAffiliate) {
+      existingAffiliate = pendingAffiliate
     }
+    // If no pending, pass the approved one to show info (but user can create new)
+    // but don't set existingAffiliate so it treats it as a new form
   }
 
-  console.log("Existing Affiliate:", existingAffiliate)
+  console.log("Existing Affiliate (pending only):", existingAffiliate)
+  console.log("All Affiliates:", affiliatesData)
   console.log("=== End Debug ===")
 
   return (

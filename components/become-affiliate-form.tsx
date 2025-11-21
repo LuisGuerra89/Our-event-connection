@@ -36,7 +36,13 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
   const [successTitle, setSuccessTitle] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
   const [hasChanges, setHasChanges] = useState(false)
+  const [showNewForm, setShowNewForm] = useState(false)
   const router = useRouter()
+
+  // Check if existing affiliate is approved (show option to create new)
+  const isApproved = existingAffiliate?.approval_status === "approved" && !showNewForm
+  const isPending = existingAffiliate?.approval_status === "pending"
+  const isRejected = existingAffiliate?.approval_status === "rejected"
 
   // Track original values to detect changes
   const [originalValues, setOriginalValues] = useState({
@@ -111,8 +117,9 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
         application_date: new Date().toISOString(),
       }
 
-      if (existingAffiliate) {
-        // Update existing application
+      // If showNewForm is true, always create a new application (even if there's an approved one)
+      if (existingAffiliate && !showNewForm && (isPending || isRejected)) {
+        // Update existing pending or rejected application
         const { error } = await supabase
           .from("affiliates")
           .update(affiliateData)
@@ -123,7 +130,7 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
         setSuccessMessage("Your application has been updated successfully!")
         setSuccessDialog(true)
       } else {
-        // Create new application
+        // Create new application (either first time or when showing new form after approved)
         const { error } = await supabase
           .from("affiliates")
           .insert(affiliateData)
@@ -170,6 +177,86 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
         <Icon className="h-3 w-3 mr-1" />
         {config.label}
       </Badge>
+    )
+  }
+
+  // Screen for approved affiliate (show current status, option to create new)
+  if (isApproved && !showNewForm) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <Button variant="ghost" asChild className="mb-6 w-full sm:w-auto">
+          <Link href="/affiliates">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Partners
+          </Link>
+        </Button>
+
+        <Card className="border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800">
+          <CardHeader>
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl text-green-900 dark:text-green-100">
+                  Your Business is an Approved Partner!
+                </CardTitle>
+                <CardDescription className="text-green-800 dark:text-green-200">
+                  Congratulations! Your business is now featured in our partner showcase.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-6">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-lg space-y-2">
+              <h4 className="font-semibold text-green-900 dark:text-green-100">Current Business Information:</h4>
+              <div className="text-sm text-green-800 dark:text-green-200 space-y-2">
+                <p><strong>Business Name:</strong> {existingAffiliate?.name}</p>
+                <p><strong>Location:</strong> {[existingAffiliate?.city, existingAffiliate?.state, existingAffiliate?.country].filter(Boolean).join(", ") || "Not specified"}</p>
+                <p><strong>Description:</strong> {existingAffiliate?.description?.substring(0, 100)}...</p>
+              </div>
+            </div>
+
+            <Alert className="border-blue-400 bg-blue-50 dark:bg-blue-950">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800 dark:text-blue-200">
+                <strong>What's next?</strong> Your business is now visible to all our members. You can update your information anytime or apply with a different business.
+              </AlertDescription>
+            </Alert>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
+              <Button className="flex-1 bg-green-600 hover:bg-green-700" asChild>
+                <Link href="/affiliates">
+                  View Partner Showcase
+                </Link>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1 sm:flex-none"
+                onClick={() => {
+                  // Clear form to create new application
+                  setBusinessName("")
+                  setDescription("")
+                  setAddress("")
+                  setCity("")
+                  setState("")
+                  setCountry("")
+                  setImageUrl("")
+                  setShowNewForm(true)
+                }}
+              >
+                Apply with Another Business
+              </Button>
+              <Button variant="ghost" asChild className="flex-1 sm:flex-none">
+                <Link href="/dashboard">
+                  Back to Dashboard
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
@@ -227,13 +314,13 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
               </AlertDescription>
             </Alert>
 
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Button asChild className="flex-1 bg-green-600 hover:bg-green-700">
                 <Link href="/affiliates">
                   View Our Partners
                 </Link>
               </Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="flex-1 sm:flex-none">
                 <Link href="/dashboard">
                   Back to Dashboard
                 </Link>
@@ -247,7 +334,7 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <Button variant="ghost" asChild className="mb-6">
+      <Button variant="ghost" asChild className="mb-6 w-full sm:w-auto">
         <Link href="/affiliates">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Partners
@@ -259,20 +346,24 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
           <div className="flex items-start justify-between">
             <div>
               <CardTitle className="text-2xl">
-                {existingAffiliate ? "Update Application" : "Become a Partner"}
+                {showNewForm && isApproved 
+                  ? "Apply with Another Business"
+                  : existingAffiliate ? "Update Application" : "Become a Partner"}
               </CardTitle>
               <CardDescription>
-                {existingAffiliate
+                {showNewForm && isApproved
+                  ? "Submit a partnership application for a different business"
+                  : existingAffiliate
                   ? "Update your business partnership application"
                   : "Apply to partner with our platform. We feature approved businesses in our partner showcase."}
               </CardDescription>
             </div>
-            {getStatusBadge()}
+            {!showNewForm && getStatusBadge()}
           </div>
         </CardHeader>
 
         <CardContent>
-          {existingAffiliate?.approval_status === "pending" && (
+          {!showNewForm && existingAffiliate?.approval_status === "pending" && (
             <Alert className="mb-6 border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
               <Clock className="h-4 w-4 text-yellow-600" />
               <AlertDescription className="text-yellow-800 dark:text-yellow-200">
@@ -282,20 +373,20 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
             </Alert>
           )}
 
-          {existingAffiliate?.approval_status === "approved" && (
-            <Alert className="mb-6 border-green-500 bg-green-50 dark:bg-green-950">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800 dark:text-green-200">
-                Congratulations! Your business is an approved partner. You can update your profile details below.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {existingAffiliate?.approval_status === "rejected" && (
+          {!showNewForm && existingAffiliate?.approval_status === "rejected" && (
             <Alert className="mb-6 border-red-500 bg-red-50 dark:bg-red-950">
               <AlertCircle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-800 dark:text-red-200">
                 Your previous application was not approved. You can reapply by updating your information below.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {showNewForm && isApproved && (
+            <Alert className="mb-6 border-blue-400 bg-blue-50 dark:bg-blue-950">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800 dark:text-blue-200">
+                You're creating a new partnership application for a different business. Your previous approved business will remain active.
               </AlertDescription>
             </Alert>
           )}
@@ -406,24 +497,38 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
               </AlertDescription>
             </Alert>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 type="submit"
-                disabled={isLoading || (existingAffiliate?.approval_status === "pending" && !hasChanges)}
+                disabled={isLoading || (isPending && !hasChanges && !showNewForm)}
                 className="flex-1"
                 size="lg"
               >
                 {isLoading
                   ? "Submitting..."
-                  : existingAffiliate?.approval_status === "pending" && !hasChanges
-                    ? "Application Under Review"
-                    : existingAffiliate
-                      ? "Update Application"
-                      : "Submit Business Application"}
+                  : showNewForm && isApproved
+                    ? "Submit New Application"
+                    : isPending && !hasChanges
+                      ? "Application Under Review"
+                      : isPending && hasChanges
+                        ? "Update Application"
+                        : existingAffiliate && !showNewForm
+                          ? "Update Application"
+                          : "Submit Business Application"}
               </Button>
-              {existingAffiliate?.approval_status !== "pending" && (
-                <Button type="button" variant="outline" asChild>
-                  <Link href="/dashboard">Back</Link>
+              {!showNewForm && (isPending || isRejected || !existingAffiliate) && (
+                <Button type="button" variant="outline" asChild className="flex-1 sm:flex-none">
+                  <Link href="/affiliates">Back</Link>
+                </Button>
+              )}
+              {showNewForm && (
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  className="flex-1 sm:flex-none"
+                  onClick={() => setShowNewForm(false)}
+                >
+                  Cancel
                 </Button>
               )}
             </div>
