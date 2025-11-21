@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, AlertCircle, Clock, ArrowLeft } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { CheckCircle2, AlertCircle, Clock, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { ImageUpload } from "@/components/admin/image-upload"
 
@@ -30,11 +31,69 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
   const [state, setState] = useState(existingAffiliate?.state || "")
   const [country, setCountry] = useState(existingAffiliate?.country || "")
   const [imageUrl, setImageUrl] = useState(existingAffiliate?.image_url || "")
+  const [successDialog, setSuccessDialog] = useState(false)
+  const [successMessage, setSuccessMessage] = useState("")
+  const [successTitle, setSuccessTitle] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
+  const [hasChanges, setHasChanges] = useState(false)
   const router = useRouter()
+
+  // Track original values to detect changes
+  const [originalValues, setOriginalValues] = useState({
+    businessName: existingAffiliate?.name || "",
+    description: existingAffiliate?.description || "",
+    address: existingAffiliate?.address || "",
+    city: existingAffiliate?.city || "",
+    state: existingAffiliate?.state || "",
+    country: existingAffiliate?.country || "",
+    imageUrl: existingAffiliate?.image_url || "",
+  })
+
+  // Update form fields when existingAffiliate changes
+  useEffect(() => {
+    if (existingAffiliate) {
+      console.log("BecomeAffiliateForm - Loading existing affiliate:", existingAffiliate)
+      const initialValues = {
+        businessName: existingAffiliate.name || "",
+        description: existingAffiliate.description || "",
+        address: existingAffiliate.address || "",
+        city: existingAffiliate.city || "",
+        state: existingAffiliate.state || "",
+        country: existingAffiliate.country || "",
+        imageUrl: existingAffiliate.image_url || "",
+      }
+      setBusinessName(initialValues.businessName)
+      setDescription(initialValues.description)
+      setAddress(initialValues.address)
+      setCity(initialValues.city)
+      setState(initialValues.state)
+      setCountry(initialValues.country)
+      setImageUrl(initialValues.imageUrl)
+      setOriginalValues(initialValues)
+      setHasChanges(false)
+    }
+  }, [existingAffiliate])
+
+  // Check for changes whenever any field updates
+  useEffect(() => {
+    const currentValues = {
+      businessName,
+      description,
+      address,
+      city,
+      state,
+      country,
+      imageUrl,
+    }
+    
+    const changed = JSON.stringify(currentValues) !== JSON.stringify(originalValues)
+    setHasChanges(changed)
+  }, [businessName, description, address, city, state, country, imageUrl, originalValues])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setErrorMessage("")
 
     const supabase = createClient()
 
@@ -60,7 +119,9 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
           .eq("id", existingAffiliate.id)
 
         if (error) throw error
-        alert("Application updated successfully!")
+        setSuccessTitle("Application Updated")
+        setSuccessMessage("Your application has been updated successfully!")
+        setSuccessDialog(true)
       } else {
         // Create new application
         const { error } = await supabase
@@ -68,12 +129,11 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
           .insert(affiliateData)
 
         if (error) throw error
+        setSubmitted(true)
       }
-
-      setSubmitted(true)
     } catch (err) {
       console.error("Affiliate application error:", err)
-      alert("Failed to submit application. Please try again.")
+      setErrorMessage("Failed to submit application. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -212,6 +272,16 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
         </CardHeader>
 
         <CardContent>
+          {existingAffiliate?.approval_status === "pending" && (
+            <Alert className="mb-6 border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+              <Clock className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+                <strong>Application Under Review:</strong> Your application is currently being reviewed by our team. This usually takes 2-3 business days. 
+                You cannot submit a new application while one is pending. Once we make a decision, you'll receive an email notification.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {existingAffiliate?.approval_status === "approved" && (
             <Alert className="mb-6 border-green-500 bg-green-50 dark:bg-green-950">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -339,13 +409,13 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
             <div className="flex gap-3">
               <Button
                 type="submit"
-                disabled={isLoading || existingAffiliate?.approval_status === "pending"}
+                disabled={isLoading || (existingAffiliate?.approval_status === "pending" && !hasChanges)}
                 className="flex-1"
                 size="lg"
               >
                 {isLoading
                   ? "Submitting..."
-                  : existingAffiliate?.approval_status === "pending"
+                  : existingAffiliate?.approval_status === "pending" && !hasChanges
                     ? "Application Under Review"
                     : existingAffiliate
                       ? "Update Application"
@@ -357,9 +427,38 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
                 </Button>
               )}
             </div>
+
+            {errorMessage && (
+              <Alert className="border-red-500 bg-red-50 dark:bg-red-950">
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-800 dark:text-red-200">
+                  {errorMessage}
+                </AlertDescription>
+              </Alert>
+            )}
           </form>
         </CardContent>
       </Card>
+
+      {/* Success Modal */}
+      <Dialog open={successDialog} onOpenChange={setSuccessDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{successTitle}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{successMessage}</p>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setSuccessDialog(false)
+                router.push("/dashboard")
+              }}
+            >
+              Back to Dashboard
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
