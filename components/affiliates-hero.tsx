@@ -10,11 +10,11 @@ export function AffiliatesHero() {
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center space-y-6">
           <h1 className="text-5xl font-bold tracking-tight">
-            Join Our Affiliate Program
+            Our Affiliate Partners
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Become an affiliate by sharing your referral code. Earn rewards for every member you bring 
-            to our community and build your network!
+            Discover amazing businesses and exclusive discounts from our trusted partners. 
+            Restaurants, gyms, shops and more - all in one place!
           </p>
 
           <div className="grid md:grid-cols-4 gap-6 pt-8">
@@ -22,9 +22,9 @@ export function AffiliatesHero() {
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <Users className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="font-semibold">Build Network</h3>
+              <h3 className="font-semibold">Local Businesses</h3>
               <p className="text-sm text-muted-foreground text-center">
-                Connect with members you refer
+                Partner companies in your area
               </p>
             </div>
 
@@ -32,9 +32,9 @@ export function AffiliatesHero() {
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <TrendingUp className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="font-semibold">Earn Rewards</h3>
+              <h3 className="font-semibold">Exclusive Deals</h3>
               <p className="text-sm text-muted-foreground text-center">
-                Get free activities & benefits
+                Special offers & discounts
               </p>
             </div>
 
@@ -42,9 +42,9 @@ export function AffiliatesHero() {
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <Award className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="font-semibold">Recognition</h3>
+              <h3 className="font-semibold">Verified Partners</h3>
               <p className="text-sm text-muted-foreground text-center">
-                Featured affiliate profile
+                Trusted & approved businesses
               </p>
             </div>
 
@@ -52,19 +52,19 @@ export function AffiliatesHero() {
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <Handshake className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="font-semibold">Community</h3>
+              <h3 className="font-semibold">Benefits</h3>
               <p className="text-sm text-muted-foreground text-center">
-                Exclusive affiliate network
+                Member-only advantages
               </p>
             </div>
           </div>
 
-          <div className="pt-6 flex gap-4 justify-center">
-            <Button size="lg" asChild>
-              <Link href="#affiliates">View Affiliates</Link>
+          <div className="pt-6 flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" asChild className="w-full sm:w-auto">
+              <Link href="#affiliates">View All Partners</Link>
             </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/affiliates/apply">Become an Affiliate</Link>
+            <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
+              <Link href="/affiliates/apply">Apply as a Partner</Link>
             </Button>
           </div>
         </div>

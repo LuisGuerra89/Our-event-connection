@@ -24,21 +24,21 @@ export default async function AffiliatesPage() {
     <div className="container mx-auto py-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Affiliates Management</h1>
-          <p className="text-muted-foreground">Manage business affiliates and partners</p>
+          <h1 className="text-3xl font-bold">Partners Management</h1>
+          <p className="text-muted-foreground">Review and manage business partner applications</p>
         </div>
         <Button asChild>
           <Link href="/admin/affiliates/create">
             <Plus className="h-4 w-4 mr-2" />
-            Add Affiliate
+            Add Partner
           </Link>
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All Affiliates</CardTitle>
-          <CardDescription>View and manage affiliate partners</CardDescription>
+          <CardTitle>All Partners</CardTitle>
+          <CardDescription>Review applications and manage approved partners</CardDescription>
         </CardHeader>
         <CardContent>
           <AffiliatesTable affiliates={affiliates || []} />

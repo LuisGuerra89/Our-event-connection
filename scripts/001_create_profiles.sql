@@ -12,12 +12,21 @@ create table if not exists public.profiles (
   location_city text,
   location_state text,
   location_country text,
+  -- Referral system fields
+  referral_code varchar(10) unique not null,
+  referral_count integer default 0,
+  referred_by uuid references public.profiles(id) on delete set null,
+  free_events_earned integer default 0,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
 -- Enable RLS
 alter table public.profiles enable row level security;
+
+-- Create indexes for referral system
+create index if not exists idx_profiles_referral_code on public.profiles(referral_code);
+create index if not exists idx_profiles_referred_by on public.profiles(referred_by);
 
 -- RLS Policies for profiles
 drop policy if exists "profiles_select_own" on public.profiles;
@@ -45,6 +54,34 @@ create policy "profiles_update_own"
 create policy "profiles_delete_own"
   on public.profiles for delete
   using (auth.uid() = id);
+
+-- Drop existing function and trigger if they exist
+drop trigger if exists generate_referral_code_trigger on public.profiles;
+drop function if exists public.generate_referral_code();
+
+-- Function to generate unique referral code
+create or replace function public.generate_referral_code()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  new.referral_code := substring(
+    md5(new.id::text || now()::text || random()::text), 
+    1, 
+    6
+  ) || lpad(floor(random() * 10000)::text, 4, '0');
+  return new;
+end;
+$$;
+
+-- Create trigger to generate referral code before insert
+drop trigger if exists generate_referral_code_trigger on public.profiles;
+create trigger generate_referral_code_trigger
+  before insert on public.profiles
+  for each row
+  execute function public.generate_referral_code();
 
 -- Create trigger to auto-create profile on signup
 create or replace function public.handle_new_user()
