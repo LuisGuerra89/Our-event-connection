@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, AlertCircle, Clock, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { ImageUpload } from "@/components/admin/image-upload"
 
 interface BecomeAffiliateFormProps {
   userId: string
@@ -28,6 +29,7 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
   const [city, setCity] = useState(existingAffiliate?.city || "")
   const [state, setState] = useState(existingAffiliate?.state || "")
   const [country, setCountry] = useState(existingAffiliate?.country || "")
+  const [imageUrl, setImageUrl] = useState(existingAffiliate?.image_url || "")
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,7 +42,7 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
       const affiliateData = {
         user_id: userId,
         name: businessName,
-        image_url: profile.profile_photo_url || null,
+        image_url: imageUrl || null,
         description,
         address,
         city,
@@ -229,6 +231,21 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Business Image */}
+            <div>
+              <Label>Business Logo or Image</Label>
+              <p className="text-xs text-muted-foreground mt-1 mb-3">
+                Upload a logo or representative image of your business (displayed on partner cards)
+              </p>
+              <ImageUpload
+                value={imageUrl}
+                onChange={setImageUrl}
+                bucket="affiliates"
+                folder="logos"
+                maxSize={5}
+              />
+            </div>
+
             {/* Business Information */}
             <div>
               <Label htmlFor="businessName">Business/Company Name</Label>

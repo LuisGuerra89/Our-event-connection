@@ -11,9 +11,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
 import { ArrowLeft, AlertCircle } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { ImageUpload } from "@/components/admin/image-upload"
 
 export default function CreateAffiliatePage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [imageUrl, setImageUrl] = useState("")
   const router = useRouter()
   const supabase = createClient()
 
@@ -40,6 +42,7 @@ export default function CreateAffiliatePage() {
       const { error } = await supabase.from("affiliates").insert({
         user_id: userData.user.id,
         name,
+        image_url: imageUrl || null,
         description,
         address,
         city,
@@ -80,6 +83,21 @@ export default function CreateAffiliatePage() {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Business Image */}
+            <div>
+              <Label>Business Logo or Image</Label>
+              <p className="text-xs text-muted-foreground mt-1 mb-3">
+                Upload a logo or representative image of the business
+              </p>
+              <ImageUpload
+                value={imageUrl}
+                onChange={setImageUrl}
+                bucket="affiliates"
+                folder="logos"
+                maxSize={5}
+              />
+            </div>
+
             {/* Business Information */}
             <div>
               <Label htmlFor="name">Business Name *</Label>

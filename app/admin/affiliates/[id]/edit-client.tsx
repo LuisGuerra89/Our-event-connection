@@ -12,6 +12,7 @@ import Link from "next/link"
 import { ArrowLeft, AlertCircle, CheckCircle2, XCircle, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { createClient } from "@/lib/supabase/client"
+import { ImageUpload } from "@/components/admin/image-upload"
 
 interface Affiliate {
   id: string
@@ -21,7 +22,7 @@ interface Affiliate {
   city: string
   state: string
   country: string
-  image_url: string
+  image_url: string | null
   approval_status: "pending" | "approved" | "rejected"
   application_date: string
   approved_date: string | null
@@ -34,6 +35,7 @@ interface EditAffiliateClientProps {
 
 export default function EditAffiliateClient({ affiliate: initialAffiliate, affiliateId }: EditAffiliateClientProps) {
   const [affiliate, setAffiliate] = useState<Affiliate>(initialAffiliate)
+  const [imageUrl, setImageUrl] = useState(initialAffiliate.image_url || "")
   const [isApproving, setIsApproving] = useState(false)
   const [isRejecting, setIsRejecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -54,12 +56,13 @@ export default function EditAffiliateClient({ affiliate: initialAffiliate, affil
         .update({
           approval_status: "approved",
           approved_date: new Date().toISOString(),
+          image_url: imageUrl || null,
         })
         .eq("id", affiliateId)
 
       if (err) throw err
 
-      setAffiliate({ ...affiliate, approval_status: "approved" })
+      setAffiliate({ ...affiliate, approval_status: "approved", image_url: imageUrl || null })
       setSuccessTitle("Partner Approved")
       setSuccessMessage("The partner has been successfully approved and will be visible in the public showcase.")
       setSuccessDialog(true)
@@ -151,7 +154,7 @@ export default function EditAffiliateClient({ affiliate: initialAffiliate, affil
           {/* Business Header */}
           <div className="flex items-start gap-6 pb-6 border-b">
             <Avatar className="h-16 w-16">
-              <AvatarImage src={affiliate.image_url} alt={affiliate.name} />
+              <AvatarImage src={imageUrl || affiliate.image_url || undefined} alt={affiliate.name} />
               <AvatarFallback className="text-lg">{getInitials(affiliate.name)}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
@@ -163,6 +166,18 @@ export default function EditAffiliateClient({ affiliate: initialAffiliate, affil
                 Applied on {format(new Date(affiliate.application_date), "MMMM d, yyyy")}
               </p>
             </div>
+          </div>
+
+          {/* Edit Business Image */}
+          <div className="border-b pb-6">
+            <h4 className="font-semibold text-sm mb-3">Business Logo/Image</h4>
+            <ImageUpload
+              value={imageUrl || affiliate.image_url || ""}
+              onChange={setImageUrl}
+              bucket="affiliates"
+              folder="logos"
+              maxSize={5}
+            />
           </div>
 
           {/* Business Details */}
