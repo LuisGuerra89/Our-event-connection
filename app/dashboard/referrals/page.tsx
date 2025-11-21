@@ -123,10 +123,7 @@ export default async function ReferralsPage() {
         <Alert className="mb-6 border-primary">
           <Award className="h-4 w-4" />
           <AlertDescription>
-            <strong>You're eligible!</strong> With {referralCount} referrals, you can apply to become an official affiliate.{" "}
-            <Link href="/affiliates/apply" className="underline font-semibold">
-              Apply now
-            </Link>
+            <strong>Great progress!</strong> You've earned {referralCount} referrals and {freeEventsEarned} free activities!
           </AlertDescription>
         </Alert>
       )}

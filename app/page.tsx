@@ -27,7 +27,7 @@ export default async function HomePage() {
       .gte("start_date", new Date().toISOString())
       .order("start_date")
       .limit(12),
-    supabase.from("affiliates").select("*").eq("status", "active").limit(12),
+    supabase.from("affiliates").select("*").eq("approval_status", "approved").limit(12),
   ])
 
   const carouselEvents = events?.slice(0, 5) || []

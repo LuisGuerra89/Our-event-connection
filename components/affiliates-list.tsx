@@ -24,18 +24,9 @@ export function AffiliatesList({ initialAffiliates }: AffiliatesListProps) {
 
     const { data } = await supabase
       .from("affiliates")
-      .select(`
-        *,
-        profile:profiles(
-          full_name,
-          email,
-          profile_photo_url,
-          referral_code,
-          referral_count
-        )
-      `)
+      .select("*")
       .eq("approval_status", "approved")
-      .order("total_referrals", { ascending: false })
+      .order("created_at", { ascending: false })
 
     if (data) {
       setAffiliates(data)
@@ -58,9 +49,9 @@ export function AffiliatesList({ initialAffiliates }: AffiliatesListProps) {
   return (
     <div id="affiliates" className="container mx-auto px-4 py-16">
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold mb-4">Our Top Affiliates</h2>
+        <h2 className="text-3xl font-bold mb-4">Our Affiliate Partners</h2>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Meet our community leaders who have successfully built their networks through referrals
+          Discover and support the businesses that partner with us
         </p>
       </div>
 
@@ -71,21 +62,21 @@ export function AffiliatesList({ initialAffiliates }: AffiliatesListProps) {
               <div className="flex items-start gap-4">
                 <Avatar className="h-16 w-16">
                   <AvatarImage 
-                    src={affiliate.profile?.profile_photo_url || affiliate.image_url} 
-                    alt={affiliate.profile?.full_name || affiliate.name} 
+                    src={affiliate.image_url} 
+                    alt={affiliate.name} 
                   />
                   <AvatarFallback className="text-lg">
-                    {getInitials(affiliate.profile?.full_name || affiliate.name)}
+                    {getInitials(affiliate.name)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <CardTitle className="text-xl">
-                    {affiliate.profile?.full_name || affiliate.name}
+                    {affiliate.name}
                   </CardTitle>
-                  {affiliate.status === "active" && (
+                  {affiliate.approval_status === "approved" && (
                     <Badge variant="secondary" className="mt-2 bg-green-100 text-green-900 dark:bg-green-900 dark:text-green-100">
                       <Award className="h-3 w-3 mr-1" />
-                      Active Affiliate
+                      Verified Partner
                     </Badge>
                   )}
                 </div>
@@ -98,12 +89,6 @@ export function AffiliatesList({ initialAffiliates }: AffiliatesListProps) {
                   {affiliate.description}
                 </p>
               )}
-
-              <div className="flex items-center gap-2 text-sm">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="font-semibold">{affiliate.total_referrals || affiliate.profile?.referral_count || 0}</span>
-                <span className="text-muted-foreground">Referrals</span>
-              </div>
 
               {(affiliate.city || affiliate.state || affiliate.country) && (
                 <div className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -120,7 +105,7 @@ export function AffiliatesList({ initialAffiliates }: AffiliatesListProps) {
             <CardFooter>
               <Button asChild className="w-full" variant="outline">
                 <Link href={`/affiliates/${affiliate.id}`}>
-                  View Profile
+                  View Details
                 </Link>
               </Button>
             </CardFooter>
@@ -144,12 +129,12 @@ export function AffiliatesList({ initialAffiliates }: AffiliatesListProps) {
       {displayedAffiliates.length === 0 && (
         <div className="text-center py-12">
           <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">No Affiliates Yet</h3>
+          <h3 className="text-xl font-semibold mb-2">No Partners Yet</h3>
           <p className="text-muted-foreground mb-6">
-            Be the first to join our affiliate program!
+            Be the first to become our partner!
           </p>
           <Button asChild size="lg">
-            <Link href="/affiliates/apply">Become an Affiliate</Link>
+            <Link href="/affiliates/apply">Become a Partner</Link>
           </Button>
         </div>
       )}
