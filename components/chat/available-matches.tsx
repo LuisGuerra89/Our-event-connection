@@ -107,12 +107,12 @@ export function AvailableMatches({ matches, currentUserId }: AvailableMatchesPro
                                         {loadingMatchId === match.matched_user_id ? (
                                             <>
                                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                Starting...
+                                                Opening...
                                             </>
                                         ) : (
                                             <>
                                                 <MessageSquare className="h-4 w-4 mr-2" />
-                                                Start Chat
+                                                Send Message
                                             </>
                                         )}
                                     </Button>

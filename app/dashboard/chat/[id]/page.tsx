@@ -4,9 +4,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ChatWindow } from "@/components/chat/chat-window"
 
 interface ChatConversationPageProps {
-    params: {
+    params: Promise<{
         id: string
-    }
+    }>
 }
 
 export default async function ChatConversationPage({ params }: ChatConversationPageProps) {
@@ -17,6 +17,9 @@ export default async function ChatConversationPage({ params }: ChatConversationP
 
     if (!user) redirect("/auth/login")
 
+    // Await params in Next.js 15
+    const { id } = await params
+
     // Get conversation details
     const { data: conversation, error } = await supabase
         .from("chat_conversations")
@@ -25,7 +28,7 @@ export default async function ChatConversationPage({ params }: ChatConversationP
       user1:profiles!chat_conversations_user1_id_fkey(id, full_name, profile_photo_url),
       user2:profiles!chat_conversations_user2_id_fkey(id, full_name, profile_photo_url)
     `)
-        .eq("id", params.id)
+        .eq("id", id)
         .single()
 
     if (error || !conversation) {
@@ -45,7 +48,7 @@ export default async function ChatConversationPage({ params }: ChatConversationP
             <Card>
                 <CardContent className="p-0">
                     <ChatWindow
-                        conversationId={params.id}
+                        conversationId={id}
                         currentUserId={user.id}
                         otherUser={otherUser}
                     />

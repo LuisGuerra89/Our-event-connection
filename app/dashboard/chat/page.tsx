@@ -36,11 +36,59 @@ export default async function ChatPage() {
     .eq("user_id", user.id)
     .order("match_score", { ascending: false })
 
+  // Get user's referrals (people they referred and who referred them)
+  // First, get the user's profile to find who referred them
+  const { data: currentProfile } = await supabase
+    .from("profiles")
+    .select("referred_by")
+    .eq("id", user.id)
+    .single()
+
+  // Get people the user referred
+  const { data: peopleIReferred } = await supabase
+    .from("profiles")
+    .select("id, full_name, profile_photo_url, bio")
+    .eq("referred_by", user.id)
+
+  // Get the person who referred the user (if any)
+  const { data: personWhoReferredMe } = currentProfile?.referred_by
+    ? await supabase
+      .from("profiles")
+      .select("id, full_name, profile_photo_url, bio")
+      .eq("id", currentProfile.referred_by)
+      .maybeSingle()
+    : { data: null }
+
+  // Combine all referrals
+  const allReferrals = [
+    ...(peopleIReferred || []),
+    ...(personWhoReferredMe ? [personWhoReferredMe] : [])
+  ]
+
+  // Combine matches and referrals into a single list
+  const combinedMatches = [
+    ...(matches || []).map(m => ({
+      ...m,
+      profile: Array.isArray(m.profile) ? m.profile[0] : m.profile
+    })),
+    ...allReferrals.map(referral => ({
+      id: `referral-${referral.id}`,
+      matched_user_id: referral.id,
+      match_score: 100, // High score for referrals
+      profile: referral
+    }))
+  ]
+
+  // Remove duplicates (in case someone is both a match and a referral)
+  const uniqueMatches = combinedMatches.filter((match, index, self) =>
+    index === self.findIndex(m => m.matched_user_id === match.matched_user_id)
+  )
+
   return (
     <div className="container mx-auto py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Messages</h1>
-        <p className="text-muted-foreground">Chat with your matches</p>
+        <p className="text-muted-foreground">Chat with your matches and referrals</p>
       </div>
 
       <Tabs defaultValue="conversations" className="w-full">
@@ -55,9 +103,9 @@ export default async function ChatPage() {
           </TabsTrigger>
           <TabsTrigger value="new-chat">
             Start New Chat
-            {matches && matches.length > 0 && (
+            {uniqueMatches && uniqueMatches.length > 0 && (
               <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs">
-                {matches.length}
+                {uniqueMatches.length}
               </span>
             )}
           </TabsTrigger>
@@ -67,7 +115,7 @@ export default async function ChatPage() {
           <Card>
             <CardHeader>
               <CardTitle>Your Conversations</CardTitle>
-              <CardDescription>Recent chats with your matches</CardDescription>
+              <CardDescription>Recent chats with your matches and referrals</CardDescription>
             </CardHeader>
             <CardContent>
               <ChatList conversations={conversations || []} currentUserId={user.id} />
@@ -78,11 +126,11 @@ export default async function ChatPage() {
         <TabsContent value="new-chat" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Your Matches</CardTitle>
-              <CardDescription>Start a conversation with your matches</CardDescription>
+              <CardTitle>Available to Chat</CardTitle>
+              <CardDescription>Start a conversation with your matches or referrals</CardDescription>
             </CardHeader>
             <CardContent>
-              <AvailableMatches matches={matches || []} currentUserId={user.id} />
+              <AvailableMatches matches={uniqueMatches || []} currentUserId={user.id} />
             </CardContent>
           </Card>
         </TabsContent>
