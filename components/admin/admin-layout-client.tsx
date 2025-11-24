@@ -18,7 +18,7 @@ export const useSidebar = () => {
     // Return default values if not in a sidebar context (for backwards compatibility)
     return {
       isCollapsed: false,
-      setIsCollapsed: () => {},
+      setIsCollapsed: () => { },
     }
   }
   return context
@@ -36,7 +36,7 @@ export function AdminLayoutClient({ userRole, userName, userEmail, children }: A
 
   return (
     <SidebarContext.Provider value={{ isCollapsed, setIsCollapsed }}>
-      <div className="flex h-screen overflow-hidden bg-background">
+      <div className="flex h-full overflow-hidden bg-background">
         <AppSidebar userRole={userRole} userName={userName} userEmail={userEmail} />
         <main
           className={cn(

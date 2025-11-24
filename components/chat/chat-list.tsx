@@ -37,7 +37,7 @@ export function ChatList({ conversations, currentUserId }: { conversations: Conv
         const otherUser = conversation.user1.id === currentUserId ? conversation.user2 : conversation.user1
 
         return (
-          <Link key={conversation.id} href={`/chat/${conversation.id}`}>
+          <Link key={conversation.id} href={`/dashboard/chat/${conversation.id}`}>
             <div className="flex items-center gap-4 p-4 rounded-lg hover:bg-muted transition-colors">
               <Avatar className="h-12 w-12">
                 <AvatarImage src={otherUser.profile_image_url || undefined} />

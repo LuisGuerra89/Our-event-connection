@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation"
 import { createServerClient } from "@/lib/supabase/server"
 import { EventList } from "@/components/event-list"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Calendar, Gift, Heart, MessageSquare } from "lucide-react"
 import Link from "next/link"
-import { Plus } from "lucide-react"
 
 export default async function DashboardPage() {
   const supabase = await createServerClient()
@@ -13,7 +13,12 @@ export default async function DashboardPage() {
     redirect("/auth/login")
   }
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single()
+  // Fetch profile with referral count
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, full_name, referral_count")
+    .eq("id", data.user.id)
+    .single()
 
   // Check if user signed waiver
   const { data: waiver } = await supabase.from("waivers").select("id").eq("user_id", data.user.id).maybeSingle()
@@ -22,34 +27,97 @@ export default async function DashboardPage() {
     redirect("/onboarding/waiver")
   }
 
-  // Fetch events - only show upcoming and ongoing events that haven't ended yet
-  const { data: events } = await supabase
-    .from("events")
-    .select("*")
-    .in("status", ["upcoming", "ongoing"])
-    .gte("end_date", new Date().toISOString())
-    .order("start_date", { ascending: true })
+  // Fetch stats in parallel
+  const [
+    { count: matchesCount },
+    { count: conversationsCount },
+    { data: events }
+  ] = await Promise.all([
+    supabase.from("matches").select("*", { count: 'exact', head: true }).eq("user_id", data.user.id),
+    supabase.from("chat_conversations").select("*", { count: 'exact', head: true }).or(`user1_id.eq.${data.user.id},user2_id.eq.${data.user.id}`),
+    supabase
+      .from("events")
+      .select("*")
+      .in("status", ["upcoming", "ongoing"])
+      .gte("end_date", new Date().toISOString())
+      .order("start_date", { ascending: true })
+  ])
+
+  const firstName = profile?.full_name?.split(' ')[0] || 'there'
 
   return (
-    <div className="min-h-full">
-      <header className="border-b bg-card sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Discover Events</h1>
-            <p className="text-sm text-muted-foreground">Find and register for upcoming events</p>
-          </div>
-          <Button asChild>
-            <Link href="/admin/events/create">
-              <Plus className="h-4 w-4 mr-2" />
-              Suggest Event
-            </Link>
-          </Button>
-        </div>
-      </header>
+    <div className="container mx-auto px-6 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">Welcome back, {firstName}!</h1>
+        <p className="text-muted-foreground">Here's an overview of your activity and upcoming events.</p>
+      </div>
 
-      <main className="container mx-auto px-6 py-8">
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-10">
+        <Link href="/dashboard/matches">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">My Matches</CardTitle>
+              <Heart className="h-4 w-4 text-pink-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{matchesCount || 0}</div>
+              <p className="text-xs text-muted-foreground">People you've matched with</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/chat">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Conversations</CardTitle>
+              <MessageSquare className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{conversationsCount || 0}</div>
+              <p className="text-xs text-muted-foreground">Active chats</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/referrals">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Referrals</CardTitle>
+              <Gift className="h-4 w-4 text-purple-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{profile?.referral_count || 0}</div>
+              <p className="text-xs text-muted-foreground">Friends you've invited</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/events">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
+              <Calendar className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{events?.length || 0}</div>
+              <p className="text-xs text-muted-foreground">Events available to join</p>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
+      {/* Events Section */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Discover Events</h2>
+          <Link href="/dashboard/events" className="text-sm text-primary hover:underline">
+            View all events
+          </Link>
+        </div>
         <EventList events={events || []} userId={data.user.id} />
-      </main>
+      </div>
     </div>
   )
 }

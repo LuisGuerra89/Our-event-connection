@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChatList } from "@/components/chat/chat-list"
 import { AvailableMatches } from "@/components/chat/available-matches"
+import { ConversationTabsTrigger } from "@/components/chat/conversation-tabs-trigger"
 
 export default async function ChatPage() {
   const supabase = await createClient()
@@ -93,14 +94,7 @@ export default async function ChatPage() {
 
       <Tabs defaultValue="conversations" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="conversations">
-            Conversations
-            {conversations && conversations.length > 0 && (
-              <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
-                {conversations.length}
-              </span>
-            )}
-          </TabsTrigger>
+          <ConversationTabsTrigger initialCount={conversations?.length || 0} userId={user.id} />
           <TabsTrigger value="new-chat">
             Start New Chat
             {uniqueMatches && uniqueMatches.length > 0 && (
