@@ -209,19 +209,19 @@ export default async function ReferralsPage() {
                 Share this code with friends to earn rewards{affiliateStatus?.approval_status === "approved" && " and grow your affiliate network"}
               </CardDescription>
             </div>
-            {!affiliateStatus && (
+            {/* {!affiliateStatus && (
               <Button asChild variant="outline">
                 <Link href="/affiliates/apply">
                   <Award className="h-4 w-4 mr-2" />
                   Become Affiliate
                 </Link>
               </Button>
-            )}
+            )} */}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {profile?.referral_code && <ReferralCode code={profile.referral_code} />}
-          
+
           {affiliateStatus?.barcode && (
             <div className="border-t pt-4">
               <p className="text-sm font-medium mb-2">Your Affiliate Barcode</p>
