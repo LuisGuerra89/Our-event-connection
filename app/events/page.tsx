@@ -51,12 +51,12 @@ export default async function EventsPage({
   const { data: events, error: eventsError } = await query
 
   // Debug logging
-  console.log("Query Debug:", {
-    hasEvents: !!events,
-    eventCount: events?.length,
-    error: eventsError,
-    firstEvent: events?.[0],
-  })
+  // console.log("Query Debug:", {
+  //   hasEvents: !!events,
+  //   eventCount: events?.length,
+  //   error: eventsError,
+  //   firstEvent: events?.[0],
+  // })
 
   return (
     <PublicPageLayout>

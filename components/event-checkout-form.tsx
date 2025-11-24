@@ -112,18 +112,21 @@ export function EventCheckoutForm({
       // For now, we'll simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000))
 
+      // Calculate amounts
+      const baseAmount = parseFloat(amount)
+      const taxAmount = baseAmount * 0.05 // 5% tax
+      const totalAmount = baseAmount + taxAmount
+
       // Create payment record
       const { error: paymentError } = await supabase.from("payments").insert({
         user_id: userId,
-        amount: parseFloat(amount),
-        currency: "USD",
-        status: "completed",
+        event_id: eventId,
+        payment_amount: baseAmount,
+        tax_amount: taxAmount,
+        total_amount: totalAmount,
         payment_method: "card",
-        metadata: {
-          event_id: eventId,
-          event_title: eventTitle,
-          card_last4: cardDetails.cardNumber.slice(-4)
-        }
+        payment_status: "success",
+        transaction_id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       })
 
       if (paymentError) throw paymentError
@@ -132,25 +135,13 @@ export function EventCheckoutForm({
       const { error: registrationError } = await supabase.from("event_attendees").insert({
         event_id: eventId,
         user_id: userId,
-        status: "registered",
-        payment_status: "paid"
+        status: "registered"
       })
 
       if (registrationError) throw registrationError
 
-      // Update event attendee count
-      const { data: event } = await supabase
-        .from("events")
-        .select("current_attendees")
-        .eq("id", eventId)
-        .single()
-
-      if (event) {
-        await supabase
-          .from("events")
-          .update({ current_attendees: (event.current_attendees || 0) + 1 })
-          .eq("id", eventId)
-      }
+      // Note: current_attendees is automatically updated by a database trigger
+      // when a new event_attendees record is inserted
 
       toast({
         title: "Payment Successful!",
