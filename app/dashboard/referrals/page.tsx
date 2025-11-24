@@ -26,6 +26,25 @@ export default async function ReferralsPage() {
     .eq("id", user.id)
     .single()
 
+  // Get count of AVAILABLE coupons (active, non-expired) - for card display
+  const { data: availableCouponsData } = await supabase
+    .from("coupons")
+    .select("id", { count: "exact" })
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .gt("expiration_date", new Date().toISOString())
+
+  const availableCoupons = availableCouponsData?.length || 0
+
+  // Get TOTAL count of coupons assigned to user (used + active) - for alert display
+  const { data: totalCouponsData } = await supabase
+    .from("coupons")
+    .select("id", { count: "exact" })
+    .eq("user_id", user.id)
+    .in("status", ["active", "used"])
+
+  const totalCouponsAssigned = totalCouponsData?.length || 0
+
   // Get affiliate status
   const { data: affiliateStatus } = await supabase
     .from("affiliates")
@@ -47,7 +66,8 @@ export default async function ReferralsPage() {
     .order("referral_date", { ascending: false })
 
   const referralCount = profile?.referral_count || 0
-  const freeEventsEarned = profile?.free_events_earned || 0
+  const freeEventsEarned = availableCoupons || 0
+  const totalEarnedRewards = totalCouponsAssigned || 0
   const referralsUntilReward = 25 - (referralCount % 25)
   const progressPercentage = ((referralCount % 25) / 25) * 100
 
@@ -123,7 +143,7 @@ export default async function ReferralsPage() {
         <Alert className="mb-6 border-primary">
           <Award className="h-4 w-4" />
           <AlertDescription>
-            <strong>Great progress!</strong> You've earned {referralCount} referrals and {freeEventsEarned} free activities!
+            <strong>Great progress!</strong> You've earned {referralCount} referrals and {totalEarnedRewards} free activities!
           </AlertDescription>
         </Alert>
       )}

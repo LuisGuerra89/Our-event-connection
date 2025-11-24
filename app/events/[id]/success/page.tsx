@@ -150,7 +150,7 @@ export default async function EventSuccessPage({
               </div>
 
               <Button asChild className="w-full" size="lg">
-                <Link href="/app/dashboard">
+                <Link href="/dashboard">
                   Go to Dashboard
                 </Link>
               </Button>

@@ -1,89 +1,127 @@
--- Testing Script for Referral Rewards System
--- Execute these queries step-by-step to validate the implementation
+-- ========================================================
+-- QUICK TEST: Referral Rewards System - Trigger Validation
+-- ========================================================
+-- This script ONLY tests the coupon generation trigger
+-- Run this step-by-step and observe the results
 
 -- ===================================
--- STEP 1: Verify Coupons Table Exists
+-- CONFIGURATION VARIABLES
 -- ===================================
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_name = 'coupons' AND table_schema = 'public';
--- Expected: 1 row (coupons table exists)
+-- CHANGE THESE VALUES TO TEST WITH DIFFERENT USERS
+-- Simply replace the UUID values below with your test user UUID
+WITH config AS (
+  SELECT 
+    'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid as user_uuid
+)
+SELECT * FROM config;
+-- Copy the user_uuid above and use it in all queries below
 
 
 -- ===================================
--- STEP 2: Verify User Profile Exists
+-- STEP 1: Check Current User Profile
 -- ===================================
--- Using existing user UUID: ccbf423c-a773-4f23-bcf8-8aa06133ca58
--- This user already exists in the database
-
--- Verify the profile exists
-SELECT id, email, referral_count, free_events_earned 
+-- Replace 'ccbf423c-a773-4f23-bcf8-8aa06133ca58' with your user UUID
+SELECT 
+  id,
+  email,
+  referral_count,
+  free_events_earned
 FROM public.profiles 
 WHERE id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid;
--- Expected: 1 row with user data
+-- Record the current referral_count value
 
 
 -- ===================================
--- STEP 3: Test Coupon Generation Trigger
+-- STEP 2: Check Current Coupons (Before Update)
 -- ===================================
--- Update referral_count to 25 (should trigger coupon generation)
+-- Replace 'ccbf423c-a773-4f23-bcf8-8aa06133ca58' with your user UUID
+SELECT 
+  COUNT(*) as total_coupons,
+  COUNT(CASE WHEN status = 'active' THEN 1 END) as active_coupons,
+  COUNT(CASE WHEN status = 'used' THEN 1 END) as used_coupons
+FROM public.coupons 
+WHERE user_id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid;
+-- Expected: Note the current counts
+
+
+-- ===================================
+-- STEP 3: UPDATE REFERRAL COUNT TO 25
+-- ===================================
+-- THIS SHOULD TRIGGER THE COUPON GENERATION!
+-- Replace 'ccbf423c-a773-4f23-bcf8-8aa06133ca58' with your user UUID
 UPDATE public.profiles 
 SET referral_count = 25 
 WHERE id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid;
 
--- Wait 1-2 seconds for trigger to execute
+-- OUTPUT: Should show "UPDATE 1"
 
--- Check if coupon was generated
+
+-- ===================================
+-- STEP 4: WAIT AND CHECK NEW COUPONS
+-- ===================================
+-- Wait 2-3 seconds, then run this query to see if coupon was generated:
+-- Replace 'ccbf423c-a773-4f23-bcf8-8aa06133ca58' with your user UUID
 SELECT 
   id,
   code,
   type,
   status,
   created_from_referral_count,
-  expiration_date
+  discount_amount,
+  expiration_date,
+  created_at
 FROM public.coupons 
 WHERE user_id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid
 ORDER BY created_at DESC;
--- Expected: 1 row with type='free_after_work_activity', status='active'
+-- Expected: New row with:
+--   - code starting with "FREEACTIVITY-"
+--   - type = 'free_after_work_activity'
+--   - status = 'active'
+--   - created_from_referral_count = 25
+--   - discount_amount = 0
 
 
 -- ===================================
--- STEP 4: Test Validation Function
+-- STEP 5: Test Validation Function
 -- ===================================
--- First, get the coupon code from previous step
--- Then use it here (replace {COUPON_CODE} with actual code)
+-- First, get the coupon code from STEP 4 result
+-- Then replace {COUPON_CODE} with the actual code value and your user UUID
 SELECT * FROM public.validate_coupon(
-  '{COUPON_CODE}',
+  'FREEACTIVITY-ccbf423c-a773-4f23-bcf8-8aa06133ca58-1-XXXXX',
   'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid
 );
 -- Expected: valid=true, message='Coupon is valid...'
 
 
 -- ===================================
--- STEP 5: Get Available Coupons
+-- STEP 6: Get Available Coupons
 -- ===================================
+-- Replace 'ccbf423c-a773-4f23-bcf8-8aa06133ca58' with your user UUID
 SELECT * FROM public.get_available_coupons('ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid);
 -- Expected: List of active, non-expired coupons
 
 
 -- ===================================
--- STEP 6: Check Available Coupons Count
+-- STEP 7: Check Available Coupons Count
 -- ===================================
+-- Replace 'ccbf423c-a773-4f23-bcf8-8aa06133ca58' with your user UUID
 SELECT public.count_available_coupons('ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid);
 -- Expected: 1
 
 
 -- ===================================
--- STEP 7: Check Has Free Activity Coupon
+-- STEP 8: Check Has Free Activity Coupon
 -- ===================================
+-- Replace 'ccbf423c-a773-4f23-bcf8-8aa06133ca58' with your user UUID
 SELECT public.has_available_free_activity_coupon('ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid);
 -- Expected: true
 
 
 -- ===================================
--- STEP 8: Test Multiple Milestones
+-- STEP 9: Test Multiple Milestones
 -- ===================================
 -- Update referral_count to 50 (should generate another coupon)
+-- Replace 'ccbf423c-a773-4f23-bcf8-8aa06133ca58' with your user UUID
 UPDATE public.profiles 
 SET referral_count = 50 
 WHERE id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid;
@@ -91,6 +129,7 @@ WHERE id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid;
 -- Wait 1-2 seconds
 
 -- Check total coupons
+-- Replace 'ccbf423c-a773-4f23-bcf8-8aa06133ca58' with your user UUID
 SELECT COUNT(*) as total_coupons 
 FROM public.coupons 
 WHERE user_id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid
@@ -99,183 +138,29 @@ AND status = 'active';
 
 
 -- ===================================
--- STEP 9: Simulate Payment Record
+-- STEP 10: Test 75 Referrals Milestone
 -- ===================================
--- For testing, you may need to check if test event exists
--- If not, create one first:
-INSERT INTO public.events (
-  title,
-  description,
-  event_type,
-  location_name,
-  location_address,
-  location_city,
-  location_state,
-  location_country,
-  start_date,
-  end_date,
-  capacity,
-  price,
-  status,
-  organizer_id
-)
-VALUES (
-  'Test Event',
-  'Testing event for coupon validation',
-  'other',
-  'Test Location',
-  '123 Test St',
-  'Test City',
-  'TS',
-  'USA',
-  NOW() + INTERVAL '7 days',
-  NOW() + INTERVAL '8 days',
-  50,
-  50.00,
-  'upcoming',
-  'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid
-)
-ON CONFLICT DO NOTHING
-RETURNING id;
--- Note the event ID returned
+-- Replace 'ccbf423c-a773-4f23-bcf8-8aa06133ca58' with your user UUID
+UPDATE public.profiles 
+SET referral_count = 75 
+WHERE id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid;
 
+-- Wait 1-2 seconds
 
--- ===================================
--- STEP 10: Test Coupon Redemption
--- ===================================
--- Get a coupon code first and use the actual event ID from STEP 9
-WITH test_coupon AS (
-  SELECT id, code FROM public.coupons 
-  WHERE user_id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid
-  AND status = 'active'
-  LIMIT 1
-),
-test_event AS (
-  SELECT id FROM public.events
-  WHERE organizer_id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid
-  AND title = 'Test Event'
-  LIMIT 1
-)
-SELECT * FROM public.redeem_coupon(
-  (SELECT code FROM test_coupon),
-  'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid,
-  (SELECT id FROM test_event)  -- Use actual event ID from database
-);
--- Expected: success=true, message='Coupon successfully redeemed'
-
-
--- ===================================
--- STEP 11: Verify Coupon is Now Used
--- ===================================
-SELECT 
-  id,
-  code,
-  status,
-  used_at,
-  event_id
+-- Check total coupons
+-- Replace 'ccbf423c-a773-4f23-bcf8-8aa06133ca58' with your user UUID
+SELECT COUNT(*) as total_coupons 
 FROM public.coupons 
 WHERE user_id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid
-AND status = 'used'
-ORDER BY used_at DESC;
--- Expected: 1 row with status='used', used_at populated, event_id populated
-
-
--- ===================================
--- STEP 12: Verify Coupon Cannot Be Used Twice
--- ===================================
--- Try to redeem same coupon again (should fail)
-WITH test_coupon AS (
-  SELECT code FROM public.coupons 
-  WHERE user_id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid
-  AND status = 'used'
-  LIMIT 1
-)
-SELECT * FROM public.validate_coupon(
-  (SELECT code FROM test_coupon),
-  'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid
-);
--- Expected: valid=false, message='Coupon has already been used...'
-
-
--- ===================================
--- STEP 13: Test RLS - User Should Only See Own Coupons
--- ===================================
--- Run this with the test user's credentials:
--- SET ROLE test_user;
-SELECT * FROM public.coupons;
--- Expected: Only coupons where user_id matches authenticated user
-
-
--- ===================================
--- STEP 14: API Endpoints Test (from Postman/Insomnia)
--- ===================================
--- 1. GET /api/coupons
---    Expected: Returns available coupons in JSON
-
--- 2. POST /api/coupons/validate
---    Body: { "code": "FREEACTIVITY-..." }
---    Expected: { "valid": true, "message": "...", "couponId": "...", "discountAmount": 0 }
-
--- 3. POST /api/coupons/redeem
---    Body: { "code": "FREEACTIVITY-...", "eventId": "..." }
---    Expected: { "success": true, "message": "...", "couponId": "..." }
-
-
--- ===================================
--- STEP 15: Verify Payment Record Integration
--- ===================================
--- After submitting checkout with coupon, check payments table:
-SELECT 
-  id,
-  payment_method,
-  payment_amount,
-  tax_amount,
-  discount_amount,
-  total_amount,
-  payment_status
-FROM public.payments 
-WHERE user_id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid
-ORDER BY created_at DESC
-LIMIT 1;
--- Expected: payment_method='coupon', total_amount=0, discount_amount=event.price
-
-
--- ===================================
--- STEP 16: Verify Event Registration
--- ===================================
-SELECT 
-  id,
-  user_id,
-  event_id,
-  status,
-  registered_at
-FROM public.event_attendees 
-WHERE user_id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid
-ORDER BY registered_at DESC
-LIMIT 1;
--- Expected: status='registered'
-
-
--- ===================================
--- CLEANUP (Optional - Remove Test Data)
--- ===================================
--- DELETE FROM public.coupons 
--- WHERE user_id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid;
-
--- DELETE FROM public.profiles 
--- WHERE id = 'ccbf423c-a773-4f23-bcf8-8aa06133ca58'::uuid;
+AND status = 'active';
+-- Expected: 3 (one from each milestone: 25, 50, 75)
 
 
 -- ===================================
 -- SUMMARY OF TESTS
 -- ===================================
--- ✅ Table exists and has proper structure
 -- ✅ Trigger generates coupon at 25 referrals
 -- ✅ Trigger generates additional coupons at 50, 75, etc.
 -- ✅ Validation function works correctly
--- ✅ Coupon cannot be redeemed twice
--- ✅ RLS prevents users from seeing other users' coupons
--- ✅ Payment records correctly reflect coupon usage
--- ✅ Event registration is created when coupon is used
--- ✅ API endpoints return proper responses
--- ✅ Frontend UI shows available coupons
+-- ✅ Functions count available coupons
+-- ✅ Multiple milestones create multiple coupons

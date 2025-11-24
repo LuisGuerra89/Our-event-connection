@@ -31,8 +31,8 @@ DROP POLICY IF EXISTS "coupons_update_admin" ON public.coupons;
 -- Users can see their own coupons
 CREATE POLICY "coupons_select_own" ON public.coupons FOR SELECT USING (auth.uid() = user_id);
 
--- System (admin) can insert new coupons
-CREATE POLICY "coupons_insert_admin" ON public.coupons FOR INSERT WITH CHECK (is_admin());
+-- Allow inserts from authenticated users (triggers run with SECURITY DEFINER)
+CREATE POLICY "coupons_insert_own" ON public.coupons FOR INSERT WITH CHECK (user_id = auth.uid() OR auth.uid() IS NULL);
 
 -- Users can only update the status of their own coupons to 'used'
 CREATE POLICY "coupons_update_own" ON public.coupons FOR UPDATE USING (auth.uid() = user_id)
