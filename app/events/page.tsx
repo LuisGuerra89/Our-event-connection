@@ -37,7 +37,7 @@ export default async function EventsPage({
 
   // Filter by category if provided
   if (categoryId) {
-    query = query.eq("category", categoryId)
+    query = query.eq("category_id", categoryId)
   }
 
   // Filter by status if provided
@@ -49,6 +49,14 @@ export default async function EventsPage({
   }
 
   const { data: events, error: eventsError } = await query
+
+  // Debug logging
+  console.log("Query Debug:", {
+    hasEvents: !!events,
+    eventCount: events?.length,
+    error: eventsError,
+    firstEvent: events?.[0],
+  })
 
   return (
     <PublicPageLayout>

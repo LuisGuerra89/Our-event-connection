@@ -102,7 +102,7 @@ export function ThisWeekEventsList({
       query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%,location_city.ilike.%${filters.search}%`)
     }
     if (filters.category !== "all") {
-      query = query.eq("category", filters.category)
+      query = query.eq("category_id", filters.category)
     }
     if (filters.priceFilter === "free") {
       query = query.eq("price", 0)
@@ -158,7 +158,7 @@ export function ThisWeekEventsList({
       query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%,location_city.ilike.%${filters.search}%`)
     }
     if (filters.category !== "all") {
-      query = query.eq("category", filters.category)
+      query = query.eq("category_id", filters.category)
     }
     if (filters.priceFilter === "free") {
       query = query.eq("price", 0)
