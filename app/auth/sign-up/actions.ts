@@ -78,33 +78,24 @@ export async function createUserProfile(
 
         if (referrer) {
           console.log("[v0] Found referrer for code:", referralCode, "referrer ID:", referrer.id)
-          
+
           // Update the new user's referred_by field
+          // The database trigger will automatically:
+          // 1. Create the referral record
+          // 2. Increment the referrer's referral_count
+          // 3. Award free events if milestone reached
+          // 4. Create notification for referrer
           const { error: updateError } = await supabase
             .from("profiles")
             .update({ referred_by: referrer.id })
             .eq("id", userId)
-          
+
           if (updateError) {
             console.log("[v0] Error updating referred_by:", updateError)
+            return { success: true, profile, warning: "Referral processing failed" }
           }
-          
-          // Create referral record
-          const { error: refError } = await supabase
-            .from("referrals")
-            .insert({
-              referrer_id: referrer.id,
-              referred_id: userId,
-              barcode: referralCode.toUpperCase(),
-              status: "completed",
-              reward_given: false,
-            })
-          
-          if (refError) {
-            console.log("[v0] Error creating referral record:", refError)
-          } else {
-            console.log("[v0] Referral record created successfully")
-          }
+
+          console.log("[v0] Referral processed successfully - trigger will handle the rest")
         } else {
           console.log("[v0] No referrer found for code:", referralCode)
           return { success: true, profile, warning: "Referral code not found" }
