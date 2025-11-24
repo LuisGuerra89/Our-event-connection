@@ -86,18 +86,8 @@ export default function SignUpPage() {
 
       console.log("[v0] Sign up successful:", data.user?.id, "email confirmed:", data.user?.email_confirmed_at)
 
-      // Create user profile automatically
-      if (data.user?.id) {
-        try {
-          console.log("[v0] Creating user profile in database")
-          await createUserProfile(data.user.id, email, fullName, referralCode || undefined)
-          console.log("[v0] User profile created successfully")
-        } catch (profileError) {
-          console.error("[v0] Error creating profile:", profileError)
-          // Profile creation error is non-fatal - user can still verify email
-          // The profile will be created when they confirm their email
-        }
-      }
+      // Note: Profile creation is handled in the waiver step
+      // The referral code is stored in user metadata and will be applied when profile is created
 
       console.log("[v0] Redirecting to verify-email page")
       router.push("/auth/verify-email")

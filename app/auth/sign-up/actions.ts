@@ -12,54 +12,41 @@ export async function createUserProfile(
   try {
     const supabase = await createServerClient()
 
-    console.log("[v0] Creating profile for user:", userId, email)
+    console.log("[v0] Processing profile for user:", userId, email)
 
-    // Check if profile already exists
-    const { data: existingProfile } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("id", userId)
-      .maybeSingle()
+    // Wait for the trigger to create the profile
+    // The handle_new_user trigger creates the profile automatically
+    // We need to wait a bit longer and retry if needed
+    let profile = null
+    let attempts = 0
+    const maxAttempts = 5
 
-    if (existingProfile) {
-      console.log("[v0] Profile already exists for user:", userId)
-      return { success: true, message: "Profile already exists" }
+    while (!profile && attempts < maxAttempts) {
+      attempts++
+      console.log(`[v0] Attempt ${attempts}/${maxAttempts} to find profile`)
+
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, email, referral_code")
+        .eq("id", userId)
+        .maybeSingle()
+
+      if (error) {
+        console.error("[v0] Error checking for profile:", error)
+      }
+
+      profile = data
     }
 
-    // Check if email already exists (duplicate check)
-    const { data: existingEmail } = await supabase
-      .from("profiles")
-      .select("id, email")
-      .eq("email", email)
-      .maybeSingle()
-
-    if (existingEmail) {
-      console.log("[v0] Email already registered:", email)
-      // Delete the auth user since email is duplicate
-      await supabase.auth.admin.deleteUser(userId)
-      throw new Error("Email already registered")
+    if (!profile) {
+      console.error("[v0] Profile was not created by trigger after", maxAttempts, "attempts")
+      console.error("[v0] This likely means the handle_new_user trigger is not working")
+      throw new Error("Profile creation failed - trigger may not be installed")
     }
 
-    // Create user profile
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .insert({
-        id: userId,
-        email,
-        full_name: fullName,
-        is_profile_complete: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single()
-
-    if (profileError) {
-      console.error("[v0] Error creating profile:", profileError)
-      throw profileError
-    }
-
-    console.log("[v0] Profile created successfully:", profile.id)
+    console.log("[v0] Profile created by trigger:", profile.id)
 
     // Handle referral if provided
     if (referralCode) {
@@ -80,7 +67,7 @@ export async function createUserProfile(
           console.log("[v0] Found referrer for code:", referralCode, "referrer ID:", referrer.id)
 
           // Update the new user's referred_by field
-          // The database trigger will automatically:
+          // The database trigger (process_referral) will automatically:
           // 1. Create the referral record
           // 2. Increment the referrer's referral_count
           // 3. Award free events if milestone reached

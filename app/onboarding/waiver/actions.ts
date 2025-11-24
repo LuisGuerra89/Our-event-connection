@@ -81,6 +81,10 @@ export async function submitWaiver(formData: FormData) {
       return { error: "Failed to find user role" }
     }
 
+    // Get referral code from user metadata (if provided during signup)
+    const referralCode = user.user_metadata?.referral_code as string | undefined
+    console.log("[v0] Server Action - Referral code from metadata:", referralCode)
+
     // Create profile if it doesn't exist
     const { error: profileInsertError } = await supabase.from("profiles").insert({
       id: user.id,
@@ -95,6 +99,41 @@ export async function submitWaiver(formData: FormData) {
     }
 
     console.log("[v0] Server Action - Profile created successfully")
+
+    // Apply referral code if provided
+    if (referralCode && referralCode.trim() !== "") {
+      console.log("[v0] Server Action - Processing referral code:", referralCode)
+
+      // Find the referrer
+      const { data: referrer, error: referrerError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("referral_code", referralCode.toUpperCase())
+        .maybeSingle()
+
+      if (referrerError) {
+        console.error("[v0] Server Action - Error finding referrer:", referrerError)
+        // Non-fatal - continue with profile creation
+      } else if (referrer) {
+        console.log("[v0] Server Action - Found referrer:", referrer.id)
+
+        // Update the new user's referred_by field
+        // This will trigger the process_referral trigger
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ referred_by: referrer.id })
+          .eq("id", user.id)
+
+        if (updateError) {
+          console.error("[v0] Server Action - Error updating referred_by:", updateError)
+          // Non-fatal - continue
+        } else {
+          console.log("[v0] Server Action - Referral processed successfully")
+        }
+      } else {
+        console.log("[v0] Server Action - Referral code not found:", referralCode)
+      }
+    }
   } else {
     console.log("[v0] Server Action - Profile already exists")
   }
