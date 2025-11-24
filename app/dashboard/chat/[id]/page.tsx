@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect, notFound } from "next/navigation"
-import { Card, CardContent } from "@/components/ui/card"
 import { ChatWindow } from "@/components/chat/chat-window"
 
 interface ChatConversationPageProps {
@@ -45,15 +44,11 @@ export default async function ChatConversationPage({ params }: ChatConversationP
 
     return (
         <div className="container mx-auto py-8 max-w-4xl">
-            <Card>
-                <CardContent className="p-0">
-                    <ChatWindow
-                        conversationId={id}
-                        currentUserId={user.id}
-                        otherUser={otherUser}
-                    />
-                </CardContent>
-            </Card>
+            <ChatWindow
+                conversationId={id}
+                currentUserId={user.id}
+                otherUser={otherUser}
+            />
         </div>
     )
 }
