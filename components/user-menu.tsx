@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import {
   DropdownMenu,
@@ -56,6 +55,15 @@ export function UserMenu({ userName, userPhoto }: UserMenuProps) {
     }
   }
 
+  // Force refresh when navigating to profile to see updated image
+  const handleProfileClick = () => {
+    router.push("/dashboard/profile")
+    // Refresca la página para asegurar que la imagen se actualice
+    setTimeout(() => {
+      router.refresh()
+    }, 100)
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -85,11 +93,9 @@ export function UserMenu({ userName, userPhoto }: UserMenuProps) {
             <span>Dashboard</span>
           </a>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/profile" className="cursor-pointer">
-            <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
-          </Link>
+        <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer">
+          <User className="mr-2 h-4 w-4" />
+          <span>Profile</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

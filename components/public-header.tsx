@@ -18,7 +18,7 @@ export async function PublicHeader() {
   if (user) {
     const { data: profileData } = await supabase
       .from("profiles")
-      .select("full_name, profile_photo_url")
+      .select("full_name, profile_photo_url, profile_image_url")
       .eq("id", user.id)
       .single()
 
@@ -63,7 +63,7 @@ export async function PublicHeader() {
               <NotificationBell userId={user.id} />
               <UserMenu
                 userName={profile.full_name || user.email || "User"}
-                userPhoto={profile.profile_photo_url}
+                userPhoto={profile.profile_image_url || profile.profile_photo_url}
               />
             </>
           ) : (

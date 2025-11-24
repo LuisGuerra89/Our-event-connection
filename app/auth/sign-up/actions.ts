@@ -7,7 +7,8 @@ export async function createUserProfile(
   userId: string,
   email: string,
   fullName: string,
-  referralCode?: string
+  referralCode?: string,
+  profileImageUrl?: string
 ) {
   try {
     const supabase = await createServerClient()
@@ -47,6 +48,20 @@ export async function createUserProfile(
     }
 
     console.log("[v0] Profile created by trigger:", profile.id)
+
+    // Update profile with image URL if provided
+    if (profileImageUrl) {
+      const { error: imageError } = await supabase
+        .from("profiles")
+        .update({ profile_image_url: profileImageUrl })
+        .eq("id", userId)
+
+      if (imageError) {
+        console.log("[v0] Warning: Failed to update profile image URL:", imageError)
+      } else {
+        console.log("[v0] Profile image URL updated successfully")
+      }
+    }
 
     // Handle referral if provided
     if (referralCode) {

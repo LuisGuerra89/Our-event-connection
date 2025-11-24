@@ -3,6 +3,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { ProfileImageUpload } from "@/components/profile-image-upload"
 import Link from "next/link"
 import { Edit, MapPin, Calendar, User } from "lucide-react"
 
@@ -42,6 +43,19 @@ export default async function ProfilePage() {
 
       <main className="container mx-auto px-6 py-8 max-w-4xl">
         <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile Picture</CardTitle>
+              <CardDescription>Upload or change your profile picture</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProfileImageUpload
+                userName={profile?.display_name || profile?.full_name || "User"}
+                currentImageUrl={profile?.profile_image_url}
+              />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <div className="flex items-start justify-between">

@@ -19,8 +19,8 @@ export default async function ChatPage() {
     .from("chat_conversations")
     .select(`
       *,
-      user1:profiles!chat_conversations_user1_id_fkey(id, full_name, profile_photo_url),
-      user2:profiles!chat_conversations_user2_id_fkey(id, full_name, profile_photo_url)
+      user1:profiles!chat_conversations_user1_id_fkey(id, full_name, profile_image_url),
+      user2:profiles!chat_conversations_user2_id_fkey(id, full_name, profile_image_url)
     `)
     .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
     .order("last_message_at", { ascending: false, nullsFirst: false })
@@ -32,7 +32,7 @@ export default async function ChatPage() {
       id,
       matched_user_id,
       match_score,
-      profile:profiles!matches_matched_user_id_fkey(id, full_name, profile_photo_url, bio)
+      profile:profiles!matches_matched_user_id_fkey(id, full_name, profile_image_url, bio)
     `)
     .eq("user_id", user.id)
     .order("match_score", { ascending: false })
@@ -48,14 +48,14 @@ export default async function ChatPage() {
   // Get people the user referred
   const { data: peopleIReferred } = await supabase
     .from("profiles")
-    .select("id, full_name, profile_photo_url, bio")
+    .select("id, full_name, profile_image_url, bio")
     .eq("referred_by", user.id)
 
   // Get the person who referred the user (if any)
   const { data: personWhoReferredMe } = currentProfile?.referred_by
     ? await supabase
       .from("profiles")
-      .select("id, full_name, profile_photo_url, bio")
+      .select("id, full_name, profile_image_url, bio")
       .eq("id", currentProfile.referred_by)
       .maybeSingle()
     : { data: null }

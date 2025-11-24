@@ -3,8 +3,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { User, MapPin, Heart } from "lucide-react"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 
 interface UserWithAttributes {
   id: string
@@ -13,6 +15,7 @@ interface UserWithAttributes {
   location_city: string | null
   location_state: string | null
   gender: string | null
+  profile_image_url: string | null
   user_attributes: any
 }
 
@@ -22,6 +25,14 @@ interface MatchListProps {
 }
 
 export function MatchList({ users, preferences }: MatchListProps) {
+  const router = useRouter()
+  const [viewingProfile, setViewingProfile] = useState<string | null>(null)
+
+  const handleViewProfile = (userId: string) => {
+    setViewingProfile(userId)
+    router.push(`/dashboard/matches/${userId}`)
+  }
+
   // Calculate match scores
   const matchedUsers = useMemo(() => {
     if (!preferences) return users.map((user) => ({ ...user, matchScore: 50 }))
@@ -74,9 +85,15 @@ export function MatchList({ users, preferences }: MatchListProps) {
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="rounded-full bg-primary/10 p-3">
-                  <User className="h-6 w-6 text-primary" />
-                </div>
+                <Avatar className="h-12 w-12">
+                  {user.profile_image_url ? (
+                    <AvatarImage src={user.profile_image_url} alt={user.display_name} />
+                  ) : (
+                    <AvatarFallback className="bg-primary/10">
+                      <User className="h-6 w-6 text-primary" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
                 <div>
                   <CardTitle className="text-xl">{user.display_name}</CardTitle>
                   {user.gender && <CardDescription className="capitalize">{user.gender}</CardDescription>}
@@ -123,8 +140,13 @@ export function MatchList({ users, preferences }: MatchListProps) {
               </div>
             )}
 
-            <Button className="w-full bg-transparent" variant="outline">
-              View Profile
+            <Button 
+              className="w-full bg-transparent" 
+              variant="outline"
+              onClick={() => handleViewProfile(user.id)}
+              disabled={viewingProfile === user.id}
+            >
+              {viewingProfile === user.id ? "Loading..." : "View Profile"}
             </Button>
           </CardContent>
         </Card>

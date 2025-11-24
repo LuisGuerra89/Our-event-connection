@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation"
 interface Profile {
     id: string
     full_name: string | null
-    profile_photo_url: string | null
+    profile_image_url: string | null
     bio?: string | null
 }
 
@@ -80,7 +80,7 @@ export function AvailableMatches({ matches, currentUserId }: AvailableMatchesPro
                     <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                             <Avatar className="h-12 w-12">
-                                <AvatarImage src={match.profile.profile_photo_url || undefined} />
+                                <AvatarImage src={match.profile.profile_image_url || undefined} />
                                 <AvatarFallback>
                                     {match.profile.full_name?.charAt(0) || "?"}
                                 </AvatarFallback>

@@ -10,13 +10,14 @@ export default async function MatchesPage() {
     redirect("/auth/login")
   }
 
-  // Fetch all users with their attributes (excluding current user)
+  // Fetch all users with their attributes (excluding current user and excluding admins/moderators)
   const { data: users } = await supabase
     .from("profiles")
     .select(`
       *,
       user_attributes (*)
     `)
+    .eq("role", "user")
     .neq("id", data.user.id)
 
   // Fetch current user's preferences

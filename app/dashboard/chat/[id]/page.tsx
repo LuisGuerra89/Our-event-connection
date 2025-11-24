@@ -24,8 +24,8 @@ export default async function ChatConversationPage({ params }: ChatConversationP
         .from("chat_conversations")
         .select(`
       *,
-      user1:profiles!chat_conversations_user1_id_fkey(id, full_name, profile_photo_url),
-      user2:profiles!chat_conversations_user2_id_fkey(id, full_name, profile_photo_url)
+      user1:profiles!chat_conversations_user1_id_fkey(id, full_name, profile_image_url),
+      user2:profiles!chat_conversations_user2_id_fkey(id, full_name, profile_image_url)
     `)
         .eq("id", id)
         .single()
@@ -41,6 +41,13 @@ export default async function ChatConversationPage({ params }: ChatConversationP
 
     // Determine the other user
     const otherUser = conversation.user1_id === user.id ? conversation.user2 : conversation.user1
+    
+    // Get current user's profile for displaying messages
+    const { data: currentUserProfile } = await supabase
+        .from("profiles")
+        .select("id, full_name, profile_image_url")
+        .eq("id", user.id)
+        .single()
 
     return (
         <div className="container mx-auto py-8 max-w-4xl">
@@ -48,6 +55,7 @@ export default async function ChatConversationPage({ params }: ChatConversationP
                 conversationId={id}
                 currentUserId={user.id}
                 otherUser={otherUser}
+                currentUser={currentUserProfile}
             />
         </div>
     )

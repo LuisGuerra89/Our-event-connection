@@ -4,8 +4,11 @@ import { useState, useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Button } from "@/components/ui/button"
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns"
 import { MessageInput } from "@/components/chat/message-input"
+import { ArrowLeft } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 interface Message {
     id: string
@@ -21,16 +24,17 @@ interface Message {
 interface Profile {
     id: string
     full_name: string | null
-    profile_photo_url: string | null
+    profile_image_url: string | null
 }
 
 interface ChatWindowProps {
     conversationId: string
     currentUserId: string
     otherUser: Profile
+    currentUser?: Profile
 }
 
-export function ChatWindow({ conversationId, currentUserId, otherUser }: ChatWindowProps) {
+export function ChatWindow({ conversationId, currentUserId, otherUser, currentUser }: ChatWindowProps) {
     const [messages, setMessages] = useState<Message[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [isOtherUserTyping, setIsOtherUserTyping] = useState(false)
@@ -38,6 +42,7 @@ export function ChatWindow({ conversationId, currentUserId, otherUser }: ChatWin
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const lastTypingSentRef = useRef<number>(0)
+    const router = useRouter()
 
     useEffect(() => {
         loadMessages()
@@ -179,8 +184,16 @@ export function ChatWindow({ conversationId, currentUserId, otherUser }: ChatWin
         <div className="flex flex-col h-[calc(100vh-12rem)] overflow-hidden border rounded-lg bg-background shadow-sm">
             {/* Chat Header */}
             <div className="border-b p-4 flex items-center gap-3 bg-card/50 shrink-0">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => router.push("/dashboard/chat")}
+                    className="mr-2"
+                >
+                    <ArrowLeft className="h-5 w-5" />
+                </Button>
                 <Avatar className="h-10 w-10">
-                    <AvatarImage src={otherUser.profile_photo_url || undefined} />
+                    <AvatarImage src={otherUser.profile_image_url || undefined} />
                     <AvatarFallback>
                         {otherUser.full_name?.charAt(0) || "?"}
                     </AvatarFallback>
@@ -234,8 +247,16 @@ export function ChatWindow({ conversationId, currentUserId, otherUser }: ChatWin
                                         </div>
                                     )}
                                     <div
-                                        className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                                        className={`flex gap-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
                                     >
+                                        {!isCurrentUser && (
+                                            <Avatar className="h-8 w-8 flex-shrink-0">
+                                                <AvatarImage src={otherUser.profile_image_url || undefined} />
+                                                <AvatarFallback>
+                                                    {otherUser.full_name?.charAt(0) || "?"}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                        )}
                                         <div
                                             className={`max-w-[70%] rounded-lg px-4 py-2 ${isCurrentUser
                                                 ? 'bg-primary text-primary-foreground'
@@ -254,6 +275,14 @@ export function ChatWindow({ conversationId, currentUserId, otherUser }: ChatWin
                                                 {format(new Date(message.created_at), "h:mm a")}
                                             </p>
                                         </div>
+                                        {isCurrentUser && (
+                                            <Avatar className="h-8 w-8 flex-shrink-0">
+                                                <AvatarImage src={currentUser?.profile_image_url || undefined} />
+                                                <AvatarFallback>
+                                                    {currentUser?.full_name?.charAt(0) || "?"}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                        )}
                                     </div>
                                 </div>
                             )

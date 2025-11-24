@@ -29,12 +29,12 @@ interface Conversation {
     user1: {
         id: string
         full_name: string | null
-        profile_photo_url: string | null
+        profile_image_url: string | null
     }
     user2: {
         id: string
         full_name: string | null
-        profile_photo_url: string | null
+        profile_image_url: string | null
     }
 }
 
@@ -96,8 +96,8 @@ export function ChatButton({ userId }: ChatButtonProps) {
             .from('chat_conversations')
             .select(`
         *,
-        user1:profiles!chat_conversations_user1_id_fkey(id, full_name, profile_photo_url),
-        user2:profiles!chat_conversations_user2_id_fkey(id, full_name, profile_photo_url)
+        user1:profiles!chat_conversations_user1_id_fkey(id, full_name, profile_image_url),
+        user2:profiles!chat_conversations_user2_id_fkey(id, full_name, profile_image_url)
       `)
             .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
             .order('last_message_at', { ascending: false, nullsFirst: false })
@@ -175,7 +175,7 @@ export function ChatButton({ userId }: ChatButtonProps) {
                                     }}
                                 >
                                     <Avatar className="h-10 w-10">
-                                        <AvatarImage src={otherUser.profile_photo_url || undefined} />
+                                        <AvatarImage src={otherUser.profile_image_url || undefined} />
                                         <AvatarFallback>
                                             {otherUser.full_name?.charAt(0) || "?"}
                                         </AvatarFallback>
