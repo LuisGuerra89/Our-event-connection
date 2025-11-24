@@ -7,9 +7,10 @@ import { Send } from "lucide-react"
 
 interface MessageInputProps {
     onSendMessage: (message: string) => Promise<void>
+    onTyping?: () => void
 }
 
-export function MessageInput({ onSendMessage }: MessageInputProps) {
+export function MessageInput({ onSendMessage, onTyping }: MessageInputProps) {
     const [message, setMessage] = useState("")
     const [isSending, setIsSending] = useState(false)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -46,6 +47,7 @@ export function MessageInput({ onSendMessage }: MessageInputProps) {
 
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setMessage(e.target.value)
+        onTyping?.()
 
         // Auto-resize textarea
         const textarea = e.target

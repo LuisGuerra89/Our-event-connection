@@ -33,17 +33,18 @@ interface ChatWindowProps {
 export function ChatWindow({ conversationId, currentUserId, otherUser }: ChatWindowProps) {
     const [messages, setMessages] = useState<Message[]>([])
     const [isLoading, setIsLoading] = useState(true)
+    const [isOtherUserTyping, setIsOtherUserTyping] = useState(false)
     const scrollAreaRef = useRef<HTMLDivElement>(null)
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const lastTypingSentRef = useRef<number>(0)
 
     useEffect(() => {
         loadMessages()
         markAsRead()
 
-        // Subscribe to new messages
+        // Subscribe to new messages and typing events
         const supabase = createClient()
-
-        console.log('[Chat] Setting up Realtime subscription for conversation:', conversationId)
 
         const channel = supabase
             .channel(`conversation_${conversationId}`)
@@ -58,10 +59,33 @@ export function ChatWindow({ conversationId, currentUserId, otherUser }: ChatWin
                 (payload) => {
                     setMessages(prev => [...prev, payload.new as Message])
                     scrollToBottom()
+                    setIsOtherUserTyping(false) // Stop typing indicator when message received
 
                     // Mark as read if message is from other user
                     if (payload.new.sender_id !== currentUserId) {
                         markAsRead()
+                    }
+                }
+            )
+            .on(
+                'broadcast',
+                { event: 'typing' },
+                (payload) => {
+                    // Only show if it's from the other user
+                    if (payload.payload.sender_id !== currentUserId) {
+                        setIsOtherUserTyping(true)
+
+                        // Clear existing timeout
+                        if (typingTimeoutRef.current) {
+                            clearTimeout(typingTimeoutRef.current)
+                        }
+
+                        // Set new timeout to hide indicator after 3 seconds
+                        typingTimeoutRef.current = setTimeout(() => {
+                            setIsOtherUserTyping(false)
+                        }, 3000)
+
+                        scrollToBottom()
                     }
                 }
             )
@@ -70,6 +94,9 @@ export function ChatWindow({ conversationId, currentUserId, otherUser }: ChatWin
         return () => {
             console.log('[Chat] Cleaning up Realtime subscription')
             supabase.removeChannel(channel)
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current)
+            }
         }
     }, [conversationId, currentUserId])
 
@@ -126,6 +153,20 @@ export function ChatWindow({ conversationId, currentUserId, otherUser }: ChatWin
         }
     }
 
+    const handleTyping = async () => {
+        const now = Date.now()
+        // Throttle typing events to once every 2 seconds
+        if (now - lastTypingSentRef.current > 2000) {
+            lastTypingSentRef.current = now
+            const supabase = createClient()
+            await supabase.channel(`conversation_${conversationId}`).send({
+                type: 'broadcast',
+                event: 'typing',
+                payload: { sender_id: currentUserId }
+            })
+        }
+    }
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-96">
@@ -146,6 +187,9 @@ export function ChatWindow({ conversationId, currentUserId, otherUser }: ChatWin
                 </Avatar>
                 <div>
                     <h3 className="font-semibold">{otherUser.full_name || "Unknown User"}</h3>
+                    {isOtherUserTyping && (
+                        <p className="text-xs text-muted-foreground animate-pulse">typing...</p>
+                    )}
                 </div>
             </div>
 
@@ -215,13 +259,24 @@ export function ChatWindow({ conversationId, currentUserId, otherUser }: ChatWin
                             )
                         })
                     )}
+                    {isOtherUserTyping && (
+                        <div className="flex justify-start">
+                            <div className="bg-muted rounded-lg px-4 py-2">
+                                <span className="flex gap-1">
+                                    <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                    <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                    <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce"></span>
+                                </span>
+                            </div>
+                        </div>
+                    )}
                     <div ref={messagesEndRef} />
                 </div>
             </div>
 
             {/* Message Input */}
             <div className="border-t p-4 bg-card/50 shrink-0">
-                <MessageInput onSendMessage={handleSendMessage} />
+                <MessageInput onSendMessage={handleSendMessage} onTyping={handleTyping} />
             </div>
         </div>
     )
