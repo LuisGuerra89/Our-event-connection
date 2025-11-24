@@ -48,6 +48,11 @@ const userNavItems = [
     icon: Home,
   },
   {
+    title: "Messages",
+    href: "/dashboard/chat",
+    icon: MessageSquare,
+  },
+  {
     title: "Events",
     href: "/dashboard/events",
     icon: Calendar,
@@ -66,6 +71,11 @@ const userNavItems = [
     title: "Referrals",
     href: "/dashboard/referrals",
     icon: Gift,
+  },
+  {
+    title: "Settings",
+    href: "/dashboard/settings",
+    icon: Settings,
   },
 ]
 
@@ -184,7 +194,7 @@ export function AppSidebar({ userRole, userName, userEmail }: AppSidebarProps) {
       const response = await fetch("/api/auth/logout", {
         method: "POST",
       })
-      
+
       if (response.ok) {
         setTimeout(() => {
           router.push("/")
