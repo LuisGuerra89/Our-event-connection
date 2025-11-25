@@ -157,26 +157,6 @@ export function ChatWindow({ conversationId, currentUserId, otherUser, currentUs
                     }
                 }
             )
-            .on(
-                'broadcast',
-                { event: 'chat_cleared' },
-                (payload) => {
-                    // Handle chat clear from other user
-                    if (payload.payload.sender_id !== currentUserId) {
-                        setMessages([])
-                    }
-                }
-            )
-            .on(
-                'broadcast',
-                { event: 'message_deleted' },
-                (payload) => {
-                    // Handle message deletion from other user
-                    if (payload.payload.sender_id !== currentUserId) {
-                        setMessages(prev => prev.filter(msg => msg.id !== payload.payload.message_id))
-                    }
-                }
-            )
             .subscribe()
 
         return () => {
@@ -196,11 +176,33 @@ export function ChatWindow({ conversationId, currentUserId, otherUser, currentUs
         setIsLoading(true)
         const supabase = createClient()
 
-        const { data, error } = await supabase
+        // Get conversation to check if user cleared the chat
+        const { data: conversation } = await supabase
+            .from('chat_conversations')
+            .select('user1_cleared_at, user2_cleared_at, user1_id, user2_id')
+            .eq('id', conversationId)
+            .single()
+
+        // Determine the cleared_at timestamp for the current user
+        let clearedAt: string | null = null
+        if (conversation) {
+            clearedAt = currentUserId === conversation.user1_id 
+                ? conversation.user1_cleared_at 
+                : conversation.user2_cleared_at
+        }
+
+        let query = supabase
             .from('chat_messages')
             .select('*')
             .eq('conversation_id', conversationId)
             .order('created_at', { ascending: true })
+
+        // Filter messages created after the user cleared the chat
+        if (clearedAt) {
+            query = query.gt('created_at', clearedAt)
+        }
+
+        const { data, error } = await query
 
         if (data && !error) {
             setMessages(data)
@@ -287,21 +289,26 @@ export function ChatWindow({ conversationId, currentUserId, otherUser, currentUs
     const clearAllMessages = async () => {
         const supabase = createClient()
 
+        // Get conversation details to determine which field to update
+        const { data: conversation } = await supabase
+            .from('chat_conversations')
+            .select('user1_id, user2_id')
+            .eq('id', conversationId)
+            .single()
+
+        if (!conversation) return
+
+        // Determine which cleared_at field to update based on conversation structure
+        const updateField = currentUserId === conversation.user1_id ? 'user1_cleared_at' : 'user2_cleared_at'
+
         const { error } = await supabase
-            .from('chat_messages')
-            .delete()
-            .eq('conversation_id', conversationId)
+            .from('chat_conversations')
+            .update({ [updateField]: new Date().toISOString() })
+            .eq('id', conversationId)
 
         if (!error) {
             setMessages([])
             setShowClearChatDialog(false)
-
-            // Notify other user via broadcast
-            await supabase.channel(`conversation_${conversationId}`).send({
-                type: 'broadcast',
-                event: 'chat_cleared',
-                payload: { sender_id: currentUserId }
-            })
         }
     }
 
