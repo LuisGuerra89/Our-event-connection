@@ -28,12 +28,14 @@ export async function submitWaiver(formData: FormData) {
   const fullName = formData.get("fullName") as string
   const signature = formData.get("signature") as string
   const agreed = formData.get("agreed") === "true"
+  const profileImageFile = formData.get("profileImage") as File | null
 
   console.log("[v0] Server Action - Form data:", {
     fullName,
     hasSignature: !!signature,
-    signatureLength: signature?.length,
     agreed,
+    hasProfileImage: !!profileImageFile,
+    imageSize: profileImageFile?.size,
   })
 
   if (!agreed) {
@@ -100,23 +102,18 @@ export async function submitWaiver(formData: FormData) {
 
     console.log("[v0] Server Action - Profile created successfully")
 
-    // Upload profile image if provided in metadata
-    const profileImageBase64 = user.user_metadata?.profile_image_base64 as string | undefined
-    if (profileImageBase64) {
+    // Upload profile image if provided
+    if (profileImageFile && profileImageFile.size > 0) {
       try {
-        console.log("[v0] Server Action - Processing profile image from signup")
-        
-        // Convert base64 to blob
-        const response = await fetch(profileImageBase64)
-        const blob = await response.blob()
+        console.log("[v0] Server Action - Processing profile image from waiver")
         
         // Generate filename
         const fileName = `profile-images/${user.id}-${Date.now()}.jpg`
         
-        // Upload to storage
+        // Upload to storage directly (File is already a Blob)
         const { error: uploadError } = await supabase.storage
           .from("profiles")
-          .upload(fileName, blob, {
+          .upload(fileName, profileImageFile, {
             cacheControl: "3600",
             upsert: false,
           })
@@ -128,6 +125,8 @@ export async function submitWaiver(formData: FormData) {
           const { data: { publicUrl } } = supabase.storage
             .from("profiles")
             .getPublicUrl(fileName)
+          
+          console.log("[v0] Server Action - Public URL generated:", publicUrl.substring(0, 50) + "...")
           
           // Update profile with image URL
           const { error: updateError } = await supabase
@@ -213,6 +212,7 @@ export async function submitWaiver(formData: FormData) {
 
   revalidatePath("/onboarding/waiver")
   revalidatePath("/onboarding/complete-profile")
+  revalidatePath("/dashboard") // Revalidate dashboard to update header with new image
 
   await new Promise((resolve) => setTimeout(resolve, 100))
 

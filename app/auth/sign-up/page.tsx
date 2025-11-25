@@ -114,7 +114,6 @@ export default function SignUpPage() {
           data: {
             full_name: fullName,
             referral_code: referralCode || null,
-            profile_image_base64: profileImagePreview || null, // Store base64 for later upload
           },
         },
       })
@@ -125,6 +124,16 @@ export default function SignUpPage() {
       }
 
       console.log("[v0] Sign up successful:", data.user?.id, "email confirmed:", data.user?.email_confirmed_at)
+
+      // Store profile image in sessionStorage temporarily (only if image was selected)
+      if (profileImagePreview) {
+        try {
+          sessionStorage.setItem("pendingProfileImage", profileImagePreview)
+          console.log("[v0] Profile image stored in sessionStorage")
+        } catch (e) {
+          console.warn("[v0] Could not store image in sessionStorage:", e)
+        }
+      }
 
       console.log("[v0] Redirecting to verify-email page")
       router.push("/auth/verify-email")

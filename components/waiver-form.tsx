@@ -99,10 +99,25 @@ export function WaiverForm({ userId, userEmail }: WaiverFormProps) {
     formData.append("signature", signature)
     formData.append("agreed", agreed.toString())
 
+    // Get profile image from sessionStorage if available
+    const profileImageBase64 = typeof window !== "undefined" ? sessionStorage.getItem("pendingProfileImage") : null
+    if (profileImageBase64) {
+      try {
+        // Convert base64 to blob and add to FormData
+        const response = await fetch(profileImageBase64)
+        const blob = await response.blob()
+        formData.append("profileImage", blob, "profile.jpg")
+        console.log("[v0] Form - Profile image from sessionStorage included as blob")
+      } catch (e) {
+        console.warn("[v0] Form - Could not convert image to blob:", e)
+      }
+    }
+
     console.log("[v0] Form - FormData prepared:", {
       fullName,
       hasSignature: !!signature,
       agreed,
+      hasImage: !!profileImageBase64,
     })
 
     try {
