@@ -2,7 +2,6 @@ import type React from "react"
 import { redirect } from "next/navigation"
 import { createServerClient } from "@/lib/supabase/server"
 import { AdminLayoutClient } from "@/components/admin/admin-layout-client"
-import { PublicHeader } from "@/components/public-header"
 
 export default async function AppLayout({
   children,
@@ -24,7 +23,6 @@ export default async function AppLayout({
 
   return (
     <div className="flex flex-col h-screen">
-      <PublicHeader />
       <div className="flex-1 overflow-hidden">
         <AdminLayoutClient
           userRole={profile?.role}

@@ -2,9 +2,10 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog"
+import { ChangePasswordForm } from "@/components/settings/change-password-form"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { User, Mail, Calendar, CreditCard, AlertTriangle } from "lucide-react"
+import { User, Mail, Calendar, CreditCard, AlertTriangle, Lock } from "lucide-react"
 
 export default async function SettingsPage() {
     const supabase = await createClient()
@@ -127,6 +128,20 @@ export default async function SettingsPage() {
                         </CardContent>
                     </Card>
                 )}
+
+                {/* Change Password */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Lock className="h-5 w-5" />
+                            Change Password
+                        </CardTitle>
+                        <CardDescription>Update your account password</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ChangePasswordForm />
+                    </CardContent>
+                </Card>
 
                 {/* Danger Zone */}
                 <Card className="border-destructive">

@@ -240,16 +240,13 @@ export function AppSidebar({ userRole, userName, userEmail, userImage }: AppSide
         )}
       >
         <div className="flex h-full flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden lg:flex ml-auto"
-              onClick={() => setIsCollapsed(!isCollapsed)}
-            >
-              <ChevronLeft className={cn("h-4 w-4 transition-transform", isCollapsed && "rotate-180")} />
-            </Button>
+          {/* Logo */}
+          <div className="flex items-center justify-center p-4 border-b border-sidebar-border">
+            {isCollapsed ? (
+              <Logo className="h-8 w-8" />
+            ) : (
+              <Logo className="h-8 w-auto" />
+            )}
           </div>
 
           {/* User info */}
@@ -308,7 +305,7 @@ export function AppSidebar({ userRole, userName, userEmail, userImage }: AppSide
             <Button
               variant="ghost"
               className={cn(
-                "w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent/50",
+                "w-full justify-start text-sidebar-foreground/80 hover:bg-red-600/90 hover:text-white transition-colors",
                 isCollapsed && "justify-center px-2",
               )}
               onClick={handleSignOut}
