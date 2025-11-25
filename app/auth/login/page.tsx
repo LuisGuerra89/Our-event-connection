@@ -67,32 +67,27 @@ export default function LoginPage() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, is_profile_complete")
+      .select("role_id, is_profile_complete, status, roles(role_name)")
       .eq("id", userId)
       .maybeSingle()
 
     console.log("[v0] Login - User profile:", { userId, profile })
 
-    // If user is admin or moderator, redirect to admin dashboard directly
-    if (profile && (profile.role === "admin" || profile.role === "moderator")) {
+    // If user is admin or moderator, check status
+    const roleName = (profile?.roles as { role_name: string } | null)?.role_name
+    if (profile && (roleName === "admin" || roleName === "moderator")) {
+      // Check if admin user is active
+      if (profile.status !== "active") {
+        console.log("[v0] Login - Admin user is inactive, logging out")
+        await supabase.auth.signOut()
+        setError(`Your admin account is ${profile.status}. Please contact support.`)
+        setIsLoading(false)
+        return
+      }
+
       console.log("[v0] Login - User is admin/moderator, redirecting to /admin")
       router.push("/admin")
       return
-    }
-
-    // Fallback: check if user is in admin_users table (for newly created admins)
-    if (!profile) {
-      const { data: adminUser } = await supabase
-        .from("admin_users")
-        .select("id")
-        .eq("user_id", userId)
-        .maybeSingle()
-
-      if (adminUser) {
-        console.log("[v0] Login - User found in admin_users table, redirecting to /admin")
-        router.push("/admin")
-        return
-      }
     }
 
     // Check if social login user needs to complete profile
@@ -107,7 +102,8 @@ export default function LoginPage() {
     if (!waiver) {
       router.push("/onboarding/waiver")
     } else {
-      router.push("/dashboard")
+      // User is logged in, waiver complete - stay on current page or go to home
+      router.push("/")
     }
   }
 

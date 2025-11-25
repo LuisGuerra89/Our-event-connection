@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 import { isAdmin } from "@/lib/auth-utils"
 
@@ -21,10 +21,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Password must be at least 8 characters long" }, { status: 400 })
     }
 
-    const supabase = await createServerClient()
+    // Create Supabase admin client using service role key
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    )
 
-    // Update the user's password using admin privileges
-    const { data, error } = await supabase.auth.admin.updateUserById(userId, {
+    // Update the user's password using service role key
+    const { data, error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
       password: newPassword,
     })
 

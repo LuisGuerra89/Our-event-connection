@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
-import { Chrome, Facebook } from "lucide-react"
+import { Chrome, Facebook, Upload, Loader2 } from "lucide-react"
 
 export default function SignUpPage() {
   const searchParams = useSearchParams()
@@ -20,6 +21,9 @@ export default function SignUpPage() {
   const [fullName, setFullName] = useState("")
   const [repeatPassword, setRepeatPassword] = useState("")
   const [referralCode, setReferralCode] = useState("")
+  const [profileImage, setProfileImage] = useState<File | null>(null)
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null)
+  const [imageUploadLoading, setImageUploadLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -30,6 +34,41 @@ export default function SignUpPage() {
       setReferralCode(refCode)
     }
   }, [searchParams])
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setError("Please select a valid image file")
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image size must be less than 5MB")
+      return
+    }
+
+    setProfileImage(file)
+    // Create preview URL
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setProfileImagePreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+    setError(null)
+  }
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
+  }
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -74,7 +113,7 @@ export default function SignUpPage() {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
-            referral_code: referralCode || null, // Include referral code in metadata
+            referral_code: referralCode || null,
           },
         },
       })
@@ -86,16 +125,13 @@ export default function SignUpPage() {
 
       console.log("[v0] Sign up successful:", data.user?.id, "email confirmed:", data.user?.email_confirmed_at)
 
-      // Create user profile automatically
-      if (data.user?.id) {
+      // Store profile image in sessionStorage temporarily (only if image was selected)
+      if (profileImagePreview) {
         try {
-          console.log("[v0] Creating user profile in database")
-          await createUserProfile(data.user.id, email, fullName, referralCode || undefined)
-          console.log("[v0] User profile created successfully")
-        } catch (profileError) {
-          console.error("[v0] Error creating profile:", profileError)
-          // Profile creation error is non-fatal - user can still verify email
-          // The profile will be created when they confirm their email
+          sessionStorage.setItem("pendingProfileImage", profileImagePreview)
+          console.log("[v0] Profile image stored in sessionStorage")
+        } catch (e) {
+          console.warn("[v0] Could not store image in sessionStorage:", e)
         }
       }
 
@@ -143,6 +179,42 @@ export default function SignUpPage() {
           <CardContent>
             <form onSubmit={handleSignUp}>
               <div className="flex flex-col gap-6">
+                {/* Profile Picture Upload */}
+                <div className="flex justify-center">
+                  <div className="relative">
+                    <Avatar className="h-20 w-20">
+                      {profileImagePreview ? (
+                        <AvatarImage src={profileImagePreview} alt={fullName} />
+                      ) : (
+                        <AvatarFallback className="bg-primary/10 text-lg font-semibold">
+                          {fullName ? getInitials(fullName) : "?"}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <label
+                      htmlFor="profile-image-input"
+                      className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:bg-primary/90 transition-colors"
+                    >
+                      {imageUploadLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4" />
+                      )}
+                    </label>
+                    <input
+                      id="profile-image-input"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      disabled={imageUploadLoading}
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  {profileImage ? "Image selected ✓" : "Click camera to add profile picture (optional)"}
+                </p>
+
                 <div className="grid gap-2">
                   <Label htmlFor="fullName">Full Name</Label>
                   <Input
@@ -197,7 +269,7 @@ export default function SignUpPage() {
                   {referralCode && <p className="text-xs text-muted-foreground">You were referred by a friend!</p>}
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full" disabled={isLoading || imageUploadLoading}>
                   {isLoading ? "Creating account..." : "Sign Up"}
                 </Button>
 

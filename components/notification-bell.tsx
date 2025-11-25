@@ -37,7 +37,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
 
   useEffect(() => {
     loadNotifications()
-    
+
     // Subscribe to real-time notifications (preparado para el futuro)
     const supabase = createClient()
     const channel = supabase
@@ -63,60 +63,31 @@ export function NotificationBell({ userId }: NotificationBellProps) {
 
   const loadNotifications = async () => {
     const supabase = createClient()
-    
-    // Por ahora simulamos notificaciones
-    // Cuando implementes la tabla de notificaciones, descomenta esto:
-    /*
+
+    // Load real notifications from database, excluding 'message' type (handled by ChatButton)
     const { data } = await supabase
       .from('notifications')
       .select('*')
       .eq('user_id', userId)
+      .neq('type', 'message')
       .order('created_at', { ascending: false })
       .limit(10)
-    
+
     if (data) {
       setNotifications(data)
       setUnreadCount(data.filter(n => !n.read).length)
     }
-    */
-    
-    // Ejemplo de notificaciones simuladas (remover cuando tengas tabla real)
-    const mockNotifications: Notification[] = [
-      {
-        id: '1',
-        type: 'message',
-        title: 'New Message',
-        message: 'You have a new message in your chat',
-        read: false,
-        created_at: new Date().toISOString(),
-        link: '/dashboard/messages'
-      },
-      {
-        id: '2',
-        type: 'referral',
-        title: 'New Referral',
-        message: 'Someone joined using your referral code!',
-        read: false,
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-        link: '/dashboard/referrals'
-      }
-    ]
-    
-    setNotifications(mockNotifications)
-    setUnreadCount(mockNotifications.filter(n => !n.read).length)
   }
 
   const markAsRead = async (notificationId: string) => {
     const supabase = createClient()
-    
-    // Cuando implementes la tabla:
-    /*
+
+    // Update in database
     await supabase
       .from('notifications')
-      .update({ read: true })
+      .update({ read: true, read_at: new Date().toISOString() })
       .eq('id', notificationId)
-    */
-    
+
     // Actualizar estado local
     setNotifications(prev =>
       prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
@@ -126,16 +97,15 @@ export function NotificationBell({ userId }: NotificationBellProps) {
 
   const markAllAsRead = async () => {
     const supabase = createClient()
-    
-    // Cuando implementes la tabla:
-    /*
+
+    // Update in database
     await supabase
       .from('notifications')
-      .update({ read: true })
+      .update({ read: true, read_at: new Date().toISOString() })
       .eq('user_id', userId)
       .eq('read', false)
-    */
-    
+      .neq('type', 'message')
+
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
     setUnreadCount(0)
   }
@@ -156,16 +126,16 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           className="relative"
           aria-label="Notifications"
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
+            <Badge
+              variant="destructive"
               className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
             >
               {unreadCount > 9 ? '9+' : unreadCount}
@@ -188,7 +158,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        
+
         <div className="max-h-[400px] overflow-y-auto">
           {notifications.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
@@ -200,9 +170,8 @@ export function NotificationBell({ userId }: NotificationBellProps) {
             notifications.map((notification) => (
               <DropdownMenuItem
                 key={notification.id}
-                className={`flex flex-col items-start gap-1 p-3 cursor-pointer ${
-                  !notification.read ? 'bg-primary/5' : ''
-                }`}
+                className={`flex flex-col items-start gap-1 p-3 cursor-pointer ${!notification.read ? 'bg-primary/5' : ''
+                  }`}
                 onClick={() => {
                   if (!notification.read) {
                     markAsRead(notification.id)
@@ -243,8 +212,8 @@ export function NotificationBell({ userId }: NotificationBellProps) {
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link 
-                href="/dashboard/notifications" 
+              <Link
+                href="/dashboard/notifications"
                 className="w-full text-center text-sm cursor-pointer"
               >
                 View all notifications

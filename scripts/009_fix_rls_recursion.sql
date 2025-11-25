@@ -16,8 +16,9 @@ stable
 as $$
 begin
   return exists (
-    select 1 from public.profiles
-    where id = auth.uid() and role = 'admin'
+    select 1 from public.profiles p
+    inner join public.roles r on p.role_id = r.id
+    where p.id = auth.uid() and r.role_name in ('admin', 'moderator')
   );
 end;
 $$;

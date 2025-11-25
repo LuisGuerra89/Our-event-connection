@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createServerClient } from "@/lib/supabase/server"
 import { MatchList } from "@/components/match-list"
+import { IncompleteProfileBanner } from "@/components/incomplete-profile-banner"
 
 export default async function MatchesPage() {
   const supabase = await createServerClient()
@@ -10,13 +11,21 @@ export default async function MatchesPage() {
     redirect("/auth/login")
   }
 
-  // Fetch all users with their attributes (excluding current user)
+  // Fetch current user profile to check if questionnaire is complete
+  const { data: userProfile } = await supabase
+    .from("profiles")
+    .select("questionnaire_completed")
+    .eq("id", data.user.id)
+    .single()
+
+  // Fetch all users with their attributes (excluding current user and excluding admins/moderators)
   const { data: users } = await supabase
     .from("profiles")
     .select(`
       *,
       user_attributes (*)
     `)
+    .eq("role", "user")
     .neq("id", data.user.id)
 
   // Fetch current user's preferences
@@ -25,6 +34,8 @@ export default async function MatchesPage() {
     .select("*")
     .eq("user_id", data.user.id)
     .single()
+
+  const isProfileComplete = userProfile?.questionnaire_completed === true
 
   return (
     <div className="min-h-full">
@@ -36,6 +47,9 @@ export default async function MatchesPage() {
       </header>
 
       <main className="container mx-auto px-6 py-8">
+        {!isProfileComplete && (
+          <IncompleteProfileBanner userId={data.user.id} />
+        )}
         <MatchList users={users || []} preferences={myPreferences} />
       </main>
     </div>

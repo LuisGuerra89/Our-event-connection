@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,7 @@ import { Calendar, MapPin, Users, Clock, DollarSign, ArrowLeft, Building2, Globe
 import { format } from "date-fns"
 import Link from "next/link"
 import Image from "next/image"
+import { MembershipRequiredModal } from "@/components/membership-required-modal"
 
 interface EventDetailsProps {
   event: any
@@ -22,37 +23,112 @@ export function EventDetails({ event, userId, isRegistered, registrationStatus }
   const [isLoading, setIsLoading] = useState(false)
   const [registered, setRegistered] = useState(isRegistered)
   const [status, setStatus] = useState(registrationStatus)
+  const [showMembershipModal, setShowMembershipModal] = useState(false)
+  const [attendeeCount, setAttendeeCount] = useState(event.current_attendees || 0)
   const router = useRouter()
 
+  // Fetch real-time attendee count
+  useEffect(() => {
+    const fetchAttendeeCount = async () => {
+      const supabase = createClient()
+      try {
+        const { count, error } = await supabase
+          .from("event_attendees")
+          .select("id", { count: "exact", head: true })
+          .eq("event_id", event.id)
+          .eq("status", "registered")
+
+        if (error) {
+          console.error("Error fetching attendee count:", error.message, error.code)
+          return
+        }
+
+        if (count !== null) {
+          console.log(`Event ${event.id} attendee count: ${count}`)
+          setAttendeeCount(count)
+        }
+      } catch (err) {
+        console.error("Exception fetching attendee count:", err)
+      }
+    }
+
+    // Fetch immediately
+    fetchAttendeeCount()
+
+    // Poll every 2 seconds
+    const pollInterval = setInterval(fetchAttendeeCount, 2000)
+
+    return () => clearInterval(pollInterval)
+  }, [event.id, registered])
+
   const handleRegister = async () => {
-    if (!userId) {
+    setIsLoading(true)
+    const supabase = createClient()
+
+    // Get current authenticated user from Supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    console.log("Auth check in handleRegister:", { user: user?.id, authError })
+
+    if (!user) {
+      setIsLoading(false)
       router.push(`/auth/login?redirect=/events/${event.id}`)
       return
     }
 
-    setIsLoading(true)
-    const supabase = createClient()
-
     // Check if membership is required and user has active subscription
     if (event.subscription_required) {
       try {
-        const { data: subscription } = await supabase
+        // Get user's subscriptions (returns array, not single)
+        const { data: subscriptions, error } = await supabase
           .from("user_subscriptions")
-          .select("id")
-          .eq("user_id", userId)
-          .eq("status", "active")
-          .single()
+          .select("id, status, end_date")
+          .eq("user_id", user.id)
 
-        if (!subscription) {
-          alert("This event requires an active membership. Please subscribe first.")
-          router.push("/membership")
+        console.log("Subscription check:", { 
+          subscriptions, 
+          error, 
+          userId: user.id, 
+          count: subscriptions?.length,
+          firstSub: subscriptions?.[0],
+          errorCode: error?.code,
+          errorMessage: error?.message
+        })
+
+        // Log the full error object to see what's wrong
+        if (error) {
+          console.error("Full error object:", JSON.stringify(error, null, 2))
+        }
+
+        if (error && error.code !== 'PGRST116') {
+          console.error("Error checking subscription:", error)
+          setShowMembershipModal(true)
           setIsLoading(false)
           return
         }
+
+        // Check if subscription exists and is active
+        const subscription = subscriptions?.[0]
+        if (!subscription || subscription.status !== "active") {
+          console.log("No active subscription found for user", user.id, "Status:", subscription?.status)
+          setShowMembershipModal(true)
+          setIsLoading(false)
+          return
+        }
+
+        // Check if subscription has expired
+        if (subscription.end_date && new Date(subscription.end_date) < new Date()) {
+          console.log("Subscription expired for user", user.id)
+          setShowMembershipModal(true)
+          setIsLoading(false)
+          return
+        }
+
+        // User has active membership, continue with registration
+        console.log("User has active subscription, proceeding with registration")
       } catch (err) {
         console.error("Error checking subscription:", err)
-        alert("This event requires an active membership. Please subscribe first.")
-        router.push("/membership")
+        setShowMembershipModal(true)
         setIsLoading(false)
         return
       }
@@ -61,6 +137,7 @@ export function EventDetails({ event, userId, isRegistered, registrationStatus }
     // If event has a price, redirect to payment/checkout
     if (event.price > 0) {
       router.push(`/events/${event.id}/checkout`)
+      setIsLoading(false)
       return
     }
 
@@ -68,18 +145,14 @@ export function EventDetails({ event, userId, isRegistered, registrationStatus }
     try {
       const { error } = await supabase.from("event_attendees").insert({
         event_id: event.id,
-        user_id: userId,
+        user_id: user.id,
         status: "registered",
       })
 
       if (error) throw error
 
-      // Update event attendee count
-      await supabase
-        .from("events")
-        .update({ current_attendees: event.current_attendees + 1 })
-        .eq("id", event.id)
-
+      // Increment local attendee count (DB trigger updates current_attendees)
+      setAttendeeCount(prev => prev + 1)
       setRegistered(true)
       setStatus("registered")
       router.refresh()
@@ -104,12 +177,8 @@ export function EventDetails({ event, userId, isRegistered, registrationStatus }
 
       if (error) throw error
 
-      // Update event attendee count
-      await supabase
-        .from("events")
-        .update({ current_attendees: Math.max(0, event.current_attendees - 1) })
-        .eq("id", event.id)
-
+      // Decrement local attendee count (DB trigger updates current_attendees)
+      setAttendeeCount(prev => Math.max(0, prev - 1))
       setStatus("cancelled")
       router.refresh()
     } catch (err) {
@@ -231,7 +300,7 @@ export function EventDetails({ event, userId, isRegistered, registrationStatus }
               <div>
                 <p className="font-medium">Capacity</p>
                 <p className="text-sm text-muted-foreground">
-                  {event.current_attendees || 0}
+                  {attendeeCount}
                   {event.capacity && ` / ${event.capacity}`} registered
                 </p>
               </div>
@@ -351,13 +420,13 @@ export function EventDetails({ event, userId, isRegistered, registrationStatus }
             ) : (
               <Button
                 onClick={handleRegister}
-                disabled={isLoading || (event.capacity && event.current_attendees >= event.capacity)}
+                disabled={isLoading || (event.capacity && attendeeCount >= event.capacity)}
                 className="w-full"
                 size="lg"
               >
                 {isLoading
                   ? event.price > 0 ? "Redirecting to checkout..." : "Registering..."
-                  : event.capacity && event.current_attendees >= event.capacity
+                  : event.capacity && attendeeCount >= event.capacity
                     ? "Event Full"
                     : event.price > 0 
                       ? `Purchase Ticket - $${event.price.toFixed(2)}`
@@ -367,6 +436,18 @@ export function EventDetails({ event, userId, isRegistered, registrationStatus }
           </div>
         </CardContent>
       </Card>
+
+      {/* Membership Required Modal */}
+      <MembershipRequiredModal
+        isOpen={showMembershipModal}
+        onClose={() => setShowMembershipModal(false)}
+        eventTitle={event.title}
+        onUpgrade={() => {
+          setShowMembershipModal(false)
+          router.push("/membership")
+        }}
+        isLoading={isLoading}
+      />
     </div>
   )
 }

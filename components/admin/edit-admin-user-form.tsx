@@ -18,14 +18,14 @@ interface Role {
 
 interface AdminUser {
   id: string
-  user_id: string
-  username: string
-  first_name: string
-  last_name: string | null
+  full_name: string
+  phone: string | null
   email: string
-  mobile: string | null
+  bio: string | null
+  location_city: string | null
+  location_state: string | null
+  location_country: string | null
   role_id: string
-  status: string
   roles?: {
     id: string
     role_name: string
@@ -37,13 +37,11 @@ export function EditAdminUserForm({ adminUser, roles }: { adminUser: AdminUser; 
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
-    username: adminUser.username,
-    email: adminUser.email,
-    firstName: adminUser.first_name,
-    lastName: adminUser.last_name || "",
-    mobile: adminUser.mobile || "",
+    fullName: adminUser.full_name || "",
+    email: adminUser.email || "",
+    phone: adminUser.phone || "",
+    bio: adminUser.bio || "",
     roleId: adminUser.role_id,
-    status: adminUser.status,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,15 +52,12 @@ export function EditAdminUserForm({ adminUser, roles }: { adminUser: AdminUser; 
       const supabase = createBrowserClient()
 
       const { error } = await supabase
-        .from("admin_users")
+        .from("profiles")
         .update({
-          username: formData.username,
-          email: formData.email,
-          first_name: formData.firstName,
-          last_name: formData.lastName || null,
-          mobile: formData.mobile || null,
+          full_name: formData.fullName,
+          phone: formData.phone || null,
+          bio: formData.bio || null,
           role_id: formData.roleId,
-          status: formData.status,
           updated_at: new Date().toISOString(),
         })
         .eq("id", adminUser.id)
@@ -91,48 +86,32 @@ export function EditAdminUserForm({ adminUser, roles }: { adminUser: AdminUser; 
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="username">Username *</Label>
-          <Input
-            id="username"
-            required
-            value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-          />
-        </div>
-        <div className="space-y-2">
           <Label htmlFor="email">Email *</Label>
           <Input
             id="email"
             type="email"
-            required
+            disabled
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            className="bg-muted cursor-not-allowed"
           />
+          <p className="text-xs text-muted-foreground">Email cannot be changed</p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="firstName">First Name *</Label>
+          <Label htmlFor="fullName">Full Name *</Label>
           <Input
-            id="firstName"
+            id="fullName"
             required
-            value={formData.firstName}
-            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+            value={formData.fullName}
+            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="lastName">Last Name</Label>
+          <Label htmlFor="phone">Phone</Label>
           <Input
-            id="lastName"
-            value={formData.lastName}
-            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="mobile">Mobile</Label>
-          <Input
-            id="mobile"
+            id="phone"
             type="tel"
-            value={formData.mobile}
-            onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+            value={formData.phone}
+            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
           />
         </div>
         <div className="space-y-2">
@@ -150,18 +129,16 @@ export function EditAdminUserForm({ adminUser, roles }: { adminUser: AdminUser; 
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="status">Status *</Label>
-          <Select required value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="bio">Bio</Label>
+        <Input
+          id="bio"
+          value={formData.bio}
+          onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+          placeholder="Brief bio"
+        />
       </div>
 
       <div className="flex gap-4">

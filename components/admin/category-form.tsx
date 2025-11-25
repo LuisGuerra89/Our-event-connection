@@ -21,7 +21,7 @@ const categorySchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   slug: z.string().min(1, "Slug is required").max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase alphanumeric with hyphens"),
   description: z.string().min(1, "Description is required"),
-  image_url: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  image_url: z.string().refine((val) => !val || /^https?:\/\/.+/.test(val), "Must be a valid URL or empty"),
   display_order: z.coerce.number().int().min(0, "Display order must be 0 or greater"),
   is_featured: z.boolean().default(false),
   status: z.enum(["active", "inactive"]).default("active"),

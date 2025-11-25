@@ -26,6 +26,7 @@ interface Role {
   description: string | null
   status: string
   created_at: string
+  user_count?: number
   profiles?: { count: number }[]
 }
 
@@ -37,8 +38,13 @@ export function RolesTable({ roles }: { roles: Role[] }) {
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // List of system roles that cannot be edited or deleted
+  const systemRoles = ["admin", "moderator", "user"]
+  const isSystemRole = (roleName: string) => systemRoles.includes(roleName)
+
   const getUserCount = (role: Role) => {
-    return role.profiles?.[0]?.count || 0
+    // Check both user_count (new structure) and profiles (old structure)
+    return role.user_count ?? role.profiles?.[0]?.count ?? 0
   }
 
   const filteredRoles = roles.filter((role) => {
@@ -51,6 +57,14 @@ export function RolesTable({ roles }: { roles: Role[] }) {
   })
 
   const handleDeleteClick = (role: Role) => {
+    if (isSystemRole(role.role_name)) {
+      toast({
+        title: "Error",
+        description: "System roles (admin, moderator, user) cannot be deleted",
+        variant: "destructive",
+      })
+      return
+    }
     setRoleToDelete(role)
     setDeleteDialogOpen(true)
   }
@@ -147,19 +161,41 @@ export function RolesTable({ roles }: { roles: Role[] }) {
                           <Shield className="h-4 w-4" />
                         </Link>
                       </Button>
-                      <Button variant="ghost" size="icon" asChild title="Edit Role">
-                        <Link href={`/admin/roles/${role.id}`}>
-                          <Edit className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteClick(role)}
-                        title="Delete Role"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      {isSystemRole(role.role_name) ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled
+                          title="System roles cannot be edited"
+                        >
+                          <Edit className="h-4 w-4 opacity-50" />
+                        </Button>
+                      ) : (
+                        <Button variant="ghost" size="icon" asChild title="Edit Role">
+                          <Link href={`/admin/roles/${role.id}`}>
+                            <Edit className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      )}
+                      {isSystemRole(role.role_name) ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled
+                          title="System roles cannot be deleted"
+                        >
+                          <Trash2 className="h-4 w-4 opacity-50 text-destructive" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteClick(role)}
+                          title="Delete Role"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

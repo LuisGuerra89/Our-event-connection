@@ -43,7 +43,7 @@ export function ProfileForm({ userId, existingProfile }: ProfileFormProps) {
 
       if (profileError) throw profileError
 
-      router.push("/onboarding/attributes")
+      router.push("/onboarding/complete-profile")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save profile")
     } finally {

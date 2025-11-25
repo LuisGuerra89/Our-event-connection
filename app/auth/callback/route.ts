@@ -24,38 +24,28 @@ export async function GET(request: Request) {
       const { data: { user } } = await supabase.auth.getUser()
       
       if (user) {
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("is_profile_complete, role")
-          .eq("id", user.id)
-          .maybeSingle()
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("questionnaire_completed, questionnaire_skipped, role_id, roles(role_name)")
+        .eq("id", user.id)
+        .maybeSingle()
 
-        console.log("[v0] User profile retrieved:", { user_id: user.id, profile, error: profileError })
+      console.log("[v0] User profile retrieved:", { user_id: user.id, profile, error: profileError })
 
-        // If user is admin or moderator, redirect to admin dashboard directly
-        if (profile && (profile.role === "admin" || profile.role === "moderator")) {
-          console.log("[v0] User is admin/moderator, redirecting to /admin")
-          return NextResponse.redirect(new URL("/admin", request.url))
-        }
+      // If user is admin or moderator, redirect to admin dashboard directly
+      const profileWithRole = profile as { questionnaire_completed: boolean; questionnaire_skipped: boolean; roles: { role_name: string } | null } | null
+      const roleName = profileWithRole?.roles?.role_name
+      
+      if (profile && (roleName === "admin" || roleName === "moderator")) {
+        console.log("[v0] User is admin/moderator, redirecting to /admin")
+        return NextResponse.redirect(new URL("/admin", request.url))
+      }
 
-        // Fallback: check if user is in admin_users table (for newly created admins)
-        if (!profile) {
-          const { data: adminUser } = await supabase
-            .from("admin_users")
-            .select("id")
-            .eq("user_id", user.id)
-            .maybeSingle()
-
-          if (adminUser) {
-            console.log("[v0] User found in admin_users table, redirecting to /admin")
-            return NextResponse.redirect(new URL("/admin", request.url))
-          }
-        }
-
-        // If social login user hasn't completed profile, redirect to complete profile page
-        if (profile && profile.is_profile_complete === false) {
-          return NextResponse.redirect(new URL("/onboarding/complete-profile", request.url))
-        }
+      // If profile is not complete (social login) or was skipped, redirect to complete profile page
+      if (profile && (profile.questionnaire_completed === false || profile.questionnaire_skipped === true)) {
+        console.log("[v0] Profile incomplete or skipped, redirecting to /onboarding/complete-profile")
+        return NextResponse.redirect(new URL("/onboarding/complete-profile", request.url))
+      }
 
         // Check if user has completed waiver
         const { data: waiver } = await supabase
@@ -65,10 +55,12 @@ export async function GET(request: Request) {
           .maybeSingle()
 
         if (!waiver) {
+          console.log("[v0] User has no waiver, redirecting to /onboarding/waiver")
           return NextResponse.redirect(new URL("/onboarding/waiver", request.url))
         }
 
         // User has completed everything, go to dashboard
+        console.log("[v0] User profile complete, redirecting to /dashboard")
         return NextResponse.redirect(new URL("/dashboard", request.url))
       }
 

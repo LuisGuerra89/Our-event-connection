@@ -21,18 +21,11 @@ import { useToast } from "@/hooks/use-toast"
 
 interface AdminUser {
   id: string
-  user_id: string
-  username: string
-  first_name: string
-  last_name: string | null
+  full_name: string
   email: string
-  mobile: string | null
+  role: string
   status: string
   created_at: string
-  roles?: {
-    id: string
-    role_name: string
-  }
 }
 
 export function AdminUsersTable({ adminUsers }: { adminUsers: AdminUser[] }) {
@@ -46,7 +39,7 @@ export function AdminUsersTable({ adminUsers }: { adminUsers: AdminUser[] }) {
 
     setIsDeleting(true)
     try {
-      const result = await deleteAdminUser(deleteUser.id, deleteUser.user_id)
+      const result = await deleteAdminUser(deleteUser.id)
 
       if (result.success) {
         toast({
@@ -98,12 +91,12 @@ export function AdminUsersTable({ adminUsers }: { adminUsers: AdminUser[] }) {
           ) : (
             adminUsers.map((user) => (
               <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.username}</TableCell>
-                <TableCell>
-                  {user.first_name} {user.last_name}
-                </TableCell>
+                <TableCell className="font-medium">{user.full_name || "—"}</TableCell>
+                <TableCell>{user.full_name || "—"}</TableCell>
                 <TableCell>{user.email}</TableCell>
-                <TableCell>{user.roles?.role_name || "—"}</TableCell>
+                <TableCell>
+                  <Badge variant="default">{user.role === "admin" ? "Admin" : "Moderator"}</Badge>
+                </TableCell>
                 <TableCell>
                   <Badge variant={user.status === "active" ? "default" : "secondary"}>{user.status}</Badge>
                 </TableCell>
@@ -142,8 +135,8 @@ export function AdminUsersTable({ adminUsers }: { adminUsers: AdminUser[] }) {
         <ResetPasswordDialog
           open={!!resetPasswordUser}
           onOpenChange={(open) => !open && setResetPasswordUser(null)}
-          userId={resetPasswordUser.user_id}
-          userName={`${resetPasswordUser.first_name} ${resetPasswordUser.last_name || ""}`.trim()}
+          userId={resetPasswordUser.id}
+          userName={resetPasswordUser.full_name || "Admin User"}
           userEmail={resetPasswordUser.email}
         />
       )}
@@ -152,9 +145,9 @@ export function AdminUsersTable({ adminUsers }: { adminUsers: AdminUser[] }) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Admin User</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete <strong>{deleteUser?.first_name} {deleteUser?.last_name}</strong> ({deleteUser?.email})?
-            </AlertDialogDescription>
+          <AlertDialogDescription>
+            Are you sure you want to delete <strong>{deleteUser?.full_name}</strong> ({deleteUser?.email})?
+          </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">This will:</p>

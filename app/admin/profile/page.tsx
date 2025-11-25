@@ -2,8 +2,15 @@ import { createServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { EditProfileForm } from "@/components/admin/edit-profile-form"
+import { isAdmin } from "@/lib/auth-utils"
 
 export default async function AdminProfilePage() {
+  // Check if user is admin
+  const admin = await isAdmin()
+  if (!admin) {
+    redirect("/dashboard")
+  }
+
   const supabase = await createServerClient()
   const {
     data: { user },
@@ -13,13 +20,16 @@ export default async function AdminProfilePage() {
     redirect("/auth/login")
   }
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
-
-  if (profile?.role !== "admin") {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, role_id, phone, full_name, bio, location_city, location_state, location_country, roles(role_name)")
+    .eq("id", user.id)
+    .single()
+  
+  const profileWithRole = profile as { role_id: string; roles: { role_name: string } } | null
+  if (!profileWithRole) {
     redirect("/dashboard")
   }
-
-  const { data: adminUser } = await supabase.from("admin_users").select("*").eq("user_id", user.id).maybeSingle()
 
   return (
     <div className="container mx-auto py-8">
@@ -35,7 +45,7 @@ export default async function AdminProfilePage() {
             <CardDescription>Update your personal details</CardDescription>
           </CardHeader>
           <CardContent>
-            <EditProfileForm userId={user.id} profile={profile} adminUser={adminUser} userEmail={user.email || ""} />
+            <EditProfileForm userId={user.id} profile={profile} adminUser={null} userEmail={user.email || ""} />
           </CardContent>
         </Card>
       </div>

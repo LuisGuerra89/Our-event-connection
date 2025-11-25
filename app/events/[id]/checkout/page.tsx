@@ -10,21 +10,22 @@ import { format } from "date-fns"
 export default async function EventCheckoutPage({ 
   params 
 }: { 
-  params: { id: string } 
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params
   const supabase = await createServerClient()
 
   // Get user
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    redirect(`/auth/login?redirect=/events/${params.id}/checkout`)
+    redirect(`/auth/login?redirect=/events/${id}/checkout`)
   }
 
   // Get event details
   const { data: event, error } = await supabase
     .from("events")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (error || !event) {
@@ -47,6 +48,26 @@ export default async function EventCheckoutPage({
   // Check if event is full
   if (event.capacity && event.current_attendees >= event.capacity) {
     redirect(`/events/${params.id}`)
+  }
+
+  // Check if membership is required and user has active subscription
+  if (event.subscription_required) {
+    const { data: subscriptions, error: subError } = await supabase
+      .from("user_subscriptions")
+      .select("id, status, end_date")
+      .eq("user_id", user.id)
+
+    const subscription = subscriptions?.[0]
+
+    // Check if subscription exists and is active
+    if (!subscription || subscription.status !== "active") {
+      redirect(`/events/${params.id}`)
+    }
+
+    // Check if subscription has expired
+    if (subscription.end_date && new Date(subscription.end_date) < new Date()) {
+      redirect(`/events/${params.id}`)
+    }
   }
 
   return (

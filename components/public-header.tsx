@@ -4,10 +4,11 @@ import { Logo } from "@/components/logo"
 import { createClient } from "@/lib/supabase/server"
 import { UserMenu } from "@/components/user-menu"
 import { NotificationBell } from "@/components/notification-bell"
+import { ChatButton } from "@/components/chat-button"
 
 export async function PublicHeader() {
   const supabase = await createClient()
-  
+
   // Check if user is authenticated
   const { data } = await supabase.auth.getUser()
   const user = data?.user
@@ -17,10 +18,10 @@ export async function PublicHeader() {
   if (user) {
     const { data: profileData } = await supabase
       .from("profiles")
-      .select("full_name, profile_photo_url")
+      .select("full_name, profile_photo_url, profile_image_url")
       .eq("id", user.id)
       .single()
-    
+
     profile = profileData
   }
 
@@ -28,7 +29,7 @@ export async function PublicHeader() {
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-2 md:gap-4">
         <Logo />
-        
+
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
           <Link href="/events" className="text-sm font-medium hover:text-primary transition-colors">
@@ -53,15 +54,16 @@ export async function PublicHeader() {
             Contact Us
           </Link>
         </nav>
-        
+
         {/* Auth Section */}
         <div className="flex items-center gap-2 md:gap-4 ml-auto">
           {user && profile ? (
             <>
+              <ChatButton userId={user.id} />
               <NotificationBell userId={user.id} />
-              <UserMenu 
-                userName={profile.full_name || user.email || "User"} 
-                userPhoto={profile.profile_photo_url}
+              <UserMenu
+                userName={profile.full_name || user.email || "User"}
+                userPhoto={profile.profile_image_url || profile.profile_photo_url}
               />
             </>
           ) : (

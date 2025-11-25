@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { isAdmin } from "@/lib/auth-utils"
+import { isAdmin, hasPrivilege, getCurrentUser } from "@/lib/auth-utils"
 import { createServerClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Calendar, DollarSign, Ticket, UserCircle2, CalendarCheck, CalendarClock, CalendarX } from "lucide-react"
@@ -10,6 +10,13 @@ export default async function AdminDashboard() {
   const admin = await isAdmin()
   if (!admin) {
     redirect("/dashboard")
+  }
+
+  // For admin users, grant access (admins have all privileges by default)
+  // For other roles, check specific privilege
+  const currentUser = await getCurrentUser()
+  if (!currentUser) {
+    redirect("/auth/login")
   }
 
   const supabase = await createServerClient()

@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import {
   DropdownMenu,
@@ -13,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { User, LayoutDashboard, LogOut } from "lucide-react"
+import { User, LayoutDashboard, LogOut, Heart } from "lucide-react"
 
 interface UserMenuProps {
   userName: string
@@ -56,6 +55,15 @@ export function UserMenu({ userName, userPhoto }: UserMenuProps) {
     }
   }
 
+  // Force refresh when navigating to profile to see updated image
+  const handleProfileClick = () => {
+    router.push("/dashboard/profile")
+    // Refresca la página para asegurar que la imagen se actualice
+    setTimeout(() => {
+      router.refresh()
+    }, 100)
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -85,11 +93,16 @@ export function UserMenu({ userName, userPhoto }: UserMenuProps) {
             <span>Dashboard</span>
           </a>
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer">
+          <User className="mr-2 h-4 w-4" />
+          <span>Profile</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/profile" className="cursor-pointer">
-            <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
-          </Link>
+          <a href="/dashboard/matches" className="cursor-pointer">
+            <Heart className="mr-2 h-4 w-4" />
+            <span>My Matches</span>
+          </a>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

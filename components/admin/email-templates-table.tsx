@@ -36,8 +36,9 @@ export function EmailTemplatesTable({ templates }: { templates: EmailTemplate[] 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [templateToDelete, setTemplateToDelete] = useState<EmailTemplate | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [filteredTemplatesList, setFilteredTemplatesList] = useState(templates)
 
-  const filteredTemplates = templates.filter((template) => {
+  const filteredTemplates = filteredTemplatesList.filter((template) => {
     const searchLower = searchTerm.toLowerCase()
     return (
       template.template_name.toLowerCase().includes(searchLower) ||
@@ -61,12 +62,13 @@ export function EmailTemplatesTable({ templates }: { templates: EmailTemplate[] 
 
       if (error) throw error
 
+      // Remove the deleted template from local state
+      setFilteredTemplatesList((prev) => prev.filter((t) => t.id !== templateToDelete.id))
+
       toast({
         title: "Success",
         description: "Email template deleted successfully",
       })
-
-      router.refresh()
     } catch (error) {
       toast({
         title: "Error",

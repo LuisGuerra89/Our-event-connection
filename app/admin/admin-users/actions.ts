@@ -3,7 +3,7 @@
 import { createServerClient, createAdminClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
-export async function deleteAdminUser(adminUserId: string, authUserId: string) {
+export async function deleteAdminUser(userId: string) {
   try {
     const supabase = await createServerClient()
 
@@ -26,51 +26,79 @@ export async function deleteAdminUser(adminUserId: string, authUserId: string) {
       return { success: false, error: "Forbidden: Only admins can delete admin users" }
     }
 
-    console.log("[v0] Deleting admin user:", adminUserId, "with auth user:", authUserId)
+    console.log("[v0] Deleting admin user:", userId)
 
-    // Step 1: Delete from admin_users table
-    const { error: adminUserError } = await supabase
-      .from("admin_users")
-      .delete()
-      .eq("id", adminUserId)
+    // Delete all related data in order (cascade dependencies)
+    // 1. First get all events where user is attendee
+    const { data: attendedEvents } = await supabase
+      .from("event_attendees")
+      .select("event_id")
+      .eq("user_id", userId)
 
-    if (adminUserError) {
-      console.error("[v0] Error deleting admin_users record:", adminUserError)
-      return { success: false, error: `Failed to delete admin user: ${adminUserError.message}` }
+    const eventIds = attendedEvents?.map(ea => ea.event_id) || []
+
+    // 2. Delete event_attendees for all those events
+    if (eventIds.length > 0) {
+      await supabase
+        .from("event_attendees")
+        .delete()
+        .in("event_id", eventIds)
     }
 
-    console.log("[v0] Admin user record deleted successfully")
+    // 3. Delete event_attendees directly for this user
+    await supabase
+      .from("event_attendees")
+      .delete()
+      .eq("user_id", userId)
 
-    // Step 2: Delete from profiles table
+    // 4. Delete events created by this user
+    await supabase
+      .from("events")
+      .delete()
+      .eq("created_by", userId)
+
+    // 5. Delete from matches
+    await supabase
+      .from("matches")
+      .delete()
+      .or(`user_id.eq.${userId},matched_user_id.eq.${userId}`)
+
+    // 6. Delete from waivers
+    await supabase
+      .from("waivers")
+      .delete()
+      .eq("user_id", userId)
+
+    // 7. Delete from user_attributes
+    await supabase
+      .from("user_attributes")
+      .delete()
+      .eq("user_id", userId)
+
+    // 8. Delete from preferences
+    await supabase
+      .from("preferences")
+      .delete()
+      .eq("user_id", userId)
+
+    // 9. Delete from chat_messages
+    await supabase
+      .from("chat_messages")
+      .delete()
+      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+
+    // 7. Delete from profiles (this will cascade delete to auth.users due to foreign key)
     const { error: profileError } = await supabase
       .from("profiles")
       .delete()
-      .eq("id", authUserId)
+      .eq("id", userId)
 
     if (profileError) {
       console.error("[v0] Error deleting profile record:", profileError)
-      // Continue anyway
+      return { success: false, error: `Failed to delete admin user: ${profileError.message}` }
     }
 
-    console.log("[v0] Profile record deleted successfully")
-
-    // Step 3: Delete from auth.users using admin client
-    if (authUserId) {
-      console.log("[v0] Deleting auth user:", authUserId)
-      const adminClient = createAdminClient()
-      const { error: authError } = await adminClient.auth.admin.deleteUser(authUserId)
-
-      if (authError) {
-        console.error("[v0] Error deleting auth user:", authError)
-        // Note: admin_users was already deleted, so we continue
-        return { 
-          success: true, 
-          warning: `Admin user deleted from database but could not delete from authentication: ${authError.message}` 
-        }
-      }
-
-      console.log("[v0] Auth user deleted successfully")
-    }
+    console.log("[v0] Admin user deleted successfully with all related data")
 
     // Revalidate the admin users page
     revalidatePath("/admin/admin-users")

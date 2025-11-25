@@ -45,28 +45,19 @@ CREATE POLICY "event_photos_select_all"
 CREATE POLICY "event_photos_insert_admin"
   ON public.event_photos FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
-    )
+    public.current_user_is_admin()
   );
 
 CREATE POLICY "event_photos_update_admin"
   ON public.event_photos FOR UPDATE
   USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
-    )
+    public.current_user_is_admin()
   );
 
 CREATE POLICY "event_photos_delete_admin"
   ON public.event_photos FOR DELETE
   USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
-    )
+    public.current_user_is_admin()
   );
 
 -- Create indexes

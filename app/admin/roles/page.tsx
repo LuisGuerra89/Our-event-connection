@@ -2,6 +2,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { RolesTable } from "@/components/admin/roles-table"
+import { isAdmin } from "@/lib/auth-utils"
 
 export default async function AdminRolesPage() {
   const supabase = await createServerClient()
@@ -13,6 +14,12 @@ export default async function AdminRolesPage() {
     redirect("/auth/login")
   }
 
+  // Check if user is admin
+  const admin = await isAdmin()
+  if (!admin) {
+    redirect("/dashboard")
+  }
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("role_id, roles(role_name)")
@@ -20,35 +27,39 @@ export default async function AdminRolesPage() {
     .single()
 
   // Check if user is admin
-  const isAdmin = profile?.roles && typeof profile.roles === 'object' && 'role_name' in profile.roles 
+  const isAdminUser = profile?.roles && typeof profile.roles === 'object' && 'role_name' in profile.roles 
     ? profile.roles.role_name === "admin" 
     : false
 
-  if (!isAdmin) {
+  if (!isAdminUser) {
     redirect("/dashboard")
   }
 
-  // Get roles
-  const { data: roles, error: rolesError } = await supabase
+  // Get user counts by role from profiles table using role_id and roles join
+  let rolesWithCount = []
+  
+  // Fetch all roles first
+  const { data: allRoles } = await supabase
     .from("roles")
     .select("*")
-    .order("created_at", { ascending: false })
-
-  // Get user count for each role
-  let rolesWithCount = roles || []
-  if (roles) {
-    const countsPromises = roles.map(async (role) => {
-      const { count } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .eq("role_id", role.id)
-      
-      return {
-        ...role,
-        profiles: [{ count: count || 0 }]
-      }
-    })
-    rolesWithCount = await Promise.all(countsPromises)
+    .eq("status", "active")
+    .order("role_name")
+  
+  // Count users for each role
+  if (allRoles) {
+    rolesWithCount = await Promise.all(
+      allRoles.map(async (role) => {
+        const { count } = await supabase
+          .from("profiles")
+          .select("*", { count: "exact", head: true })
+          .eq("role_id", role.id)
+        
+        return {
+          ...role,
+          user_count: count || 0
+        }
+      })
+    )
   }
 
   return (

@@ -11,21 +11,22 @@ import Link from "next/link"
 export default async function EventSuccessPage({ 
   params 
 }: { 
-  params: { id: string } 
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params
   const supabase = await createServerClient()
 
   // Get user
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    redirect(`/auth/login?redirect=/events/${params.id}`)
+    redirect(`/auth/login?redirect=/events/${id}`)
   }
 
   // Get event details
   const { data: event } = await supabase
     .from("events")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (!event) {
@@ -42,7 +43,7 @@ export default async function EventSuccessPage({
     .single()
 
   if (!registration) {
-    redirect(`/events/${params.id}`)
+    redirect(`/events/${id}`)
   }
 
   // Get user profile for email
@@ -149,7 +150,7 @@ export default async function EventSuccessPage({
               </div>
 
               <Button asChild className="w-full" size="lg">
-                <Link href="/app/dashboard">
+                <Link href="/dashboard">
                   Go to Dashboard
                 </Link>
               </Button>

@@ -33,12 +33,22 @@ import { useState } from "react"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Logo } from "@/components/logo"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSidebar } from "@/components/admin/admin-layout-client"
 
 interface AppSidebarProps {
   userRole?: string
   userName?: string
   userEmail?: string
+  userImage?: string | null
+  userPrivileges?: string[]
+}
+
+interface MenuItem {
+  title: string
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  requiredPrivileges?: string[]
 }
 
 const userNavItems = [
@@ -46,6 +56,11 @@ const userNavItems = [
     title: "Dashboard",
     href: "/dashboard",
     icon: Home,
+  },
+  {
+    title: "Messages",
+    href: "/dashboard/chat",
+    icon: MessageSquare,
   },
   {
     title: "Events",
@@ -67,112 +82,137 @@ const userNavItems = [
     href: "/dashboard/referrals",
     icon: Gift,
   },
+  {
+    title: "Settings",
+    href: "/dashboard/settings",
+    icon: Settings,
+  },
 ]
 
-const adminNavItems = [
+const adminNavItems: MenuItem[] = [
   {
     title: "Admin Dashboard",
     href: "/admin",
     icon: Shield,
+    requiredPrivileges: ["dashboard.view"],
   },
   {
     title: "Edit Profile",
     href: "/admin/profile",
     icon: UserCog,
+    requiredPrivileges: ["admin-profile.view"],
   },
   {
     title: "Change Password",
     href: "/admin/change-password",
     icon: KeyRound,
+    requiredPrivileges: ["change-password.update"],
   },
   {
     title: "Admin Users",
     href: "/admin/admin-users",
     icon: Shield,
+    requiredPrivileges: ["admin-users.view"],
   },
   {
     title: "Roles & Privileges",
     href: "/admin/roles",
     icon: Shield,
+    requiredPrivileges: ["roles.view"],
   },
   {
     title: "Manage Users",
     href: "/admin/users",
     icon: Users,
+    requiredPrivileges: ["users.view"],
   },
   {
     title: "Manage Events",
     href: "/admin/events",
     icon: Calendar,
+    requiredPrivileges: ["events.view"],
   },
   {
     title: "Settings",
     href: "/admin/settings",
     icon: Settings,
+    requiredPrivileges: ["settings.view"],
   },
   {
     title: "Email Templates",
     href: "/admin/email-templates",
     icon: Mail,
+    requiredPrivileges: ["email-templates.view"],
   },
   {
     title: "Email Recipients",
     href: "/admin/recipients",
     icon: Mail,
+    requiredPrivileges: ["recipients.view"],
   },
   {
     title: "Locations",
     href: "/admin/locations",
     icon: Globe,
+    requiredPrivileges: ["locations.view"],
   },
   {
     title: "Categories",
     href: "/admin/categories",
     icon: FolderTree,
+    requiredPrivileges: ["categories.view"],
   },
   {
     title: "Enums",
     href: "/admin/enums",
     icon: ListTree,
+    requiredPrivileges: ["enums.view"],
   },
   {
     title: "Content Pages",
     href: "/admin/content",
     icon: FileText,
+    requiredPrivileges: ["content.view"],
   },
   {
     title: "Affiliates",
     href: "/admin/affiliates",
     icon: Briefcase,
+    requiredPrivileges: ["affiliates.view"],
   },
   {
     title: "Subscriptions",
     href: "/admin/subscriptions",
     icon: CreditCard,
+    requiredPrivileges: ["subscriptions.view"],
   },
   {
     title: "Payments",
     href: "/admin/payments",
     icon: CreditCard,
+    requiredPrivileges: ["payments.view"],
   },
   {
     title: "Contact Forms",
     href: "/admin/contacts",
     icon: MessageSquare,
+    requiredPrivileges: ["contacts.view"],
   },
   {
     title: "Waivers",
     href: "/admin/waivers",
     icon: FileText,
+    requiredPrivileges: ["waivers.view"],
   },
   {
     title: "Analytics",
     href: "/admin/analytics",
     icon: TrendingUp,
+    requiredPrivileges: ["analytics.view"],
   },
 ]
 
-export function AppSidebar({ userRole, userName, userEmail }: AppSidebarProps) {
+export function AppSidebar({ userRole, userName, userEmail, userImage, userPrivileges = [] }: AppSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
@@ -184,7 +224,7 @@ export function AppSidebar({ userRole, userName, userEmail }: AppSidebarProps) {
       const response = await fetch("/api/auth/logout", {
         method: "POST",
       })
-      
+
       if (response.ok) {
         setTimeout(() => {
           router.push("/")
@@ -197,7 +237,20 @@ export function AppSidebar({ userRole, userName, userEmail }: AppSidebarProps) {
     }
   }
 
-  const navItems = isAdmin ? adminNavItems : userNavItems
+  // Filter menu items based on privileges
+  const hasPrivilege = (requiredPrivileges?: string[]) => {
+    if (!requiredPrivileges || requiredPrivileges.length === 0) {
+      return true
+    }
+    return requiredPrivileges.some(priv => userPrivileges.includes(priv))
+  }
+
+  let navItems = isAdmin ? adminNavItems : userNavItems
+  
+  // Filter admin items based on privileges
+  if (isAdmin && Array.isArray(adminNavItems)) {
+    navItems = adminNavItems.filter((item: MenuItem) => hasPrivilege(item.requiredPrivileges))
+  }
 
   return (
     <>
@@ -228,26 +281,28 @@ export function AppSidebar({ userRole, userName, userEmail }: AppSidebarProps) {
         )}
       >
         <div className="flex h-full flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
-            {!isCollapsed && <Logo className="text-base" />}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden lg:flex ml-auto"
-              onClick={() => setIsCollapsed(!isCollapsed)}
-            >
-              <ChevronLeft className={cn("h-4 w-4 transition-transform", isCollapsed && "rotate-180")} />
-            </Button>
+          {/* Logo */}
+          <div className="flex items-center justify-center p-4 border-b border-sidebar-border">
+            {isCollapsed ? (
+              <Logo className="h-8 w-8" />
+            ) : (
+              <Logo className="h-8 w-auto" />
+            )}
           </div>
 
           {/* User info */}
           {!isCollapsed && (userName || userEmail) && (
             <div className="p-4 border-b border-sidebar-border">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-sidebar-accent flex items-center justify-center">
-                  <User className="h-5 w-5 text-sidebar-accent-foreground" />
-                </div>
+                <Avatar className="h-10 w-10">
+                  {userImage ? (
+                    <AvatarImage src={userImage} alt={userName} />
+                  ) : (
+                    <AvatarFallback className="bg-sidebar-accent">
+                      <User className="h-5 w-5 text-sidebar-accent-foreground" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
                 <div className="flex-1 min-w-0">
                   {userName && <p className="text-sm font-medium text-sidebar-foreground truncate">{userName}</p>}
                   {userEmail && <p className="text-xs text-sidebar-foreground/60 truncate">{userEmail}</p>}
@@ -291,7 +346,7 @@ export function AppSidebar({ userRole, userName, userEmail }: AppSidebarProps) {
             <Button
               variant="ghost"
               className={cn(
-                "w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent/50",
+                "w-full justify-start text-sidebar-foreground/80 hover:bg-red-600/90 hover:text-white transition-colors",
                 isCollapsed && "justify-center px-2",
               )}
               onClick={handleSignOut}

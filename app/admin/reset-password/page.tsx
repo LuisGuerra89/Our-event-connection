@@ -12,7 +12,7 @@ import { createBrowserClient } from "@/lib/supabase/client"
 import { useRouter, useSearchParams } from "next/navigation"
 
 export default function AdminResetPasswordPage() {
-  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -34,18 +34,23 @@ export default function AdminResetPasswordPage() {
         return
       }
 
-      // Check if user is in admin_users table
-      const { data: adminUser } = await supabase
-        .from("admin_users")
-        .select("username, email")
-        .eq("user_id", user.id)
+      // Check if user is admin or moderator in profiles table
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("email, role_id, roles(role_name)")
+        .eq("id", user.id)
         .maybeSingle()
 
-      if (adminUser) {
-        setUsername(adminUser.username)
-        setValidToken(true)
+      if (profile) {
+        const userRole = (profile?.roles as any)?.role_name
+        if (userRole === "admin" || userRole === "moderator") {
+          setEmail(profile.email || "")
+          setValidToken(true)
+        } else {
+          setError("This reset link is not valid for admin accounts.")
+        }
       } else {
-        setError("This reset link is not valid for admin accounts.")
+        setError("User profile not found.")
       }
     }
 
@@ -155,8 +160,8 @@ export default function AdminResetPasswordPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input id="username" type="text" value={username} disabled className="bg-muted" />
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" value={email} disabled className="bg-muted" />
             </div>
 
             <div className="space-y-2">

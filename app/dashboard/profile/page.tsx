@@ -3,6 +3,13 @@ import { createServerClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { ProfileImageUpload } from "@/components/profile-image-upload"
+import { EditAttributes } from "@/components/edit-attributes"
+import { EditBasicInfo } from "@/components/edit-basic-info"
+import { EditAddress } from "@/components/edit-address"
+import { ProfileSectionPhase2 } from "@/components/profile-section-phase-2"
+import { ProfileSectionPhase5 } from "@/components/profile-section-phase-5"
+import { QuestionnaireStatus } from "@/components/questionnaire-status"
 import Link from "next/link"
 import { Edit, MapPin, Calendar, User } from "lucide-react"
 
@@ -44,17 +51,24 @@ export default async function ProfilePage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
+              <CardTitle>Profile Picture</CardTitle>
+              <CardDescription>Upload or change your profile picture</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProfileImageUpload
+                userName={profile?.display_name || profile?.full_name || "User"}
+                currentImageUrl={profile?.profile_image_url}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <div className="flex items-start justify-between">
                 <div>
                   <CardTitle className="text-3xl">{profile?.display_name || "Your Profile"}</CardTitle>
                   <CardDescription className="text-base mt-2">{profile?.email}</CardDescription>
-                </div>
-                <Button variant="outline" asChild>
-                  <Link href="/onboarding/profile">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Link>
-                </Button>
+                </div>                
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -90,19 +104,13 @@ export default async function ProfilePage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>My Attributes</CardTitle>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/onboarding/attributes">
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Link>
-                  </Button>
+                  <CardTitle>My Attributes</CardTitle>                  
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {attributes.hair_color && <Badge variant="secondary">{attributes.hair_color} hair</Badge>}
-                  {attributes.hair_length && <Badge variant="secondary">{attributes.hair_length} hair</Badge>}
+                  {attributes.hair_length && <Badge variant="secondary">{attributes.hair_length}</Badge>}
                   {attributes.eye_color && <Badge variant="secondary">{attributes.eye_color} eyes</Badge>}
                   {attributes.body_type && <Badge variant="secondary">{attributes.body_type}</Badge>}
                   {attributes.height && <Badge variant="secondary">{attributes.height} cm</Badge>}
@@ -113,37 +121,23 @@ export default async function ProfilePage() {
             </Card>
           )}
 
-          {preferences && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>My Preferences</CardTitle>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/onboarding/preferences">
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Link>
-                  </Button>
-                </div>
-                <CardDescription>What I&apos;m looking for in a match</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {Object.entries(preferences)
-                    .filter(([key, value]) => key.endsWith("_importance") && value === "important")
-                    .map(([key]) => {
-                      const label = key.replace("_importance", "").replace(/_/g, " ")
-                      return (
-                        <div key={key} className="flex items-center gap-2">
-                          <Badge>{label}</Badge>
-                          <span className="text-sm text-muted-foreground">is important to me</span>
-                        </div>
-                      )
-                    })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* Phase 2: Essential Preferences */}
+          <ProfileSectionPhase2 preferences={preferences} />
+
+          {/* Questionnaire Status */}
+          <QuestionnaireStatus questionnaireCompleted={profile?.questionnaire_completed} />
+
+          {/* Basic Information */}
+          <EditBasicInfo profile={profile} attributes={attributes} />
+
+          {/* Address Information */}
+          <EditAddress profile={profile} />
+
+          {/* Edit Attributes Component */}
+          <EditAttributes currentAttributes={attributes} />
+
+          {/* Phase 5: Detailed Preferences */}
+          <ProfileSectionPhase5 preferences={preferences} />
         </div>
       </main>
     </div>
