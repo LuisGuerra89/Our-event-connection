@@ -46,7 +46,7 @@ export function AttributesForm({ userId, existingAttributes }: AttributesFormPro
         if (insertError) throw insertError
       }
 
-      router.push("/onboarding/preferences")
+      router.push("/onboarding/complete-profile")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save attributes")
     } finally {

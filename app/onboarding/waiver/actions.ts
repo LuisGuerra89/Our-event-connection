@@ -100,6 +100,53 @@ export async function submitWaiver(formData: FormData) {
 
     console.log("[v0] Server Action - Profile created successfully")
 
+    // Upload profile image if provided in metadata
+    const profileImageBase64 = user.user_metadata?.profile_image_base64 as string | undefined
+    if (profileImageBase64) {
+      try {
+        console.log("[v0] Server Action - Processing profile image from signup")
+        
+        // Convert base64 to blob
+        const response = await fetch(profileImageBase64)
+        const blob = await response.blob()
+        
+        // Generate filename
+        const fileName = `profile-images/${user.id}-${Date.now()}.jpg`
+        
+        // Upload to storage
+        const { error: uploadError } = await supabase.storage
+          .from("profiles")
+          .upload(fileName, blob, {
+            cacheControl: "3600",
+            upsert: false,
+          })
+        
+        if (uploadError) {
+          console.error("[v0] Server Action - Image upload error:", uploadError)
+        } else {
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from("profiles")
+            .getPublicUrl(fileName)
+          
+          // Update profile with image URL
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update({ profile_image_url: publicUrl })
+            .eq("id", user.id)
+          
+          if (updateError) {
+            console.error("[v0] Server Action - Error updating profile image URL:", updateError)
+          } else {
+            console.log("[v0] Server Action - Profile image uploaded successfully")
+          }
+        }
+      } catch (imgError) {
+        console.error("[v0] Server Action - Image processing error:", imgError)
+        // Non-fatal - continue
+      }
+    }
+
     // Apply referral code if provided
     if (referralCode && referralCode.trim() !== "") {
       console.log("[v0] Server Action - Processing referral code:", referralCode)
@@ -165,10 +212,10 @@ export async function submitWaiver(formData: FormData) {
   console.log("[v0] Server Action - Waiver inserted successfully:", insertedWaiver?.id)
 
   revalidatePath("/onboarding/waiver")
-  revalidatePath("/onboarding/profile")
+  revalidatePath("/onboarding/complete-profile")
 
   await new Promise((resolve) => setTimeout(resolve, 100))
 
-  console.log("[v0] Server Action - Redirecting to profile page")
-  redirect("/onboarding/profile")
+  console.log("[v0] Server Action - Redirecting to onboarding wizard")
+  redirect("/onboarding/complete-profile")
 }

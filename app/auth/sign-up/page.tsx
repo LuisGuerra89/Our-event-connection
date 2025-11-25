@@ -113,7 +113,8 @@ export default function SignUpPage() {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
-            referral_code: referralCode || null, // Include referral code in metadata
+            referral_code: referralCode || null,
+            profile_image_base64: profileImagePreview || null, // Store base64 for later upload
           },
         },
       })
@@ -124,9 +125,6 @@ export default function SignUpPage() {
       }
 
       console.log("[v0] Sign up successful:", data.user?.id, "email confirmed:", data.user?.email_confirmed_at)
-
-      // Note: Profile creation is handled in the waiver step
-      // The referral code is stored in user metadata and will be applied when profile is created
 
       console.log("[v0] Redirecting to verify-email page")
       router.push("/auth/verify-email")

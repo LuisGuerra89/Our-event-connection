@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -29,6 +30,7 @@ export function DeleteAccountDialog({ hasActiveSubscription }: DeleteAccountDial
     const [confirmed, setConfirmed] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const router = useRouter()
+    const { toast } = useToast()
 
     const handleDelete = async () => {
         if (confirmText !== "DELETE" || !confirmed) {
@@ -42,16 +44,29 @@ export function DeleteAccountDialog({ hasActiveSubscription }: DeleteAccountDial
                 method: "POST",
             })
 
+            const data = await response.json()
+
             if (!response.ok) {
-                const error = await response.json()
-                throw new Error(error.message || "Failed to delete account")
+                throw new Error(data.details || data.error || "Failed to delete account")
             }
 
-            // Redirect to home page
-            router.push("/")
+            toast({
+                title: "Account Deleted",
+                description: "Your account has been permanently deleted.",
+                variant: "default",
+            })
+
+            // Redirect to home page after short delay
+            setTimeout(() => router.push("/"), 1000)
         } catch (error) {
             console.error("Error deleting account:", error)
-            alert(error instanceof Error ? error.message : "Failed to delete account. Please try again.")
+            
+            toast({
+                title: "Error",
+                description: error instanceof Error ? error.message : "Failed to delete account. Please try again.",
+                variant: "destructive",
+            })
+            
             setIsDeleting(false)
         }
     }

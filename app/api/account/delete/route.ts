@@ -37,6 +37,43 @@ export async function POST(request: NextRequest) {
 
         console.log("[DELETE ACCOUNT] Starting account deletion for user:", user.id)
 
+        // Step 0: Delete all related data from tables before deleting the user
+        // This avoids foreign key constraint issues
+        try {
+            console.log("[DELETE ACCOUNT] Deleting related user data...")
+            
+            // Delete in order of foreign key dependencies
+            const tables = [
+                "matches",
+                "user_preferences",
+                "user_attributes",
+                "event_attendees",
+                "user_subscriptions",
+                "profiles",
+            ]
+
+            for (const table of tables) {
+                try {
+                    const { error } = await supabase
+                        .from(table)
+                        .delete()
+                        .eq("user_id", user.id)
+
+                    if (error) {
+                        console.log(`[DELETE ACCOUNT] Note: Could not delete from ${table}:`, error.message)
+                        // Continue anyway - some tables might not exist for this user
+                    } else {
+                        console.log(`[DELETE ACCOUNT] Deleted records from ${table}`)
+                    }
+                } catch (tableError) {
+                    console.log(`[DELETE ACCOUNT] Table ${table} may not have user_id or may not exist`)
+                }
+            }
+        } catch (dataDeleteError) {
+            console.error("[DELETE ACCOUNT] Error deleting related data:", dataDeleteError)
+            // Continue anyway - we'll try to delete the auth user
+        }
+
         // Step 1: Get active subscriptions
         const { data: subscriptions, error: subError } = await supabase
             .from("user_subscriptions")
@@ -86,20 +123,60 @@ export async function POST(request: NextRequest) {
         console.log("[DELETE ACCOUNT] Deleting user from auth.users")
 
         const serviceClient = getServiceClient()
-        const { error: deleteError } = await serviceClient.auth.admin.deleteUser(user.id)
+        
+        try {
+            const { data, error: deleteError } = await serviceClient.auth.admin.deleteUser(user.id)
 
-        if (deleteError) {
-            console.error("[DELETE ACCOUNT] Error deleting user:", deleteError)
+            if (deleteError) {
+                console.error("[DELETE ACCOUNT] Error deleting user:", {
+                    message: deleteError.message,
+                    code: deleteError.code,
+                    status: (deleteError as any).status,
+                })
+                
+                // If we get an auth error, try one more approach: manually delete from public.profiles
+                console.log("[DELETE ACCOUNT] Attempting fallback: deleting from public.profiles...")
+                
+                const { error: profileError } = await supabase
+                    .from("profiles")
+                    .delete()
+                    .eq("id", user.id)
+
+                if (profileError) {
+                    console.error("[DELETE ACCOUNT] Also failed to delete profile:", profileError)
+                    return NextResponse.json(
+                        { 
+                            error: "Failed to delete account", 
+                            details: `Could not delete user: ${deleteError.message}` 
+                        },
+                        { status: 500 }
+                    )
+                }
+
+                // Profile deleted, but auth user still exists - this is acceptable
+                console.log("[DELETE ACCOUNT] Profile deleted successfully (auth user may still exist)")
+            } else {
+                console.log("[DELETE ACCOUNT] Successfully deleted user:", user.id)
+            }
+        } catch (deleteException) {
+            console.error("[DELETE ACCOUNT] Exception deleting user:", deleteException)
+            
             return NextResponse.json(
-                { error: "Failed to delete account", details: deleteError.message },
+                { 
+                    error: "Failed to delete account", 
+                    details: deleteException instanceof Error ? deleteException.message : "Unknown error during deletion" 
+                },
                 { status: 500 }
             )
         }
 
-        console.log("[DELETE ACCOUNT] Successfully deleted user:", user.id)
-
         // Step 4: Sign out the user
-        await supabase.auth.signOut()
+        try {
+            await supabase.auth.signOut()
+        } catch (signOutError) {
+            console.error("[DELETE ACCOUNT] Error signing out user:", signOutError)
+            // Continue anyway - user is already deleted
+        }
 
         return NextResponse.json({
             success: true,

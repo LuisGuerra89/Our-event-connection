@@ -30,8 +30,22 @@ export default async function WaiverPage() {
   })
 
   if (existingWaiver) {
-    console.log("[v0] Waiver page - Redirecting to profile (waiver exists)")
-    redirect("/onboarding/profile")
+    console.log("[v0] Waiver page - Waiver exists, checking if questionnaire completed")
+    
+    // Check if questionnaire is completed
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("questionnaire_completed")
+      .eq("id", data.user.id)
+      .single()
+    
+    if (profile?.questionnaire_completed) {
+      console.log("[v0] Waiver page - Questionnaire completed, redirecting to dashboard")
+      redirect("/dashboard")
+    } else {
+      console.log("[v0] Waiver page - Questionnaire not completed, redirecting to wizard")
+      redirect("/onboarding/complete-profile")
+    }
   }
 
   console.log("[v0] Waiver page - Showing waiver form")

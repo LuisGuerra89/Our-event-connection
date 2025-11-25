@@ -26,7 +26,7 @@ export async function GET(request: Request) {
       if (user) {
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select("is_profile_complete, role")
+          .select("questionnaire_completed, questionnaire_skipped, role")
           .eq("id", user.id)
           .maybeSingle()
 
@@ -52,8 +52,9 @@ export async function GET(request: Request) {
           }
         }
 
-        // If social login user hasn't completed profile, redirect to complete profile page
-        if (profile && profile.is_profile_complete === false) {
+        // If profile is not complete (social login) or was skipped, redirect to complete profile page
+        if (profile && (profile.questionnaire_completed === false || profile.questionnaire_skipped === true)) {
+          console.log("[v0] Profile incomplete or skipped, redirecting to /onboarding/complete-profile")
           return NextResponse.redirect(new URL("/onboarding/complete-profile", request.url))
         }
 
@@ -65,10 +66,12 @@ export async function GET(request: Request) {
           .maybeSingle()
 
         if (!waiver) {
+          console.log("[v0] User has no waiver, redirecting to /onboarding/waiver")
           return NextResponse.redirect(new URL("/onboarding/waiver", request.url))
         }
 
         // User has completed everything, go to dashboard
+        console.log("[v0] User profile complete, redirecting to /dashboard")
         return NextResponse.redirect(new URL("/dashboard", request.url))
       }
 

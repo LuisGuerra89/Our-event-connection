@@ -64,9 +64,9 @@ export default async function ProfilePage() {
                   <CardDescription className="text-base mt-2">{profile?.email}</CardDescription>
                 </div>
                 <Button variant="outline" asChild>
-                  <Link href="/onboarding/profile">
+                  <Link href="/onboarding/complete-profile">
                     <Edit className="h-4 w-4 mr-2" />
-                    Edit
+                    Complete Profile
                   </Link>
                 </Button>
               </div>
@@ -106,7 +106,7 @@ export default async function ProfilePage() {
                 <div className="flex items-center justify-between">
                   <CardTitle>My Attributes</CardTitle>
                   <Button variant="outline" size="sm" asChild>
-                    <Link href="/onboarding/attributes">
+                    <Link href="/onboarding/complete-profile">
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
                     </Link>
@@ -133,7 +133,7 @@ export default async function ProfilePage() {
                 <div className="flex items-center justify-between">
                   <CardTitle>My Preferences</CardTitle>
                   <Button variant="outline" size="sm" asChild>
-                    <Link href="/onboarding/preferences">
+                    <Link href="/onboarding/complete-profile">
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
                     </Link>

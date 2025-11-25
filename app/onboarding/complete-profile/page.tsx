@@ -1,6 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import CompleteProfileForm from "@/components/complete-profile-form"
+import OnboardingWizard from "@/components/onboarding-wizard"
 
 export default async function CompleteProfilePage() {
   const supabase = await createServerClient()
@@ -24,18 +24,16 @@ export default async function CompleteProfilePage() {
   }
 
   return (
-    <div className="container mx-auto max-w-2xl py-8">
+    <div className="container mx-auto max-w-4xl py-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Complete Your Profile</h1>
         <p className="text-muted-foreground mt-2">
-          Welcome! Please complete your profile to continue using the platform.
+          Welcome! Let's get you matched with amazing people. This will only take a few minutes.
         </p>
       </div>
 
-      <CompleteProfileForm 
-        userId={user.id} 
-        initialEmail={profile?.email || user.email || ""}
-        initialFullName={profile?.full_name || ""}
+      <OnboardingWizard 
+        userId={user.id}
       />
     </div>
   )
