@@ -3,7 +3,7 @@
 import { createServerClient, createAdminClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
-export async function deleteAdminUser(adminUserId: string, authUserId: string) {
+export async function deleteAdminUser(userId: string) {
   try {
     const supabase = await createServerClient()
 
@@ -26,51 +26,121 @@ export async function deleteAdminUser(adminUserId: string, authUserId: string) {
       return { success: false, error: "Forbidden: Only admins can delete admin users" }
     }
 
-    console.log("[v0] Deleting admin user:", adminUserId, "with auth user:", authUserId)
+    console.log("[v0] Deleting admin user:", userId)
 
-    // Step 1: Delete from admin_users table
-    const { error: adminUserError } = await supabase
-      .from("admin_users")
-      .delete()
-      .eq("id", adminUserId)
+    // Delete all related data in order (cascade dependencies)
+    // The issue: payments.event_id FK lacks ON DELETE CASCADE, blocking profile deletion
+    // Solution: Delete ALL user payments first (both by user_id and event_id)
 
-    if (adminUserError) {
-      console.error("[v0] Error deleting admin_users record:", adminUserError)
-      return { success: false, error: `Failed to delete admin user: ${adminUserError.message}` }
+    // 1. Delete ALL payments for this user (critical - must be first)
+    // This includes payments by user_id AND payments for events they created
+    console.log("[v0] Deleting all payments for user:", userId)
+
+    // First, get all events created by this user to delete their payments
+    const { data: createdEvents } = await supabase
+      .from("events")
+      .select("id")
+      .eq("created_by", userId)
+
+    const createdEventIds = createdEvents?.map(e => e.id) || []
+    console.log("[v0] Found", createdEventIds.length, "events created by user")
+
+    // Delete payments associated with user's events
+    if (createdEventIds.length > 0) {
+      console.log("[v0] Deleting payments for user's events")
+      await supabase
+        .from("payments")
+        .delete()
+        .in("event_id", createdEventIds)
     }
 
-    console.log("[v0] Admin user record deleted successfully")
-
-    // Step 2: Delete from profiles table
-    const { error: profileError } = await supabase
-      .from("profiles")
+    // Delete payments by user_id
+    await supabase
+      .from("payments")
       .delete()
-      .eq("id", authUserId)
+      .eq("user_id", userId)
 
-    if (profileError) {
-      console.error("[v0] Error deleting profile record:", profileError)
-      // Continue anyway
+    // 2. Get all events where user is attendee
+    const { data: attendedEvents } = await supabase
+      .from("event_attendees")
+      .select("event_id")
+      .eq("user_id", userId)
+
+    const attendeeEventIds = attendedEvents?.map(ea => ea.event_id) || []
+
+    // 3. Delete event_attendees for all those events
+    if (attendeeEventIds.length > 0) {
+      await supabase
+        .from("event_attendees")
+        .delete()
+        .in("event_id", attendeeEventIds)
     }
 
-    console.log("[v0] Profile record deleted successfully")
+    // 4. Delete event_attendees directly for this user
+    await supabase
+      .from("event_attendees")
+      .delete()
+      .eq("user_id", userId)
 
-    // Step 3: Delete from auth.users using admin client
-    if (authUserId) {
-      console.log("[v0] Deleting auth user:", authUserId)
-      const adminClient = createAdminClient()
-      const { error: authError } = await adminClient.auth.admin.deleteUser(authUserId)
+    // 5. Delete events created by this user (payments already deleted above)
+    if (createdEventIds.length > 0) {
+      console.log("[v0] Deleting", createdEventIds.length, "events created by user")
+      await supabase
+        .from("events")
+        .delete()
+        .in("id", createdEventIds)
+    }
 
-      if (authError) {
-        console.error("[v0] Error deleting auth user:", authError)
-        // Note: admin_users was already deleted, so we continue
-        return { 
-          success: true, 
-          warning: `Admin user deleted from database but could not delete from authentication: ${authError.message}` 
-        }
+    // 6. Delete from subscriptions
+    await supabase
+      .from("subscriptions")
+      .delete()
+      .eq("user_id", userId)
+
+    // 7. Delete from matches
+    await supabase
+      .from("matches")
+      .delete()
+      .or(`user_id.eq.${userId},matched_user_id.eq.${userId}`)
+
+    // 8. Delete from waivers
+    await supabase
+      .from("waivers")
+      .delete()
+      .eq("user_id", userId)
+
+    // 9. Delete from user_attributes
+    await supabase
+      .from("user_attributes")
+      .delete()
+      .eq("user_id", userId)
+
+    // 10. Delete from preferences
+    await supabase
+      .from("preferences")
+      .delete()
+      .eq("user_id", userId)
+
+    // 11. Delete from chat_messages
+    await supabase
+      .from("chat_messages")
+      .delete()
+      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+
+    // 12. Delete from auth.users using admin client (this will cascade delete the profile)
+    console.log("[v0] Deleting auth user:", userId)
+    const adminClient = createAdminClient()
+    const { error: authError } = await adminClient.auth.admin.deleteUser(userId)
+
+    if (authError) {
+      console.error("[v0] Error deleting auth user:", authError)
+      return {
+        success: false,
+        error: `Failed to delete admin user from authentication: ${authError.message}`
       }
-
-      console.log("[v0] Auth user deleted successfully")
     }
+
+    console.log("[v0] Auth user deleted successfully (profile cascade deleted)")
 
     // Revalidate the admin users page
     revalidatePath("/admin/admin-users")

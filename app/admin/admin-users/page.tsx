@@ -16,38 +16,22 @@ export default async function AdminUsersManagementPage() {
     redirect("/auth/login")
   }
 
-  // Check if user is admin
+  // Check if user is admin or moderator
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role_id, roles!profiles_role_id_fkey(role_name)")
+    .select("role, status")
     .eq("id", user.id)
     .single()
 
-  const userRole = profile?.roles?.role_name
-
-  if (userRole !== "admin" && userRole !== "moderator") {
+  if (profile?.role !== "admin" && profile?.role !== "moderator") {
     redirect("/dashboard")
   }
 
-  // Get admin and moderator roles
-  const { data: adminRoles } = await supabase
-    .from("roles")
-    .select("id, role_name")
-    .in("role_name", ["admin", "moderator"])
-
-  const adminRoleIds = adminRoles?.map((r) => r.id) || []
-
-  // Fetch admin users with admin or moderator roles
+  // Fetch users with admin or moderator roles from profiles
   const { data: adminUsers, error } = await supabase
-    .from("admin_users")
-    .select(`
-      *,
-      roles (
-        id,
-        role_name
-      )
-    `)
-    .in("role_id", adminRoleIds)
+    .from("profiles")
+    .select("id, full_name, email, role, status, created_at")
+    .in("role", ["admin", "moderator"])
     .order("created_at", { ascending: false })
 
   return (

@@ -67,54 +67,24 @@ export default function LoginPage() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, is_profile_complete")
+      .select("role, is_profile_complete, status")
       .eq("id", userId)
       .maybeSingle()
 
     console.log("[v0] Login - User profile:", { userId, profile })
 
-    // If user is admin or moderator, check status in admin_users
+    // If user is admin or moderator, check status
     if (profile && (profile.role === "admin" || profile.role === "moderator")) {
-      const { data: adminUser } = await supabase
-        .from("admin_users")
-        .select("id, status")
-        .eq("user_id", userId)
-        .maybeSingle()
-
-      if (adminUser) {
-        // Check if admin user is active
-        if (adminUser.status !== "active") {
-          console.log("[v0] Login - Admin user is inactive, logging out")
-          await supabase.auth.signOut()
-          setError(`Your admin account is ${adminUser.status}. Please contact support.`)
-          setIsLoading(false)
-          return
-        }
-      }
-
-      console.log("[v0] Login - User is admin/moderator, redirecting to /admin")
-      router.push("/admin")
-      return
-    }
-
-    // Fallback: check if user is in admin_users table (for newly created admins without profile role)
-    const { data: adminUser } = await supabase
-      .from("admin_users")
-      .select("id, status")
-      .eq("user_id", userId)
-      .maybeSingle()
-
-    if (adminUser) {
       // Check if admin user is active
-      if (adminUser.status !== "active") {
+      if (profile.status !== "active") {
         console.log("[v0] Login - Admin user is inactive, logging out")
         await supabase.auth.signOut()
-        setError(`Your admin account is ${adminUser.status}. Please contact support.`)
+        setError(`Your admin account is ${profile.status}. Please contact support.`)
         setIsLoading(false)
         return
       }
 
-      console.log("[v0] Login - User found in admin_users table, redirecting to /admin")
+      console.log("[v0] Login - User is admin/moderator, redirecting to /admin")
       router.push("/admin")
       return
     }

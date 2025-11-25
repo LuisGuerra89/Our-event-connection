@@ -67,7 +67,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && request.nextUrl.pathname.startsWith("/admin")) {
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
+    const { data: profile } = await supabase.from("profiles").select("role, status").eq("id", user.id).maybeSingle()
 
     // Allow admins and moderators to access admin routes
     if (profile?.role !== "admin" && profile?.role !== "moderator") {
@@ -76,16 +76,9 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    // Check if admin user is active in admin_users table
-    const { data: adminUser } = await supabase
-      .from("admin_users")
-      .select("status")
-      .eq("user_id", user.id)
-      .maybeSingle()
-
-    // If admin is inactive, sign out and redirect to login
-    if (adminUser && adminUser.status !== "active") {
-      console.log(`[Middleware] Admin user ${user.id} is ${adminUser.status}, signing out`)
+    // Check if admin user is active
+    if (profile?.status !== "active") {
+      console.log(`[Middleware] Admin user ${user.id} is ${profile?.status}, signing out`)
       await supabase.auth.signOut()
       const url = request.nextUrl.clone()
       url.pathname = "/auth/login"

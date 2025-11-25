@@ -2,8 +2,8 @@
 CREATE TABLE IF NOT EXISTS payments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  event_id UUID REFERENCES events(id),
-  subscription_id UUID REFERENCES user_subscriptions(id),
+  event_id UUID REFERENCES events(id) ON DELETE CASCADE,
+  subscription_id UUID REFERENCES user_subscriptions(id) ON DELETE SET NULL,
   registration_id TEXT,
   payment_amount DECIMAL(10, 2) NOT NULL,
   tax_amount DECIMAL(10, 2) DEFAULT 0,

@@ -17,7 +17,7 @@ export default async function AdminLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, email")
+    .select("role, full_name, email, status")
     .eq("id", data.user.id)
     .single()
 
@@ -26,15 +26,8 @@ export default async function AdminLayout({
     redirect("/dashboard")
   }
 
-  // Check admin_users status for active/inactive
-  const { data: adminUser } = await supabase
-    .from("admin_users")
-    .select("id, status")
-    .eq("user_id", data.user.id)
-    .maybeSingle()
-
-  // If admin exists in admin_users and is inactive, redirect to login
-  if (adminUser && adminUser.status !== "active") {
+  // Check if admin user is active
+  if (profile?.status !== "active") {
     await supabase.auth.signOut()
     redirect("/auth/login")
   }

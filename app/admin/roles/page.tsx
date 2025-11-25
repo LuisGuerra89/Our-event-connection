@@ -28,28 +28,61 @@ export default async function AdminRolesPage() {
     redirect("/dashboard")
   }
 
-  // Get roles
-  const { data: roles, error: rolesError } = await supabase
-    .from("roles")
-    .select("*")
-    .order("created_at", { ascending: false })
-
-  // Get user count for each role
-  let rolesWithCount = roles || []
-  if (roles) {
-    const countsPromises = roles.map(async (role) => {
-      const { count } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .eq("role_id", role.id)
-      
-      return {
-        ...role,
-        profiles: [{ count: count || 0 }]
-      }
-    })
-    rolesWithCount = await Promise.all(countsPromises)
+  // Get role IDs from database
+  // admin = "admin", moderator = "moderator", user = "user"
+  const roleMapping = {
+    'admin': 'admin',
+    'moderator': 'moderator',
+    'user': 'user'
   }
+
+  // Get user counts by role from profiles table
+  let rolesWithCount = []
+  
+  // Count admins
+  const { count: adminCount } = await supabase
+    .from("profiles")
+    .select("*", { count: "exact", head: true })
+    .eq("role", "admin")
+  
+  // Count moderators
+  const { count: moderatorCount } = await supabase
+    .from("profiles")
+    .select("*", { count: "exact", head: true })
+    .eq("role", "moderator")
+  
+  // Count regular users
+  const { count: userCount } = await supabase
+    .from("profiles")
+    .select("*", { count: "exact", head: true })
+    .eq("role", "user")
+
+  rolesWithCount = [
+    {
+      id: "1",
+      role_name: "Admin",
+      description: "System administrator",
+      status: "active",
+      created_at: new Date().toISOString(),
+      profiles: [{ count: adminCount || 0 }]
+    },
+    {
+      id: "2",
+      role_name: "Moderator",
+      description: "Content moderator",
+      status: "active",
+      created_at: new Date().toISOString(),
+      profiles: [{ count: moderatorCount || 0 }]
+    },
+    {
+      id: "3",
+      role_name: "User",
+      description: "Regular user",
+      status: "active",
+      created_at: new Date().toISOString(),
+      profiles: [{ count: userCount || 0 }]
+    }
+  ]
 
   return (
     <div className="container mx-auto py-8">
