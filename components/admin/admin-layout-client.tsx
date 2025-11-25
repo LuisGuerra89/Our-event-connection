@@ -28,16 +28,17 @@ interface AdminLayoutClientProps {
   userRole?: string
   userName?: string
   userEmail?: string
+  userImage?: string | null
   children: React.ReactNode
 }
 
-export function AdminLayoutClient({ userRole, userName, userEmail, children }: AdminLayoutClientProps) {
+export function AdminLayoutClient({ userRole, userName, userEmail, userImage, children }: AdminLayoutClientProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
 
   return (
     <SidebarContext.Provider value={{ isCollapsed, setIsCollapsed }}>
       <div className="flex h-full overflow-hidden bg-background">
-        <AppSidebar userRole={userRole} userName={userName} userEmail={userEmail} />
+        <AppSidebar userRole={userRole} userName={userName} userEmail={userEmail} userImage={userImage} />
         <main
           className={cn(
             "flex-1 overflow-y-auto transition-all duration-300",

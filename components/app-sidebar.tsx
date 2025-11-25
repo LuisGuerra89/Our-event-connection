@@ -33,12 +33,14 @@ import { useState } from "react"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Logo } from "@/components/logo"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSidebar } from "@/components/admin/admin-layout-client"
 
 interface AppSidebarProps {
   userRole?: string
   userName?: string
   userEmail?: string
+  userImage?: string | null
 }
 
 const userNavItems = [
@@ -182,7 +184,7 @@ const adminNavItems = [
   },
 ]
 
-export function AppSidebar({ userRole, userName, userEmail }: AppSidebarProps) {
+export function AppSidebar({ userRole, userName, userEmail, userImage }: AppSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
@@ -240,7 +242,6 @@ export function AppSidebar({ userRole, userName, userEmail }: AppSidebarProps) {
         <div className="flex h-full flex-col">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
-            {!isCollapsed && <Logo className="text-base" />}
             <Button
               variant="ghost"
               size="icon"
@@ -255,9 +256,15 @@ export function AppSidebar({ userRole, userName, userEmail }: AppSidebarProps) {
           {!isCollapsed && (userName || userEmail) && (
             <div className="p-4 border-b border-sidebar-border">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-sidebar-accent flex items-center justify-center">
-                  <User className="h-5 w-5 text-sidebar-accent-foreground" />
-                </div>
+                <Avatar className="h-10 w-10">
+                  {userImage ? (
+                    <AvatarImage src={userImage} alt={userName} />
+                  ) : (
+                    <AvatarFallback className="bg-sidebar-accent">
+                      <User className="h-5 w-5 text-sidebar-accent-foreground" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
                 <div className="flex-1 min-w-0">
                   {userName && <p className="text-sm font-medium text-sidebar-foreground truncate">{userName}</p>}
                   {userEmail && <p className="text-xs text-sidebar-foreground/60 truncate">{userEmail}</p>}

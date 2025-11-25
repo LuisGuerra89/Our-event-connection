@@ -18,7 +18,7 @@ export default async function AppLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, email")
+    .select("role, full_name, email, profile_image_url")
     .eq("id", data.user.id)
     .single()
 
@@ -30,6 +30,7 @@ export default async function AppLayout({
           userRole={profile?.role}
           userName={profile?.full_name || data.user.email?.split("@")[0]}
           userEmail={data.user.email}
+          userImage={profile?.profile_image_url}
         >
           {children}
         </AdminLayoutClient>
