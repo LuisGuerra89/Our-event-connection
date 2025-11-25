@@ -163,6 +163,18 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Recalculate matches after preferences update
+    try {
+      await fetch(`${request.nextUrl.origin}/api/matches/calculate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: 50, minScore: 30 }),
+      });
+    } catch (matchError) {
+      console.error("Error recalculating matches:", matchError);
+      // Don't fail the request if match calculation fails
+    }
+
     return NextResponse.json(
       { success: true, data },
       { status: 200 }

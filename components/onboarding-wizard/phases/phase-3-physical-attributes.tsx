@@ -199,11 +199,11 @@ export default function Phase3PhysicalAttributes({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="not_specified">Not specified</SelectItem>
-                        <SelectItem value="black">Black</SelectItem>
-                        <SelectItem value="brown">Brown</SelectItem>
-                        <SelectItem value="blonde">Blonde</SelectItem>
-                        <SelectItem value="red">Red</SelectItem>
-                        <SelectItem value="gray">Gray</SelectItem>
+                        <SelectItem value="fair">Very Fair / Fair</SelectItem>
+                        <SelectItem value="medium">Light / Medium</SelectItem>
+                        <SelectItem value="olive">Olive</SelectItem>
+                        <SelectItem value="dark">Tan / Dark</SelectItem>
+                        <SelectItem value="very_dark">Deep Tan / Very Dark</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>

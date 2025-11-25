@@ -171,6 +171,20 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // If questionnaire is completed, recalculate matches
+    if (validatedData.questionnaireCompleted) {
+      try {
+        await fetch(`${request.nextUrl.origin}/api/matches/calculate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ limit: 50, minScore: 30 }),
+        });
+      } catch (matchError) {
+        console.error("Error recalculating matches:", matchError);
+        // Don't fail the request if match calculation fails
+      }
+    }
+
     return NextResponse.json(
       { success: true, data },
       { status: 200 }

@@ -92,7 +92,15 @@ export default function OnboardingWizard({
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              physical: updatedData.phase3.physical,
+              physical: {
+                hairLength: updatedData.phase3.hairLength,
+                hairColor: updatedData.phase3.hairColor,
+                eyeColor: updatedData.phase3.eyeColor,
+                bodyType: updatedData.phase3.bodyType,
+                complexion: updatedData.phase3.complexion,
+                race: updatedData.phase3.race,
+                height: updatedData.phase3.height,
+              },
             }),
           });
 
@@ -112,8 +120,13 @@ export default function OnboardingWizard({
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              lifestyle: updatedData.phase4.physical,
-              demographics: updatedData.phase4.lifestyle,
+              lifestyle: {
+                religion: updatedData.phase4.religion,
+                workoutFrequency: updatedData.phase4.workoutFrequency,
+                alcoholConsumptionFrequency: updatedData.phase4.alcoholConsumption,
+                nightclubBarFrequency: updatedData.phase4.nightclubFrequency,
+                likesOutdoors: updatedData.phase4.likesOutdoors,
+              },
             }),
           });
 
@@ -143,13 +156,34 @@ export default function OnboardingWizard({
   );
 
   // Handle completion
-  const handleComplete = useCallback(async () => {
+  const handleComplete = useCallback(async (phase5Data?: any) => {
     try {
       setIsLoading(true);
+
+      // Save phase 5 preferences if provided
+      if (phase5Data) {
+        const response = await fetch("/api/user/preferences", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            general: phase5Data,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to save preferences");
+        }
+
+        toast({
+          title: "Preferences saved",
+          description: "Marking questionnaire complete...",
+        });
+      }
+
       setCurrentPhase("searching");
 
       // Mark questionnaire as complete
-      const response = await fetch("/api/user/attributes", {
+      const completeResponse = await fetch("/api/user/attributes", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -158,7 +192,7 @@ export default function OnboardingWizard({
         }),
       });
 
-      if (!response.ok) {
+      if (!completeResponse.ok) {
         throw new Error("Failed to mark questionnaire complete");
       }
 

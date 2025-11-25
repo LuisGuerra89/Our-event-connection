@@ -211,11 +211,11 @@ export async function submitWaiver(formData: FormData) {
   console.log("[v0] Server Action - Waiver inserted successfully:", insertedWaiver?.id)
 
   revalidatePath("/onboarding/waiver")
-  revalidatePath("/onboarding/complete-profile")
+  revalidatePath("/onboarding/complete-signup-profile")
   revalidatePath("/dashboard") // Revalidate dashboard to update header with new image
 
   await new Promise((resolve) => setTimeout(resolve, 100))
 
-  console.log("[v0] Server Action - Redirecting to onboarding wizard")
-  redirect("/onboarding/complete-profile")
+  console.log("[v0] Server Action - Redirecting to complete signup profile")
+  redirect("/onboarding/complete-signup-profile")
 }
