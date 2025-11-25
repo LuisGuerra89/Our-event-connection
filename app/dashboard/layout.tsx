@@ -17,7 +17,7 @@ export default async function AppLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, email, profile_image_url")
+    .select("role_id, full_name, email, profile_image_url, roles(role_name)")
     .eq("id", data.user.id)
     .single()
 
@@ -25,7 +25,7 @@ export default async function AppLayout({
     <div className="flex flex-col h-screen">
       <div className="flex-1 overflow-hidden">
         <AdminLayoutClient
-          userRole={profile?.role}
+          userRole={(profile?.roles as { role_name: string } | null)?.role_name}
           userName={profile?.full_name || data.user.email?.split("@")[0]}
           userEmail={data.user.email}
           userImage={profile?.profile_image_url}

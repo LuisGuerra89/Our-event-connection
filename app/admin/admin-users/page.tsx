@@ -17,22 +17,30 @@ export default async function AdminUsersManagementPage() {
   }
 
   // Check if user is admin or moderator
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, status")
-    .eq("id", user.id)
-    .single()
-
-  if (profile?.role !== "admin" && profile?.role !== "moderator") {
+  const { data: profile } = await supabase.from("profiles").select("role_id, roles(role_name)").eq("id", user.id).single()
+  const profileWithRole = profile as { role_id: string; roles: { role_name: string } } | null
+  const userRole = profileWithRole?.roles?.role_name
+  if (!userRole || (userRole !== "admin" && userRole !== "moderator")) {
     redirect("/dashboard")
   }
 
   // Fetch users with admin or moderator roles from profiles
-  const { data: adminUsers, error } = await supabase
+  const { data: adminUsersRaw, error } = await supabase
     .from("profiles")
-    .select("id, full_name, email, role, status, created_at")
-    .in("role", ["admin", "moderator"])
+    .select("id, full_name, email, role_id, status, created_at, roles(role_name)")
+    .eq("status", "active")
     .order("created_at", { ascending: false })
+
+  // Filter to only include admin and moderator users
+  const adminUsers = adminUsersRaw
+    ?.filter((user: any) => {
+      const roleName = user.roles?.role_name
+      return roleName === "admin" || roleName === "moderator"
+    })
+    .map((user: any) => ({
+      ...user,
+      role: user.roles?.role_name || "user",
+    })) || []
 
   return (
     <div className="container mx-auto py-8">

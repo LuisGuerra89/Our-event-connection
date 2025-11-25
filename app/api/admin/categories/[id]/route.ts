@@ -44,9 +44,15 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     }
 
     // Check if user is admin
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role_id, roles(role_name)")
+      .eq("id", user.id)
+      .single()
 
-    if (profile?.role !== "admin") {
+    const profileWithRole = profile as { role_id: string; roles: { role_name: string } } | null
+
+    if (!profileWithRole || profileWithRole.roles?.role_name !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -94,9 +100,15 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     }
 
     // Check if user is admin
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role_id, roles(role_name)")
+      .eq("id", user.id)
+      .single()
 
-    if (profile?.role !== "admin") {
+    const profileWithRole = profile as { role_id: string; roles: { role_name: string } } | null
+
+    if (!profileWithRole || profileWithRole.roles?.role_name !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 

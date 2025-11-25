@@ -15,14 +15,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { data: profile } = await supabase.from("profiles").select("roles(role_name)").eq("id", user.id).single()
+    // Check admin using role_id join with roles table
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role_id, roles(role_name)")
+      .eq("id", user.id)
+      .single()
 
-    if (profile?.roles?.role_name !== "admin") {
+    // Type assertion for the joined data
+    const profileWithRole = profile as { role_id: string; roles: { role_name: string } } | null
+
+    if (!profileWithRole || profileWithRole.roles?.role_name !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const body = await request.json()
-    const { username, email, password, firstName, lastName, mobile, roleId, role = "admin" } = body
+    const { username, email, password, firstName, lastName, mobile, role = "admin" } = body
 
     // Validate required fields
     if (!email || !password) {
@@ -32,16 +40,34 @@ export async function POST(request: Request) {
       )
     }
 
-    if (!roleId || roleId === "") {
+    if (!role || !["admin", "moderator", "user"].includes(role)) {
       return NextResponse.json(
-        { error: "Role ID is required" },
+        { error: "Valid role is required (admin, moderator, or user)" },
         { status: 400 },
       )
     }
 
-    console.log("[v0] Creating admin user:", email)
+    console.log("[v0] Creating admin user:", email, "with role:", role)
 
-    // Check if email already exists in auth.users
+    // Get the role_id from roles table
+    const { data: roleData, error: roleError } = await supabase
+      .from("roles")
+      .select("id")
+      .eq("role_name", role)
+      .single()
+
+    if (roleError || !roleData) {
+      console.error("[v0] Role lookup error:", roleError)
+      return NextResponse.json(
+        { error: `Role '${role}' not found in database` },
+        { status: 400 },
+      )
+    }
+
+    const roleId = roleData.id
+    console.log("[v0] Found role_id:", roleId, "for role:", role)
+
+    // Check if email already exists
     const { data: existingUser } = await supabase
       .from("profiles")
       .select("id")
@@ -55,7 +81,7 @@ export async function POST(request: Request) {
       )
     }
 
-    console.log("[v0] Form data received:", { email, roleId, firstName, lastName })
+    console.log("[v0] Form data received:", { email, role, firstName, lastName })
 
     // Use admin client to create auth user
     console.log("[v0] Attempting to create auth user:", email)
@@ -65,7 +91,7 @@ export async function POST(request: Request) {
       email_confirm: true,
       user_metadata: {
         full_name: `${firstName} ${lastName}`.trim(),
-        is_admin: true,
+        role: role,
       },
     })
 
@@ -88,60 +114,55 @@ export async function POST(request: Request) {
     const authUserId = authData.user.id
     console.log("[v0] Auth user created successfully:", authUserId)
 
-    // Create admin user record linked to auth user using admin client to bypass RLS
-    console.log("[v0] Creating admin_users record for:", email)
-    const { data: adminUser, error: adminUserError } = await adminClient
-      .from("admin_users")
-      .insert({
-        user_id: authUserId,
-        username: username || email.split("@")[0],
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        mobile,
-        role_id: roleId,
-        status: "active",
-      })
-      .select()
-      .single()
-
-    if (adminUserError) {
-      console.error("[v0] Admin user creation error:", adminUserError)
-      return NextResponse.json(
-        { error: `Failed to create admin user: ${adminUserError.message}` },
-        { status: 500 },
-      )
+    // Generate a unique referral code
+    const generateReferralCode = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+      let code = ''
+      for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length))
+      }
+      return code
     }
 
-    console.log("[v0] Admin user created successfully:", adminUser.id)
+    const referralCode = generateReferralCode()
 
-    // Create profile record for consistency using admin client to bypass RLS
-    console.log("[v0] Creating profile record for user with roleId:", roleId)
+    // Create profile explicitly with all required fields including role_id
+    console.log("[v0] Creating profile with role_id:", roleId)
     const { error: profileError } = await adminClient
       .from("profiles")
       .insert({
         id: authUserId,
-        email,
+        email: email,
         full_name: `${firstName} ${lastName}`.trim(),
-        role,
+        phone: mobile,
         role_id: roleId,
-        is_profile_complete: true,
+        referral_code: referralCode,
+        referral_count: 0,
+        free_events_earned: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
 
     if (profileError) {
       console.error("[v0] Profile creation error:", profileError)
-      // Note: we don't fail here as the admin_users was created successfully
-      console.log("[v0] Profile creation failed but admin user was created")
+      // Try to clean up the auth user if profile creation fails
+      await adminClient.auth.admin.deleteUser(authUserId)
+      return NextResponse.json(
+        { error: `Failed to create profile: ${profileError.message}` },
+        { status: 500 },
+      )
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    console.log("[v0] Profile created successfully with role_id:", roleId)
+
+    return NextResponse.json({
+      success: true,
       data: {
-        ...adminUser,
         user_id: authUserId,
-        message: "Admin user created successfully. Confirmation email sent."
+        email: email,
+        role: role,
+        role_id: roleId,
+        message: "Admin user created successfully."
       }
     })
   } catch (error) {

@@ -11,9 +11,9 @@ export default async function EditCategoryPage({ params }: { params: Promise<{ i
 
   if (!user) redirect("/auth/login")
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-
-  if (profile?.role !== "admin") redirect("/dashboard")
+  const { data: profile } = await supabase.from("profiles").select("role_id, roles(role_name)").eq("id", user.id).single()
+  const profileWithRole = profile as { role_id: string; roles: { role_name: string } } | null
+  if (!profileWithRole || profileWithRole.roles?.role_name !== "admin") redirect("/dashboard")
 
   const { data: category } = await supabase.from("event_categories").select("*").eq("id", id).single()
 

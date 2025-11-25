@@ -24,21 +24,22 @@ export async function GET(request: Request) {
       const { data: { user } } = await supabase.auth.getUser()
       
       if (user) {
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("questionnaire_completed, questionnaire_skipped, role")
-          .eq("id", user.id)
-          .maybeSingle()
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("questionnaire_completed, questionnaire_skipped, role_id, roles(role_name)")
+        .eq("id", user.id)
+        .maybeSingle()
 
-        console.log("[v0] User profile retrieved:", { user_id: user.id, profile, error: profileError })
+      console.log("[v0] User profile retrieved:", { user_id: user.id, profile, error: profileError })
 
-        // If user is admin or moderator, redirect to admin dashboard directly
-        if (profile && (profile.role === "admin" || profile.role === "moderator")) {
-          console.log("[v0] User is admin/moderator, redirecting to /admin")
-          return NextResponse.redirect(new URL("/admin", request.url))
-        }
-
-        // Fallback: check if user is in admin_users table (for newly created admins)
+      // If user is admin or moderator, redirect to admin dashboard directly
+      const profileWithRole = profile as { questionnaire_completed: boolean; questionnaire_skipped: boolean; roles: { role_name: string } | null } | null
+      const roleName = profileWithRole?.roles?.role_name
+      
+      if (profile && (roleName === "admin" || roleName === "moderator")) {
+        console.log("[v0] User is admin/moderator, redirecting to /admin")
+        return NextResponse.redirect(new URL("/admin", request.url))
+      }        // Fallback: check if user is in admin_users table (for newly created admins)
         if (!profile) {
           const { data: adminUser } = await supabase
             .from("admin_users")

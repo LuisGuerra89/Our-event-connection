@@ -13,19 +13,18 @@ export default async function CreateAdminUserPage() {
     redirect("/auth/login")
   }
 
-  const { data: profile } = await supabase.from("profiles").select("roles(role_name)").eq("id", user.id).single()
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role_id, roles(role_name)")
+    .eq("id", user.id)
+    .single()
 
-  if (profile?.roles?.role_name !== "admin") {
+  // Type assertion for the joined data
+  const profileWithRole = profile as { role_id: string; roles: { role_name: string } } | null
+
+  if (!profileWithRole || profileWithRole.roles?.role_name !== "admin") {
     redirect("/dashboard")
   }
-
-  // Fetch only admin and moderator roles
-  const { data: roles } = await supabase
-    .from("roles")
-    .select("*")
-    .in("role_name", ["admin", "moderator"])
-    .eq("status", "active")
-    .order("role_name")
 
   return (
     <div className="container mx-auto py-8">
@@ -40,7 +39,7 @@ export default async function CreateAdminUserPage() {
           <CardDescription>Fill in the details to create a new admin user</CardDescription>
         </CardHeader>
         <CardContent>
-          <CreateAdminUserForm roles={roles || []} />
+          <CreateAdminUserForm />
         </CardContent>
       </Card>
     </div>

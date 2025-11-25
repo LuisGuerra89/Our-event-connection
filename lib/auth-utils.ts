@@ -10,7 +10,11 @@ export async function getCurrentUser() {
 
 export async function getUserProfile(userId: string) {
   const supabase = await createServerClient()
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", userId).single()
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*, roles(role_name)")
+    .eq("id", userId)
+    .single()
   return profile
 }
 
@@ -19,7 +23,9 @@ export async function isAdmin() {
   if (!user) return false
 
   const profile = await getUserProfile(user.id)
-  return profile?.role === "admin"
+  // Check if user has admin role via the roles table
+  const roles = profile?.roles as { role_name: string } | null
+  return roles?.role_name === "admin"
 }
 
 export async function requireAdmin() {

@@ -16,7 +16,7 @@ export default async function DashboardPage() {
   // Fetch profile with referral count
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, referral_count")
+    .select("role_id, full_name, referral_count, roles(role_name)")
     .eq("id", data.user.id)
     .single()
 

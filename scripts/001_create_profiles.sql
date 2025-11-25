@@ -12,9 +12,6 @@ create table if not exists public.profiles (
   location_city text,
   location_state text,
   location_country text,
-  -- User role and status
-  role text default 'user' check (role in ('user', 'admin', 'moderator')),
-  status text default 'active' check (status in ('active', 'inactive', 'suspended')),
   -- Referral system fields
   referral_code varchar(10) unique not null,
   referral_count integer default 0,
@@ -30,10 +27,6 @@ alter table public.profiles enable row level security;
 -- Create indexes for referral system
 create index if not exists idx_profiles_referral_code on public.profiles(referral_code);
 create index if not exists idx_profiles_referred_by on public.profiles(referred_by);
-
--- Create indexes for role and status
-create index if not exists idx_profiles_role on public.profiles(role);
-create index if not exists idx_profiles_status on public.profiles(status);
 
 -- RLS Policies for profiles
 drop policy if exists "profiles_select_own" on public.profiles;

@@ -17,25 +17,29 @@ export default async function AdminLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, email, status")
+    .select("role_id, roles(role_name), full_name, email")
     .eq("id", data.user.id)
     .single()
 
-  // Verify user is admin or moderator
-  if (profile?.role !== "admin" && profile?.role !== "moderator") {
-    redirect("/dashboard")
-  }
+  // Type assertion for the joined data
+  const profileWithRole = profile as {
+    role_id: string;
+    roles: { role_name: string };
+    full_name: string | null;
+    email: string;
+  } | null
 
-  // Check if admin user is active
-  if (profile?.status !== "active") {
-    await supabase.auth.signOut()
-    redirect("/auth/login")
+  const userRole = profileWithRole?.roles?.role_name
+
+  // Verify user is admin or moderator
+  if (!userRole || (userRole !== "admin" && userRole !== "moderator")) {
+    redirect("/dashboard")
   }
 
   return (
     <AdminLayoutClient
-      userRole={profile?.role}
-      userName={profile?.full_name || data.user.email?.split("@")[0]}
+      userRole={userRole}
+      userName={profileWithRole?.full_name || data.user.email?.split("@")[0]}
       userEmail={data.user.email}
     >
       {children}

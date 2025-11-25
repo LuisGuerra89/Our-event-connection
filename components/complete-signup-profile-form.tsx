@@ -25,28 +25,76 @@ import {
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 
+// Format utilities
+const formatPhoneNumber = (value: string): string => {
+  const cleaned = value.replace(/\D/g, "")
+  if (cleaned.length === 0) return ""
+  if (cleaned.length <= 3) return cleaned
+  if (cleaned.length <= 6) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`
+  return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 10)}`
+}
+
+const formatZipCode = (value: string): string => {
+  // Allows alphanumeric for international zip codes
+  return value.replace(/[^a-zA-Z0-9\s-]/g, "").slice(0, 20)
+}
+
 const completeProfileSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  contactNumber: z.string().min(10, "Contact number must be at least 10 digits"),
-  dateOfBirth: z.string().refine((date) => {
-    const d = new Date(date)
-    const today = new Date()
-    const age = today.getFullYear() - d.getFullYear()
-    return age >= 18
-  }, "You must be at least 18 years old"),
-  height: z.coerce.number().min(100).max(250, "Height must be between 100-250 cm"),
-  weight: z.coerce.number().min(30).max(300, "Weight must be between 30-300 kg"),
+  firstName: z.string()
+    .min(1, "First name is required")
+    .min(2, "First name must be at least 2 characters")
+    .max(50, "First name must be less than 50 characters")
+    .regex(/^[a-zA-Z\s'-]+$/, "First name can only contain letters, spaces, hyphens, and apostrophes"),
+  lastName: z.string()
+    .min(1, "Last name is required")
+    .min(2, "Last name must be at least 2 characters")
+    .max(50, "Last name must be less than 50 characters")
+    .regex(/^[a-zA-Z\s'-]+$/, "Last name can only contain letters, spaces, hyphens, and apostrophes"),
+  contactNumber: z.string()
+    .min(1, "Contact number is required")
+    .refine((val) => val.replace(/\D/g, "").length >= 10, "Contact number must be at least 10 digits")
+    .refine((val) => val.replace(/\D/g, "").length <= 15, "Contact number must not exceed 15 digits"),
+  dateOfBirth: z.string()
+    .min(1, "Date of birth is required")
+    .refine((date) => {
+      const d = new Date(date)
+      const today = new Date()
+      const age = today.getFullYear() - d.getFullYear()
+      const monthDiff = today.getMonth() - d.getMonth()
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < d.getDate())) {
+        return age - 1 >= 13
+      }
+      return age >= 13
+    }, "You must be at least 13 years old"),
+  height: z.coerce.number()
+    .min(100, "Height must be at least 100 cm")
+    .max(250, "Height must not exceed 250 cm"),
+  weight: z.coerce.number()
+    .min(30, "Weight must be at least 30 kg")
+    .max(300, "Weight must not exceed 300 kg"),
   skinTone: z.string().min(1, "Skin tone is required"),
   hairColor: z.string().min(1, "Hair color is required"),
   occupation: z.string().min(1, "Occupation is required"),
-  hobbies: z.string().min(1, "Please select at least one hobby"),
-  address1: z.string().min(1, "Address is required"),
-  address2: z.string().optional(),
+  hobbies: z.string()
+    .min(1, "Please select at least one hobby")
+    .max(200, "Hobbies field must be less than 200 characters"),
+  address1: z.string()
+    .min(1, "Address is required")
+    .min(5, "Address must be at least 5 characters")
+    .max(100, "Address must be less than 100 characters"),
+  address2: z.string()
+    .max(100, "Address line 2 must be less than 100 characters")
+    .optional(),
   country: z.string().min(1, "Country is required"),
   state: z.string().min(1, "State is required"),
-  city: z.string().min(1, "City is required"),
-  zipCode: z.string().min(1, "Zip code is required"),
+  city: z.string()
+    .min(1, "City is required")
+    .min(2, "City must be at least 2 characters")
+    .max(50, "City must be less than 50 characters"),
+  zipCode: z.string()
+    .min(1, "Zip code is required")
+    .min(3, "Zip code must be at least 3 characters")
+    .max(20, "Zip code must be less than 20 characters"),
 })
 
 type CompleteProfileFormData = z.infer<typeof completeProfileSchema>
@@ -306,9 +354,20 @@ export function CompleteSignupProfileForm({ userId, onComplete }: CompleteSignup
                       <FormItem>
                         <FormLabel>First Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="John" {...field} />
+                          <Input
+                            placeholder="John"
+                            maxLength={50}
+                            value={field.value}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^a-zA-Z\s'-]/g, "")
+                              field.onChange(value)
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
+                        <div className="text-xs text-muted-foreground">
+                          {field.value.length}/50
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -320,9 +379,20 @@ export function CompleteSignupProfileForm({ userId, onComplete }: CompleteSignup
                       <FormItem>
                         <FormLabel>Last Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Doe" {...field} />
+                          <Input
+                            placeholder="Doe"
+                            maxLength={50}
+                            value={field.value}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^a-zA-Z\s'-]/g, "")
+                              field.onChange(value)
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
+                        <div className="text-xs text-muted-foreground">
+                          {field.value.length}/50
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -334,9 +404,19 @@ export function CompleteSignupProfileForm({ userId, onComplete }: CompleteSignup
                       <FormItem>
                         <FormLabel>Contact Number *</FormLabel>
                         <FormControl>
-                          <Input placeholder="+1 (555) 000-0000" {...field} />
+                          <Input
+                            placeholder="555 123 4567"
+                            value={field.value}
+                            onChange={(e) => {
+                              const formatted = formatPhoneNumber(e.target.value)
+                              field.onChange(formatted)
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
+                        <div className="text-xs text-muted-foreground">
+                          {field.value.replace(/\D/g, "").length}/15 digits
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -478,10 +558,15 @@ export function CompleteSignupProfileForm({ userId, onComplete }: CompleteSignup
                           <FormControl>
                             <Input
                               placeholder="e.g., Reading, Sports, Gaming"
-                              {...field}
+                              maxLength={200}
+                              value={field.value}
+                              onChange={field.onChange}
                             />
                           </FormControl>
                           <FormMessage />
+                          <div className="text-xs text-muted-foreground">
+                            {field.value.length}/200
+                          </div>
                         </FormItem>
                       )}
                     />
@@ -499,9 +584,17 @@ export function CompleteSignupProfileForm({ userId, onComplete }: CompleteSignup
                         <FormItem>
                           <FormLabel>Address 1 *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Street address" {...field} />
+                            <Input
+                              placeholder="Street address"
+                              maxLength={100}
+                              value={field.value}
+                              onChange={field.onChange}
+                            />
                           </FormControl>
                           <FormMessage />
+                          <div className="text-xs text-muted-foreground">
+                            {field.value.length}/100
+                          </div>
                         </FormItem>
                       )}
                     />
@@ -513,9 +606,17 @@ export function CompleteSignupProfileForm({ userId, onComplete }: CompleteSignup
                         <FormItem>
                           <FormLabel>Address 2 (Optional)</FormLabel>
                           <FormControl>
-                            <Input placeholder="Apartment, suite, etc." {...field} />
+                            <Input
+                              placeholder="Apartment, suite, etc."
+                              maxLength={100}
+                              value={field.value || ""}
+                              onChange={field.onChange}
+                            />
                           </FormControl>
                           <FormMessage />
+                          <div className="text-xs text-muted-foreground">
+                            {(field.value || "").length}/100
+                          </div>
                         </FormItem>
                       )}
                     />
@@ -592,9 +693,20 @@ export function CompleteSignupProfileForm({ userId, onComplete }: CompleteSignup
                           <FormItem>
                             <FormLabel>City *</FormLabel>
                             <FormControl>
-                              <Input placeholder="City name" {...field} />
+                              <Input
+                                placeholder="City name"
+                                maxLength={50}
+                                value={field.value}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/[^a-zA-Z\s-]/g, "")
+                                  field.onChange(value)
+                                }}
+                              />
                             </FormControl>
                             <FormMessage />
+                            <div className="text-xs text-muted-foreground">
+                              {field.value.length}/50
+                            </div>
                           </FormItem>
                         )}
                       />
@@ -606,9 +718,20 @@ export function CompleteSignupProfileForm({ userId, onComplete }: CompleteSignup
                           <FormItem>
                             <FormLabel>Zip Code *</FormLabel>
                             <FormControl>
-                              <Input placeholder="Zip/Postal code" {...field} />
+                              <Input
+                                placeholder="Zip/Postal code"
+                                maxLength={20}
+                                value={field.value}
+                                onChange={(e) => {
+                                  const formatted = formatZipCode(e.target.value)
+                                  field.onChange(formatted)
+                                }}
+                              />
                             </FormControl>
                             <FormMessage />
+                            <div className="text-xs text-muted-foreground">
+                              {field.value.length}/20
+                            </div>
                           </FormItem>
                         )}
                       />

@@ -29,118 +29,76 @@ export async function deleteAdminUser(userId: string) {
     console.log("[v0] Deleting admin user:", userId)
 
     // Delete all related data in order (cascade dependencies)
-    // The issue: payments.event_id FK lacks ON DELETE CASCADE, blocking profile deletion
-    // Solution: Delete ALL user payments first (both by user_id and event_id)
-
-    // 1. Delete ALL payments for this user (critical - must be first)
-    // This includes payments by user_id AND payments for events they created
-    console.log("[v0] Deleting all payments for user:", userId)
-
-    // First, get all events created by this user to delete their payments
-    const { data: createdEvents } = await supabase
-      .from("events")
-      .select("id")
-      .eq("created_by", userId)
-
-    const createdEventIds = createdEvents?.map(e => e.id) || []
-    console.log("[v0] Found", createdEventIds.length, "events created by user")
-
-    // Delete payments associated with user's events
-    if (createdEventIds.length > 0) {
-      console.log("[v0] Deleting payments for user's events")
-      await supabase
-        .from("payments")
-        .delete()
-        .in("event_id", createdEventIds)
-    }
-
-    // Delete payments by user_id
-    await supabase
-      .from("payments")
-      .delete()
-      .eq("user_id", userId)
-
-    // 2. Get all events where user is attendee
+    // 1. First get all events where user is attendee
     const { data: attendedEvents } = await supabase
       .from("event_attendees")
       .select("event_id")
       .eq("user_id", userId)
 
-    const attendeeEventIds = attendedEvents?.map(ea => ea.event_id) || []
+    const eventIds = attendedEvents?.map(ea => ea.event_id) || []
 
-    // 3. Delete event_attendees for all those events
-    if (attendeeEventIds.length > 0) {
+    // 2. Delete event_attendees for all those events
+    if (eventIds.length > 0) {
       await supabase
         .from("event_attendees")
         .delete()
-        .in("event_id", attendeeEventIds)
+        .in("event_id", eventIds)
     }
 
-    // 4. Delete event_attendees directly for this user
+    // 3. Delete event_attendees directly for this user
     await supabase
       .from("event_attendees")
       .delete()
       .eq("user_id", userId)
 
-    // 5. Delete events created by this user (payments already deleted above)
-    if (createdEventIds.length > 0) {
-      console.log("[v0] Deleting", createdEventIds.length, "events created by user")
-      await supabase
-        .from("events")
-        .delete()
-        .in("id", createdEventIds)
-    }
-
-    // 6. Delete from subscriptions
+    // 4. Delete events created by this user
     await supabase
-      .from("subscriptions")
+      .from("events")
       .delete()
-      .eq("user_id", userId)
+      .eq("created_by", userId)
 
-    // 7. Delete from matches
+    // 5. Delete from matches
     await supabase
       .from("matches")
       .delete()
       .or(`user_id.eq.${userId},matched_user_id.eq.${userId}`)
 
-    // 8. Delete from waivers
+    // 6. Delete from waivers
     await supabase
       .from("waivers")
       .delete()
       .eq("user_id", userId)
 
-    // 9. Delete from user_attributes
+    // 7. Delete from user_attributes
     await supabase
       .from("user_attributes")
       .delete()
       .eq("user_id", userId)
 
-    // 10. Delete from preferences
+    // 8. Delete from preferences
     await supabase
       .from("preferences")
       .delete()
       .eq("user_id", userId)
 
-    // 11. Delete from chat_messages
+    // 9. Delete from chat_messages
     await supabase
       .from("chat_messages")
       .delete()
       .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
 
-    // 12. Delete from auth.users using admin client (this will cascade delete the profile)
-    console.log("[v0] Deleting auth user:", userId)
-    const adminClient = createAdminClient()
-    const { error: authError } = await adminClient.auth.admin.deleteUser(userId)
+    // 7. Delete from profiles (this will cascade delete to auth.users due to foreign key)
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("id", userId)
 
-    if (authError) {
-      console.error("[v0] Error deleting auth user:", authError)
-      return {
-        success: false,
-        error: `Failed to delete admin user from authentication: ${authError.message}`
-      }
+    if (profileError) {
+      console.error("[v0] Error deleting profile record:", profileError)
+      return { success: false, error: `Failed to delete admin user: ${profileError.message}` }
     }
 
-    console.log("[v0] Auth user deleted successfully (profile cascade deleted)")
+    console.log("[v0] Admin user deleted successfully with all related data")
 
     // Revalidate the admin users page
     revalidatePath("/admin/admin-users")

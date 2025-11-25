@@ -19,9 +19,9 @@ export default async function EditAffiliatePage({ params }: EditAffiliatePagePro
 
   if (!user) redirect("/auth/login")
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-
-  if (profile?.role !== "admin") redirect("/dashboard")
+  const { data: profile } = await supabase.from("profiles").select("role_id, roles(role_name)").eq("id", user.id).single()
+  const profileWithRole = profile as { role_id: string; roles: { role_name: string } } | null
+  if (!profileWithRole || profileWithRole.roles?.role_name !== "admin") redirect("/dashboard")
 
   const { data: affiliate, error } = await supabase
     .from("affiliates")

@@ -67,14 +67,15 @@ export default function LoginPage() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, is_profile_complete, status")
+      .select("role_id, is_profile_complete, status, roles(role_name)")
       .eq("id", userId)
       .maybeSingle()
 
     console.log("[v0] Login - User profile:", { userId, profile })
 
     // If user is admin or moderator, check status
-    if (profile && (profile.role === "admin" || profile.role === "moderator")) {
+    const roleName = (profile?.roles as { role_name: string } | null)?.role_name
+    if (profile && (roleName === "admin" || roleName === "moderator")) {
       // Check if admin user is active
       if (profile.status !== "active") {
         console.log("[v0] Login - Admin user is inactive, logging out")

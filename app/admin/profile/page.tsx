@@ -13,9 +13,9 @@ export default async function AdminProfilePage() {
     redirect("/auth/login")
   }
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
-
-  if (profile?.role !== "admin") {
+  const { data: profile } = await supabase.from("profiles").select("role_id, roles(role_name)").eq("id", user.id).single()
+  const profileWithRole = profile as { role_id: string; roles: { role_name: string } } | null
+  if (!profileWithRole || profileWithRole.roles?.role_name !== "admin") {
     redirect("/dashboard")
   }
 
