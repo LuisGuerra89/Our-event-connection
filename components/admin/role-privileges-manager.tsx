@@ -70,7 +70,8 @@ export function RolePrivilegesManager({
         description: "Role privileges updated successfully",
       })
 
-      router.refresh()
+      // Redirect to roles list after successful save
+      router.push("/admin/roles")
     } catch (error) {
       toast({
         title: "Error",

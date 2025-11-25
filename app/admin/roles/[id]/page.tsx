@@ -42,6 +42,12 @@ export default async function EditRolePage({ params }: { params: Promise<{ id: s
     redirect("/admin/roles")
   }
 
+  // System roles cannot be edited
+  const systemRoles = ["admin", "moderator", "user"]
+  if (systemRoles.includes(role.role_name)) {
+    redirect("/admin/roles")
+  }
+
   return (
     <div className="container mx-auto py-8">
       <div className="mb-8">

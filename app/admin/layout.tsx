@@ -2,6 +2,7 @@ import type React from "react"
 import { redirect } from "next/navigation"
 import { createServerClient } from "@/lib/supabase/server"
 import { AdminLayoutClient } from "@/components/admin/admin-layout-client"
+import { getUserPrivileges } from "@/lib/auth-utils"
 
 export default async function AdminLayout({
   children,
@@ -36,11 +37,15 @@ export default async function AdminLayout({
     redirect("/dashboard")
   }
 
+  // Get user privileges
+  const privileges = await getUserPrivileges(data.user.id)
+
   return (
     <AdminLayoutClient
       userRole={userRole}
       userName={profileWithRole?.full_name || data.user.email?.split("@")[0]}
       userEmail={data.user.email}
+      userPrivileges={privileges}
     >
       {children}
     </AdminLayoutClient>

@@ -5,6 +5,7 @@ import { AdminUsersTable } from "@/components/admin/admin-users-table"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Plus } from "lucide-react"
+import { isAdmin } from "@/lib/auth-utils"
 
 export default async function AdminUsersManagementPage() {
   const supabase = await createServerClient()
@@ -17,6 +18,11 @@ export default async function AdminUsersManagementPage() {
   }
 
   // Check if user is admin or moderator
+  const admin = await isAdmin()
+  if (!admin) {
+    redirect("/dashboard")
+  }
+
   const { data: profile } = await supabase.from("profiles").select("role_id, roles(role_name)").eq("id", user.id).single()
   const profileWithRole = profile as { role_id: string; roles: { role_name: string } } | null
   const userRole = profileWithRole?.roles?.role_name

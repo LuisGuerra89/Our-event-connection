@@ -2,8 +2,15 @@ import { createServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { EditProfileForm } from "@/components/admin/edit-profile-form"
+import { isAdmin } from "@/lib/auth-utils"
 
 export default async function AdminProfilePage() {
+  // Check if user is admin
+  const admin = await isAdmin()
+  if (!admin) {
+    redirect("/dashboard")
+  }
+
   const supabase = await createServerClient()
   const {
     data: { user },
@@ -20,7 +27,7 @@ export default async function AdminProfilePage() {
     .single()
   
   const profileWithRole = profile as { role_id: string; roles: { role_name: string } } | null
-  if (!profileWithRole || profileWithRole.roles?.role_name !== "admin") {
+  if (!profileWithRole) {
     redirect("/dashboard")
   }
 

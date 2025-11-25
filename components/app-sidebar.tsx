@@ -41,6 +41,14 @@ interface AppSidebarProps {
   userName?: string
   userEmail?: string
   userImage?: string | null
+  userPrivileges?: string[]
+}
+
+interface MenuItem {
+  title: string
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  requiredPrivileges?: string[]
 }
 
 const userNavItems = [
@@ -81,110 +89,130 @@ const userNavItems = [
   },
 ]
 
-const adminNavItems = [
+const adminNavItems: MenuItem[] = [
   {
     title: "Admin Dashboard",
     href: "/admin",
     icon: Shield,
+    requiredPrivileges: ["dashboard.view"],
   },
   {
     title: "Edit Profile",
     href: "/admin/profile",
     icon: UserCog,
+    requiredPrivileges: ["admin-profile.view"],
   },
   {
     title: "Change Password",
     href: "/admin/change-password",
     icon: KeyRound,
+    requiredPrivileges: ["change-password.update"],
   },
   {
     title: "Admin Users",
     href: "/admin/admin-users",
     icon: Shield,
+    requiredPrivileges: ["admin-users.view"],
   },
   {
     title: "Roles & Privileges",
     href: "/admin/roles",
     icon: Shield,
+    requiredPrivileges: ["roles.view"],
   },
   {
     title: "Manage Users",
     href: "/admin/users",
     icon: Users,
+    requiredPrivileges: ["users.view"],
   },
   {
     title: "Manage Events",
     href: "/admin/events",
     icon: Calendar,
+    requiredPrivileges: ["events.view"],
   },
   {
     title: "Settings",
     href: "/admin/settings",
     icon: Settings,
+    requiredPrivileges: ["settings.view"],
   },
   {
     title: "Email Templates",
     href: "/admin/email-templates",
     icon: Mail,
+    requiredPrivileges: ["email-templates.view"],
   },
   {
     title: "Email Recipients",
     href: "/admin/recipients",
     icon: Mail,
+    requiredPrivileges: ["recipients.view"],
   },
   {
     title: "Locations",
     href: "/admin/locations",
     icon: Globe,
+    requiredPrivileges: ["locations.view"],
   },
   {
     title: "Categories",
     href: "/admin/categories",
     icon: FolderTree,
+    requiredPrivileges: ["categories.view"],
   },
   {
     title: "Enums",
     href: "/admin/enums",
     icon: ListTree,
+    requiredPrivileges: ["enums.view"],
   },
   {
     title: "Content Pages",
     href: "/admin/content",
     icon: FileText,
+    requiredPrivileges: ["content.view"],
   },
   {
     title: "Affiliates",
     href: "/admin/affiliates",
     icon: Briefcase,
+    requiredPrivileges: ["affiliates.view"],
   },
   {
     title: "Subscriptions",
     href: "/admin/subscriptions",
     icon: CreditCard,
+    requiredPrivileges: ["subscriptions.view"],
   },
   {
     title: "Payments",
     href: "/admin/payments",
     icon: CreditCard,
+    requiredPrivileges: ["payments.view"],
   },
   {
     title: "Contact Forms",
     href: "/admin/contacts",
     icon: MessageSquare,
+    requiredPrivileges: ["contacts.view"],
   },
   {
     title: "Waivers",
     href: "/admin/waivers",
     icon: FileText,
+    requiredPrivileges: ["waivers.view"],
   },
   {
     title: "Analytics",
     href: "/admin/analytics",
     icon: TrendingUp,
+    requiredPrivileges: ["analytics.view"],
   },
 ]
 
-export function AppSidebar({ userRole, userName, userEmail, userImage }: AppSidebarProps) {
+export function AppSidebar({ userRole, userName, userEmail, userImage, userPrivileges = [] }: AppSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
@@ -209,7 +237,20 @@ export function AppSidebar({ userRole, userName, userEmail, userImage }: AppSide
     }
   }
 
-  const navItems = isAdmin ? adminNavItems : userNavItems
+  // Filter menu items based on privileges
+  const hasPrivilege = (requiredPrivileges?: string[]) => {
+    if (!requiredPrivileges || requiredPrivileges.length === 0) {
+      return true
+    }
+    return requiredPrivileges.some(priv => userPrivileges.includes(priv))
+  }
+
+  let navItems = isAdmin ? adminNavItems : userNavItems
+  
+  // Filter admin items based on privileges
+  if (isAdmin && Array.isArray(adminNavItems)) {
+    navItems = adminNavItems.filter((item: MenuItem) => hasPrivilege(item.requiredPrivileges))
+  }
 
   return (
     <>

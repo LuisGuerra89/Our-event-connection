@@ -2,6 +2,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { RolesTable } from "@/components/admin/roles-table"
+import { isAdmin } from "@/lib/auth-utils"
 
 export default async function AdminRolesPage() {
   const supabase = await createServerClient()
@@ -13,6 +14,12 @@ export default async function AdminRolesPage() {
     redirect("/auth/login")
   }
 
+  // Check if user is admin
+  const admin = await isAdmin()
+  if (!admin) {
+    redirect("/dashboard")
+  }
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("role_id, roles(role_name)")
@@ -20,11 +27,11 @@ export default async function AdminRolesPage() {
     .single()
 
   // Check if user is admin
-  const isAdmin = profile?.roles && typeof profile.roles === 'object' && 'role_name' in profile.roles 
+  const isAdminUser = profile?.roles && typeof profile.roles === 'object' && 'role_name' in profile.roles 
     ? profile.roles.role_name === "admin" 
     : false
 
-  if (!isAdmin) {
+  if (!isAdminUser) {
     redirect("/dashboard")
   }
 
