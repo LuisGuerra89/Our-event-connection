@@ -6,12 +6,6 @@ INSERT INTO privileges (privilege_name, module_name, description) VALUES
   ('users.update', 'User Management', 'Update user details'),
   ('users.delete', 'User Management', 'Delete users'),
   
-  -- Admin Users
-  ('admin_users.view', 'Admin Users', 'View admin users'),
-  ('admin_users.create', 'Admin Users', 'Create admin users'),
-  ('admin_users.update', 'Admin Users', 'Update admin users'),
-  ('admin_users.delete', 'Admin Users', 'Delete admin users'),
-  
   -- Roles Management
   ('roles.view', 'Roles Management', 'View roles'),
   ('roles.create', 'Roles Management', 'Create roles'),

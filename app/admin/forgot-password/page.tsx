@@ -11,7 +11,6 @@ import Link from "next/link"
 import { createBrowserClient } from "@/lib/supabase/client"
 
 export default function AdminForgotPasswordPage() {
-  const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [mobile, setMobile] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -27,18 +26,24 @@ export default function AdminForgotPasswordPage() {
     try {
       const supabase = createBrowserClient()
 
-      // Verify admin user exists with matching credentials
-      const { data: adminUser, error: queryError } = await supabase
-        .from("admin_users")
-        .select("id, user_id, email, username")
-        .eq("username", username)
+      // Verify admin user exists with matching email in profiles table
+      const { data: profile, error: queryError } = await supabase
+        .from("profiles")
+        .select("id, email, phone, role_id, roles(role_name)")
         .eq("email", email)
-        .eq("mobile", mobile)
-        .eq("status", "active")
+        .eq("phone", mobile)
         .maybeSingle()
 
-      if (queryError || !adminUser) {
-        setError("No active admin account found with the provided credentials")
+      if (queryError || !profile) {
+        setError("No admin account found with the provided credentials")
+        setIsLoading(false)
+        return
+      }
+
+      // Check if user has admin role
+      const userRole = (profile?.roles as any)?.role_name
+      if (userRole !== "admin" && userRole !== "moderator") {
+        setError("Only admin and moderator accounts can reset password here")
         setIsLoading(false)
         return
       }
@@ -94,7 +99,7 @@ export default function AdminForgotPasswordPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Forgot Password</CardTitle>
           <CardDescription>
-            Enter your credentials to receive a password reset link. All fields are required.
+            Enter your email and phone number to receive a password reset link. All fields are required.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -105,21 +110,6 @@ export default function AdminForgotPasswordPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-
-            <div className="space-y-2">
-              <Label htmlFor="username">
-                Username <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="Enter your username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">
@@ -138,12 +128,12 @@ export default function AdminForgotPasswordPage() {
 
             <div className="space-y-2">
               <Label htmlFor="mobile">
-                Mobile <span className="text-destructive">*</span>
+                Phone Number <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="mobile"
                 type="tel"
-                placeholder="Enter your mobile number"
+                placeholder="Enter your phone number"
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value)}
                 required

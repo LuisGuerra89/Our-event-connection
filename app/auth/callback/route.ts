@@ -39,25 +39,13 @@ export async function GET(request: Request) {
       if (profile && (roleName === "admin" || roleName === "moderator")) {
         console.log("[v0] User is admin/moderator, redirecting to /admin")
         return NextResponse.redirect(new URL("/admin", request.url))
-      }        // Fallback: check if user is in admin_users table (for newly created admins)
-        if (!profile) {
-          const { data: adminUser } = await supabase
-            .from("admin_users")
-            .select("id")
-            .eq("user_id", user.id)
-            .maybeSingle()
+      }
 
-          if (adminUser) {
-            console.log("[v0] User found in admin_users table, redirecting to /admin")
-            return NextResponse.redirect(new URL("/admin", request.url))
-          }
-        }
-
-        // If profile is not complete (social login) or was skipped, redirect to complete profile page
-        if (profile && (profile.questionnaire_completed === false || profile.questionnaire_skipped === true)) {
-          console.log("[v0] Profile incomplete or skipped, redirecting to /onboarding/complete-profile")
-          return NextResponse.redirect(new URL("/onboarding/complete-profile", request.url))
-        }
+      // If profile is not complete (social login) or was skipped, redirect to complete profile page
+      if (profile && (profile.questionnaire_completed === false || profile.questionnaire_skipped === true)) {
+        console.log("[v0] Profile incomplete or skipped, redirecting to /onboarding/complete-profile")
+        return NextResponse.redirect(new URL("/onboarding/complete-profile", request.url))
+      }
 
         // Check if user has completed waiver
         const { data: waiver } = await supabase

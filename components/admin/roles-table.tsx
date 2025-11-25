@@ -26,6 +26,7 @@ interface Role {
   description: string | null
   status: string
   created_at: string
+  user_count?: number
   profiles?: { count: number }[]
 }
 
@@ -38,7 +39,8 @@ export function RolesTable({ roles }: { roles: Role[] }) {
   const [isDeleting, setIsDeleting] = useState(false)
 
   const getUserCount = (role: Role) => {
-    return role.profiles?.[0]?.count || 0
+    // Check both user_count (new structure) and profiles (old structure)
+    return role.user_count ?? role.profiles?.[0]?.count ?? 0
   }
 
   const filteredRoles = roles.filter((role) => {

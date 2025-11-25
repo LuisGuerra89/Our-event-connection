@@ -26,11 +26,19 @@ export default async function EditAdminUserPage({ params }: { params: Promise<{ 
     redirect("/dashboard")
   }
 
-  // Fetch the admin user to edit
+  // Fetch the admin user to edit from profiles table
   const { data: adminUser, error } = await supabase
-    .from("admin_users")
+    .from("profiles")
     .select(`
-      *,
+      id,
+      full_name,
+      phone,
+      email,
+      bio,
+      location_city,
+      location_state,
+      location_country,
+      role_id,
       roles (
         id,
         role_name

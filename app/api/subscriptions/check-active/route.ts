@@ -94,14 +94,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
-    // Check if current user is admin
-    const { data: adminUser, error: adminError } = await supabase
-      .from("admin_users")
-      .select("id")
+    // Check if current user is admin using profiles table
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role_id, roles(role_name)")
       .eq("id", currentUser.id)
       .maybeSingle()
     
-    if (adminError || !adminUser) {
+    const userRole = (profile?.roles as any)?.role_name
+    
+    if (profileError || !profile || (userRole !== "admin" && userRole !== "moderator")) {
       return NextResponse.json(
         { error: "Admin access required" },
         { status: 403 }

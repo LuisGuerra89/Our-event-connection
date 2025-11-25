@@ -13,13 +13,16 @@ export default async function AdminProfilePage() {
     redirect("/auth/login")
   }
 
-  const { data: profile } = await supabase.from("profiles").select("role_id, roles(role_name)").eq("id", user.id).single()
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, role_id, phone, full_name, bio, location_city, location_state, location_country, roles(role_name)")
+    .eq("id", user.id)
+    .single()
+  
   const profileWithRole = profile as { role_id: string; roles: { role_name: string } } | null
   if (!profileWithRole || profileWithRole.roles?.role_name !== "admin") {
     redirect("/dashboard")
   }
-
-  const { data: adminUser } = await supabase.from("admin_users").select("*").eq("user_id", user.id).maybeSingle()
 
   return (
     <div className="container mx-auto py-8">
@@ -35,7 +38,7 @@ export default async function AdminProfilePage() {
             <CardDescription>Update your personal details</CardDescription>
           </CardHeader>
           <CardContent>
-            <EditProfileForm userId={user.id} profile={profile} adminUser={adminUser} userEmail={user.email || ""} />
+            <EditProfileForm userId={user.id} profile={profile} adminUser={null} userEmail={user.email || ""} />
           </CardContent>
         </Card>
       </div>
