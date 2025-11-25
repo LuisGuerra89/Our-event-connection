@@ -75,6 +75,22 @@ export async function updateSession(request: NextRequest) {
       url.pathname = "/dashboard"
       return NextResponse.redirect(url)
     }
+
+    // Check if admin user is active in admin_users table
+    const { data: adminUser } = await supabase
+      .from("admin_users")
+      .select("status")
+      .eq("user_id", user.id)
+      .maybeSingle()
+
+    // If admin is inactive, sign out and redirect to login
+    if (adminUser && adminUser.status !== "active") {
+      console.log(`[Middleware] Admin user ${user.id} is ${adminUser.status}, signing out`)
+      await supabase.auth.signOut()
+      const url = request.nextUrl.clone()
+      url.pathname = "/auth/login"
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse

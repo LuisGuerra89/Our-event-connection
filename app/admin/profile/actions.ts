@@ -67,12 +67,26 @@ export async function changePassword(formData: FormData) {
     return { error: "Password must be at least 6 characters long" }
   }
 
+  if (oldPassword === newPassword) {
+    return { error: "New password must be different from the old password" }
+  }
+
   try {
-    // Verify old password by attempting to sign in
+    // Get current user
     const {
       data: { user },
     } = await supabase.auth.getUser()
     if (!user?.email) throw new Error("User not found")
+
+    // Verify old password by attempting to sign in
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: oldPassword,
+    })
+
+    if (signInError) {
+      return { error: "Current password is incorrect" }
+    }
 
     // Update password
     const { error } = await supabase.auth.updateUser({
@@ -80,6 +94,13 @@ export async function changePassword(formData: FormData) {
     })
 
     if (error) throw error
+
+    // Sign out user
+    const { error: signOutError } = await supabase.auth.signOut()
+    if (signOutError) {
+      console.error("Sign out error:", signOutError)
+      // Continue anyway, client will handle logout
+    }
 
     return { success: true }
   } catch (error) {

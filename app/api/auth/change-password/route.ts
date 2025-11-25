@@ -76,8 +76,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Sign out user
+    const { error: signOutError } = await supabase.auth.signOut()
+
+    if (signOutError) {
+      console.error("Sign out error:", signOutError)
+      return NextResponse.json(
+        { error: "Failed to sign out", message: signOutError.message },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
-      { success: true, message: "Password changed successfully" },
+      { success: true, message: "Password changed successfully. Please log in again." },
       { status: 200 }
     )
   } catch (error) {

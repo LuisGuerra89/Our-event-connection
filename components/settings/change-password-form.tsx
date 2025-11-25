@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -41,6 +42,7 @@ type ChangePasswordFormData = z.infer<typeof changePasswordSchema>
 
 export function ChangePasswordForm() {
   const { toast } = useToast()
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPasswords, setShowPasswords] = useState({
     current: false,
@@ -61,6 +63,7 @@ export function ChangePasswordForm() {
     try {
       setIsLoading(true)
 
+      // Change password
       const response = await fetch("/api/auth/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,10 +80,22 @@ export function ChangePasswordForm() {
 
       toast({
         title: "Success!",
-        description: "Your password has been changed successfully.",
+        description: "Your password has been changed successfully. Redirecting to login...",
       })
 
       form.reset()
+      
+      // Wait a moment then sign out and redirect
+      setTimeout(async () => {
+        try {
+          await fetch("/api/auth/logout", {
+            method: "POST",
+          })
+        } catch (err) {
+          console.error("Logout error:", err)
+        }
+        router.push("/auth/login")
+      }, 1500)
     } catch (error) {
       console.error("Error:", error)
       toast({

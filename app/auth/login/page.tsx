@@ -73,26 +73,50 @@ export default function LoginPage() {
 
     console.log("[v0] Login - User profile:", { userId, profile })
 
-    // If user is admin or moderator, redirect to admin dashboard directly
+    // If user is admin or moderator, check status in admin_users
     if (profile && (profile.role === "admin" || profile.role === "moderator")) {
+      const { data: adminUser } = await supabase
+        .from("admin_users")
+        .select("id, status")
+        .eq("user_id", userId)
+        .maybeSingle()
+
+      if (adminUser) {
+        // Check if admin user is active
+        if (adminUser.status !== "active") {
+          console.log("[v0] Login - Admin user is inactive, logging out")
+          await supabase.auth.signOut()
+          setError(`Your admin account is ${adminUser.status}. Please contact support.`)
+          setIsLoading(false)
+          return
+        }
+      }
+
       console.log("[v0] Login - User is admin/moderator, redirecting to /admin")
       router.push("/admin")
       return
     }
 
-    // Fallback: check if user is in admin_users table (for newly created admins)
-    if (!profile) {
-      const { data: adminUser } = await supabase
-        .from("admin_users")
-        .select("id")
-        .eq("user_id", userId)
-        .maybeSingle()
+    // Fallback: check if user is in admin_users table (for newly created admins without profile role)
+    const { data: adminUser } = await supabase
+      .from("admin_users")
+      .select("id, status")
+      .eq("user_id", userId)
+      .maybeSingle()
 
-      if (adminUser) {
-        console.log("[v0] Login - User found in admin_users table, redirecting to /admin")
-        router.push("/admin")
+    if (adminUser) {
+      // Check if admin user is active
+      if (adminUser.status !== "active") {
+        console.log("[v0] Login - Admin user is inactive, logging out")
+        await supabase.auth.signOut()
+        setError(`Your admin account is ${adminUser.status}. Please contact support.`)
+        setIsLoading(false)
         return
       }
+
+      console.log("[v0] Login - User found in admin_users table, redirecting to /admin")
+      router.push("/admin")
+      return
     }
 
     // Check if social login user needs to complete profile
