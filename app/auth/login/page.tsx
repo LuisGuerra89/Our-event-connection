@@ -131,7 +131,8 @@ export default function LoginPage() {
     if (!waiver) {
       router.push("/onboarding/waiver")
     } else {
-      router.push("/dashboard")
+      // User is logged in, waiver complete - stay on current page or go to home
+      router.push("/")
     }
   }
 
