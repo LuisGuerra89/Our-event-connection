@@ -40,6 +40,7 @@ interface Enum {
   id: string
   enum_title: string
   enum_type: string
+  enum_value?: string
 }
 
 export default function CreateEventForm() {
@@ -127,7 +128,7 @@ export default function CreateEventForm() {
     // Load event types
     const { data: eventTypesData } = await supabase
       .from("enums")
-      .select("id, enum_title, enum_type")
+      .select("id, enum_title, enum_type, enum_value")
       .eq("enum_type", "event_type")
       .eq("status", "active")
       .order("display_order")
@@ -136,7 +137,7 @@ export default function CreateEventForm() {
     // Load venue types
     const { data: venueTypesData } = await supabase
       .from("enums")
-      .select("id, enum_title, enum_type")
+      .select("id, enum_title, enum_type, enum_value")
       .eq("enum_type", "venue_type")
       .eq("status", "active")
       .order("display_order")
@@ -145,7 +146,7 @@ export default function CreateEventForm() {
     // Load gender limitations
     const { data: genderLimitationsData } = await supabase
       .from("enums")
-      .select("id, enum_title, enum_type")
+      .select("id, enum_title, enum_type, enum_value")
       .eq("enum_type", "gender_limitation")
       .eq("status", "active")
       .order("display_order")
@@ -154,7 +155,7 @@ export default function CreateEventForm() {
     // Load event statuses
     const { data: eventStatusesData } = await supabase
       .from("enums")
-      .select("id, enum_title, enum_type")
+      .select("id, enum_title, enum_type, enum_value")
       .eq("enum_type", "event_status")
       .eq("status", "active")
       .order("display_order")
@@ -373,11 +374,15 @@ export default function CreateEventForm() {
                   <SelectValue placeholder="Select event type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {eventTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.enum_title.toLowerCase().replace(/ /g, "_")}>
-                      {type.enum_title}
-                    </SelectItem>
-                  ))}
+                  {eventTypes.map((type) => {
+                    // Use enum_value if available, otherwise generate it from enum_title
+                    const value = type.enum_value || type.enum_title.toLowerCase().replace(/ /g, "_")
+                    return (
+                      <SelectItem key={type.id} value={value}>
+                        {type.enum_title}
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -424,11 +429,14 @@ export default function CreateEventForm() {
                   <SelectValue placeholder="Select venue type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {venueTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.enum_title.toLowerCase()}>
-                      {type.enum_title}
-                    </SelectItem>
-                  ))}
+                  {venueTypes.map((type) => {
+                    const value = type.enum_value || type.enum_title.toLowerCase().replace(/ /g, "_")
+                    return (
+                      <SelectItem key={type.id} value={value}>
+                        {type.enum_title}
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -551,11 +559,14 @@ export default function CreateEventForm() {
                 <SelectValue placeholder="Select gender limitation" />
               </SelectTrigger>
               <SelectContent>
-                {genderLimitations.map((limitation) => (
-                  <SelectItem key={limitation.id} value={limitation.enum_title.toLowerCase().replace(/ /g, "_")}>
-                    {limitation.enum_title}
-                  </SelectItem>
-                ))}
+                {genderLimitations.map((limitation) => {
+                  const value = limitation.enum_value || limitation.enum_title.toLowerCase().replace(/ /g, "_")
+                  return (
+                    <SelectItem key={limitation.id} value={value}>
+                      {limitation.enum_title}
+                    </SelectItem>
+                  )
+                })}
               </SelectContent>
             </Select>
           </div>

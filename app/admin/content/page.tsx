@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
+import { isAdmin } from "@/lib/auth-utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ContentTable } from "@/components/admin/content-table"
 import { Button } from "@/components/ui/button"
@@ -14,9 +15,9 @@ export default async function ContentManagementPage() {
 
   if (!user) redirect("/auth/login")
 
-  const { data: profile } = await supabase.from("profiles").select("role_id, roles(role_name)").eq("id", user.id).single()
-  const profileWithRole = profile as { role_id: string; roles: { role_name: string } } | null
-  if (!profileWithRole || profileWithRole.roles?.role_name !== "admin") redirect("/dashboard")
+  // Check if user is admin using the auth utility
+  const adminCheck = await isAdmin(user.id)
+  if (!adminCheck) redirect("/dashboard")
 
   const { data: content } = await supabase.from("cms_content").select("*").order("created_at", { ascending: false })
 
