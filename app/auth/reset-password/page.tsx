@@ -15,12 +15,16 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isValidSession, setIsValidSession] = useState(false)
+  const [isValidSession, setIsValidSession] = useState<boolean | null>(null)
   const router = useRouter()
 
   useEffect(() => {
     const checkSession = async () => {
       const supabase = createClient()
+      
+      // Give Supabase a moment to process the callback URL token
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
       const { data } = await supabase.auth.getSession()
       setIsValidSession(!!data.session)
     }
@@ -59,6 +63,18 @@ export default function ResetPasswordPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (isValidSession === null) {
+    return (
+      <div className="flex min-h-svh w-full items-center justify-center p-6">
+        <Card className="w-full max-w-sm">
+          <CardHeader>
+            <CardTitle className="text-2xl">Loading...</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    )
   }
 
   if (!isValidSession) {
