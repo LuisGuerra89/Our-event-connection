@@ -41,10 +41,10 @@ export async function GET(request: Request) {
         return NextResponse.redirect(new URL("/admin", request.url))
       }
 
-      // If profile is not complete (social login) or was skipped, redirect to complete profile page
+      // If profile is not complete (social login) or was skipped, redirect to login for new email signups
       if (profile && (profile.questionnaire_completed === false || profile.questionnaire_skipped === true)) {
-        console.log("[v0] Profile incomplete or skipped, redirecting to /onboarding/complete-profile")
-        return NextResponse.redirect(new URL("/onboarding/complete-profile", request.url))
+        console.log("[v0] Profile incomplete or skipped, redirecting to /auth/login")
+        return NextResponse.redirect(new URL("/auth/login?message=Email confirmed successfully. Please log in.", request.url))
       }
 
         // Check if user has completed waiver
