@@ -53,10 +53,10 @@ function createUserMarkerIcon(userInfo?: UserInfo | null): string {
     return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" width="48" height="56" viewBox="0 0 48 56">
         <ellipse cx="24" cy="52" rx="8" ry="3" fill="rgba(0,0,0,0.2)"/>
-        <path d="M24 56 L16 40 L32 40 Z" fill="#7c3aed"/>
-        <circle cx="24" cy="22" r="20" fill="#7c3aed"/>
+        <path d="M24 56 L16 40 L32 40 Z" fill="#ef4444"/>
+        <circle cx="24" cy="22" r="20" fill="#ef4444"/>
         <circle cx="24" cy="22" r="18" fill="white"/>
-        <text x="24" y="28" text-anchor="middle" fill="#7c3aed" font-family="Arial, sans-serif" font-size="14" font-weight="bold">${initials}</text>
+        <text x="24" y="28" text-anchor="middle" fill="#ef4444" font-family="Arial, sans-serif" font-size="14" font-weight="bold">${initials}</text>
       </svg>
     `)}`
   }
@@ -65,12 +65,12 @@ function createUserMarkerIcon(userInfo?: UserInfo | null): string {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="56" viewBox="0 0 48 56">
       <ellipse cx="24" cy="52" rx="8" ry="3" fill="rgba(0,0,0,0.2)"/>
-      <path d="M24 56 L16 40 L32 40 Z" fill="#3b82f6"/>
-      <circle cx="24" cy="22" r="20" fill="#3b82f6"/>
+      <path d="M24 56 L16 40 L32 40 Z" fill="#ef4444"/>
+      <circle cx="24" cy="22" r="20" fill="#ef4444"/>
       <circle cx="24" cy="22" r="18" fill="white"/>
       <!-- User icon -->
-      <circle cx="24" cy="18" r="6" fill="#3b82f6"/>
-      <path d="M14 32 C14 26 19 23 24 23 C29 23 34 26 34 32" fill="#3b82f6"/>
+      <circle cx="24" cy="18" r="6" fill="#ef4444"/>
+      <path d="M14 32 C14 26 19 23 24 23 C29 23 34 26 34 32" fill="#ef4444"/>
     </svg>
   `)}`
 }
@@ -329,15 +329,9 @@ export function EventMap({
               </div>
             )}
             <h3 className="font-semibold text-sm text-gray-900">{selectedEvent.title}</h3>
-            {selectedEvent.location_name && (
-              <p className="text-xs text-gray-600">{selectedEvent.location_name}</p>
-            )}
-            {selectedEvent.location_address && (
-              <p className="text-xs text-gray-600">{selectedEvent.location_address}</p>
-            )}
-            {selectedEvent.location_city && selectedEvent.location_state && (
+            {(selectedEvent.location_city || selectedEvent.location_state) && (
               <p className="text-xs text-gray-600">
-                {selectedEvent.location_city}, {selectedEvent.location_state}
+                {[selectedEvent.location_city, selectedEvent.location_state].filter(Boolean).join(", ")}
               </p>
             )}
             {selectedEvent.start_date && (
