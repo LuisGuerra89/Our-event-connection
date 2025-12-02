@@ -8,17 +8,17 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Our Event Connection - Connect Through Shared Experiences',
-  description: 'Meet meaningful connections through carefully curated social events. Our Event Connection brings singles together for unforgettable experiences.',
+  title: 'Our Love Connection - Connect Through Shared Experiences',
+  description: 'Meet meaningful connections through carefully curated social events. Our Love Connection brings singles together for unforgettable experiences.',
   keywords: 'dating, events, singles, networking, social events, connections',
-  applicationName: 'Our Event Connection',
-  authors: [{ name: 'Our Event Connection Team' }],
+  applicationName: 'Our Love Connection',
+  authors: [{ name: 'Our Love Connection Team' }],
   icons: {
     icon: '/favicon.svg',
     apple: '/apple-icon.png',
   },
   openGraph: {
-    title: 'Our Event Connection - Connect Through Shared Experiences',
+    title: 'Our Love Connection - Connect Through Shared Experiences',
     description: 'Meet meaningful connections through carefully curated social events',
     type: 'website',
     locale: 'en_US',

@@ -177,7 +177,7 @@ export default async function HomePage() {
         <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Why Choose Our Event Connection?</h2>
+              <h2 className="text-3xl font-bold mb-4">Why Choose Our Love Connection?</h2>
               <p className="text-muted-foreground">Everything you need to find meaningful connections</p>
             </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
