@@ -14,13 +14,10 @@ export default async function EnumsPage() {
 
   if (!user) redirect("/auth/login")
 
-  const { data: profile } = await supabase.from("profiles").select("role_id").eq("id", user.id).single()
+  const { data: profile } = await supabase.from("profiles").select("role_id, roles(role_name)").eq("id", user.id).single()
 
-  if (!profile?.role_id) redirect("/dashboard")
-
-  const { data: role } = await supabase.from("roles").select("role_name").eq("id", profile.role_id).single()
-
-  if (role?.role_name !== "admin") redirect("/dashboard")
+  const profileWithRole = profile as { role_id: string; roles: { role_name: string } } | null
+  if (!profileWithRole || profileWithRole.roles?.role_name !== "admin") redirect("/dashboard")
 
   const { data: enums } = await supabase.from("enums").select("*").order("enum_type").order("display_order")
 
