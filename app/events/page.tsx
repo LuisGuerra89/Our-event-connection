@@ -9,10 +9,15 @@ import { PublicPageLayout } from "@/components/public-page-layout"
 export default async function EventsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; status?: string }>
+  searchParams: Promise<{ category?: string; status?: string; q?: string; location?: string; date?: string; page?: string }>
 }) {
   const supabase = await createClient()
   const params = await searchParams
+  
+  // Get page number from params (default to 1)
+  const page = Math.max(1, parseInt(params.page || "1"))
+  const itemsPerPage = 12
+  const offset = (page - 1) * itemsPerPage
 
   // Fetch categories for filter
   const { data: categories } = await supabase
@@ -31,9 +36,10 @@ export default async function EventsPage({
   // Build query
   let query = supabase
     .from("events")
-    .select("*")
+    .select("*", { count: "exact" })
     .gte("end_date", new Date().toISOString())
     .order("start_date", { ascending: true })
+    .range(offset, offset + itemsPerPage - 1)
 
   // Filter by category if provided
   if (categoryId) {
@@ -46,6 +52,28 @@ export default async function EventsPage({
   } else {
     // Default: show only upcoming and ongoing events
     query = query.in("status", ["upcoming", "ongoing"])
+  }
+
+  // Filter by keyword (search in title and description)
+  if (params.q) {
+    query = query.or(`title.ilike.%${params.q}%,description.ilike.%${params.q}%`)
+  }
+
+  // Filter by location (city or state)
+  if (params.location) {
+    query = query.or(`location_city.ilike.%${params.location}%,location_state.ilike.%${params.location}%`)
+  }
+
+  // Filter by date (events on or after the selected date)
+  if (params.date) {
+    const startOfDay = new Date(params.date)
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(params.date)
+    endOfDay.setHours(23, 59, 59, 999)
+
+    query = query
+      .gte("start_date", startOfDay.toISOString())
+      .lte("start_date", endOfDay.toISOString())
   }
 
   const { data: events, error: eventsError } = await query
@@ -103,14 +131,41 @@ export default async function EventsPage({
               </div>
             )}
 
-        {/* Events Count */}
+        {/* Events Count & Active Filters */}
         {events && events.length > 0 && (
           <div className="mb-6">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-2">
               {params.category 
                 ? `Showing ${events.length} event${events.length !== 1 ? 's' : ''} in this category`
-                : `${events.length} upcoming event${events.length !== 1 ? 's' : ''} available`}
+                : `${events.length} event${events.length !== 1 ? 's' : ''} found`}
             </p>
+            {(params.q || params.location || params.date) && (
+              <div className="flex flex-wrap gap-2">
+                {params.q && (
+                  <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full">
+                    📝 {params.q}
+                  </span>
+                )}
+                {params.location && (
+                  <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full">
+                    📍 {params.location}
+                  </span>
+                )}
+                {params.date && (
+                  <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full">
+                    📅 {new Date(params.date).toLocaleDateString()}
+                  </span>
+                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-xs h-auto py-1 px-2"
+                  asChild
+                >
+                  <Link href="/events">Clear Filters</Link>
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
@@ -122,18 +177,20 @@ export default async function EventsPage({
             </div>
             <h3 className="text-lg font-semibold mb-2">No Events Found</h3>
             <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-              {params.category 
+              {params.q || params.location || params.date
+                ? "No events match your search criteria. Try adjusting your filters or searching for something else."
+                : params.category
                 ? "There are no events in this category at the moment. Try selecting a different category."
                 : "There are no upcoming events at the moment. Check back soon for new events!"}
             </p>
-            <div className="flex gap-3 justify-center">
-              {params.category && (
+            <div className="flex gap-3 justify-center flex-wrap">
+              {(params.q || params.location || params.date || params.category) && (
                 <Button variant="outline" asChild>
-                  <Link href="/events">View All Events</Link>
+                  <Link href="/events">Clear All Filters</Link>
                 </Button>
               )}
               <Button asChild>
-                <Link href="/dashboard">Back to Dashboard</Link>
+                <Link href="/">Back to Home</Link>
               </Button>
             </div>
           </div>
