@@ -55,7 +55,7 @@ export function DomesticEventsSection() {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(false)
   const [detectingLocation, setDetectingLocation] = useState(true)
-  
+
   const [selectedCountry, setSelectedCountry] = useState<string>("")
   const [selectedState, setSelectedState] = useState<string>("")
   const [selectedCity, setSelectedCity] = useState<string>("")
@@ -114,29 +114,35 @@ export function DomesticEventsSection() {
         .select("*")
         .eq("status", "active")
         .order("name")
-      
+
       if (error) {
         console.error("Error loading countries:", error)
         return
       }
-      
+
       if (data) {
         setCountries(data)
-        // Only set default country if not already detected
-        if (!selectedCountry) {
-          // Find USA by default
-          const usa = data.find(c => c.code === "US" || c.name === "United States" || c.name.toLowerCase().includes("united states"))
-          if (usa) {
-            setSelectedCountry(usa.id)
-          } else if (data.length > 0) {
-            // Fallback to first country if USA not found
-            setSelectedCountry(data[0].id)
-          }
-        }
+        // Don't set default country here - wait for location detection
+        // The location detection useEffect will set the country
       }
     }
     loadCountries()
   }, [supabase])
+
+  // Set default country to USA only after location detection completes or fails
+  useEffect(() => {
+    if (!detectingLocation && !selectedCountry && countries.length > 0) {
+      // Location detection is done, but no country was set
+      // Default to USA
+      const usa = countries.find(c => c.code === "US" || c.name === "United States" || c.name.toLowerCase().includes("united states"))
+      if (usa) {
+        setSelectedCountry(usa.id)
+      } else if (countries.length > 0) {
+        // Fallback to first country if USA not found
+        setSelectedCountry(countries[0].id)
+      }
+    }
+  }, [detectingLocation, selectedCountry, countries])
 
   // Load states when country changes
   useEffect(() => {
@@ -144,7 +150,7 @@ export function DomesticEventsSection() {
       setStates([])
       return
     }
-    
+
     const loadStates = async () => {
       const { data, error } = await supabase
         .from("states")
@@ -152,17 +158,21 @@ export function DomesticEventsSection() {
         .eq("country_id", selectedCountry)
         .eq("status", "active")
         .order("name")
-      
+
       if (error) {
         console.error("Error loading states:", error)
         return
       }
-      
+
       if (data) {
         setStates(data)
-        setSelectedState("")
-        setSelectedCity("")
-        setCities([])
+        // Only reset state/city if they weren't set by location detection
+        // Check if the current selectedState is valid for this country
+        const isStateValid = data.some(s => s.id === selectedState)
+        if (!isStateValid) {
+          setSelectedState("")
+          setSelectedCity("")
+        }
       }
     }
     loadStates()
@@ -174,7 +184,7 @@ export function DomesticEventsSection() {
       setCities([])
       return
     }
-    
+
     const loadCities = async () => {
       const { data, error } = await supabase
         .from("cities")
@@ -182,12 +192,12 @@ export function DomesticEventsSection() {
         .eq("state_id", selectedState)
         .eq("status", "active")
         .order("name")
-      
+
       if (error) {
         console.error("Error loading cities:", error)
         return
       }
-      
+
       if (data) {
         setCities(data)
         setSelectedCity("")
@@ -201,7 +211,7 @@ export function DomesticEventsSection() {
     const loadEvents = async () => {
       setLoading(true)
       const now = new Date().toISOString()
-      
+
       let query = supabase
         .from("events")
         .select("*")
@@ -276,13 +286,13 @@ export function DomesticEventsSection() {
           <div>
             <h2 className="text-3xl font-bold mb-2">Domestic Events</h2>
             <p className="text-muted-foreground">
-              {userDetectedState 
+              {userDetectedState
                 ? `Showing events in ${userDetectedState} (auto-detected)`
                 : "Find events near you by selecting state and city"
               }
             </p>
           </div>
-          
+
           {/* Location Filters */}
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <Select value={selectedState || "all-states"} onValueChange={(value) => setSelectedState(value === "all-states" ? "" : value)}>
@@ -328,7 +338,7 @@ export function DomesticEventsSection() {
           <div className="text-center py-16">
             <MapPin className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-lg mb-2">
-              {userDetectedState 
+              {userDetectedState
                 ? `No events found in ${userDetectedState}`
                 : "No domestic events found for the selected location."
               }
