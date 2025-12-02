@@ -7,6 +7,7 @@ import { Calendar, MapPin, Users, Loader2, Map } from "lucide-react"
 import Link from "next/link"
 import { EventMap } from "@/components/event-map"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { createClient } from "@/lib/supabase/client"
 
 interface Event {
   id: string
@@ -23,6 +24,12 @@ interface Event {
   longitude?: number
 }
 
+interface UserInfo {
+  profileImageUrl?: string | null
+  fullName?: string
+  initials?: string
+}
+
 interface EventsNearYouProps {
   fallbackEvents: Event[]
 }
@@ -32,6 +39,42 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
   const [loading, setLoading] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null)
   const [locationError, setLocationError] = useState<string | null>(null)
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
+
+  // Fetch user profile info
+  useEffect(() => {
+    async function fetchUserProfile() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, profile_image_url, profile_photo_url")
+          .eq("id", user.id)
+          .single()
+        
+        if (profile) {
+          const fullName = profile.full_name || ""
+          const initials = fullName
+            .split(" ")
+            .map((n: string) => n[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2)
+          
+          setUserInfo({
+            profileImageUrl: profile.profile_image_url || profile.profile_photo_url,
+            fullName,
+            initials
+          })
+        }
+      }
+    }
+    
+    fetchUserProfile()
+  }, [])
 
   useEffect(() => {
     // Request user's location
@@ -179,26 +222,55 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
                   location_city: e.location_city,
                   location_state: e.location_state,
                   start_date: e.start_date,
+                  image_url: e.image_url || undefined,
                 }))}
               center={userLocation ? { lat: userLocation.lat, lng: userLocation.lon } : undefined}
               zoom={10}
               height="500px"
+              userLocation={userLocation ? { lat: userLocation.lat, lng: userLocation.lon } : null}
+              userInfo={userInfo}
+              selectedEventId={selectedEventId}
+              onEventSelect={(eventId) => setSelectedEventId(eventId || null)}
             />
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {events.slice(0, 6).map((event) => (
-              <Card key={event.id} className="hover:shadow-lg transition-shadow">
+            {events
+              .slice(0, 6)
+              .map((event) => {
+              const hasCoordinates = event.latitude && event.longitude
+              return (
+              <Card 
+                key={event.id} 
+                className={`hover:shadow-lg transition-all ${hasCoordinates ? 'cursor-pointer' : ''} ${
+                  selectedEventId === event.id 
+                    ? 'ring-2 ring-primary shadow-lg bg-primary/5' 
+                    : ''
+                }`}
+                onClick={() => {
+                  if (hasCoordinates) {
+                    setSelectedEventId(selectedEventId === event.id ? null : event.id)
+                  }
+                }}
+              >
                 <CardContent className="p-4">
                   <div className="flex gap-4">
-                    {event.image_url && (
-                      <div className="w-24 h-24 bg-muted rounded-md overflow-hidden flex-shrink-0">
+                    <div className={`w-20 h-20 bg-muted rounded-full overflow-hidden flex-shrink-0 border-2 ${
+                      selectedEventId === event.id ? 'border-primary ring-2 ring-primary/30' : 'border-gray-200'
+                    }`}>
+                      {event.image_url ? (
                         <img
                           src={event.image_url}
                           alt={event.title}
                           className="w-full h-full object-cover"
                         />
-                      </div>
-                    )}
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center">
+                          <span className="text-white font-bold text-xl">
+                            {event.title.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-sm mb-2 line-clamp-1">{event.title}</h3>
                       <div className="space-y-1 text-xs text-muted-foreground">
@@ -217,15 +289,23 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
                             {event.location_city}, {event.location_state}
                           </span>
                         </div>
+                        {!hasCoordinates && (
+                          <p className="text-xs text-amber-600">Location not on map</p>
+                        )}
                       </div>
-                      <Button size="sm" className="mt-2 w-full" asChild>
+                      <Button 
+                        size="sm" 
+                        className="mt-2 w-full" 
+                        asChild
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Link href={`/events/${event.id}`}>View</Link>
                       </Button>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )})}
           </div>
         </TabsContent>
       </Tabs>
