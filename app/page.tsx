@@ -13,13 +13,14 @@ import { InternationalEvents } from "@/components/international-events"
 import { AffiliatesSlider } from "@/components/affiliates-slider"
 import { DomesticEventsSection } from "@/components/domestic-events-section"
 import { InternationalEventsSection } from "@/components/international-events-section"
+import { UpcomingEventsPagination } from "@/components/upcoming-events-pagination"
 
 export default async function HomePage() {
   const supabase = await createServerClient()
 
   const [{ data: categories }, { data: allCategories }, { data: events }, { data: affiliates }] = await Promise.all([
-    supabase.from("event_categories").select("*").eq("is_featured", true).eq("status", "active").limit(4),
-    supabase.from("event_categories").select("*").eq("status", "active").order("name"),
+    supabase.from("event_categories").select("*").eq("is_featured", true).eq("status", "active").order("display_order").limit(4),
+    supabase.from("event_categories").select("*").eq("is_featured", true).eq("status", "active").order("display_order"),
     supabase
       .from("events")
       .select("*")
@@ -127,42 +128,7 @@ export default async function HomePage() {
                   </Button>
                 </div>
               </div>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {upcomingEvents.map((event) => (
-                  <Card key={event.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      {event.image_url && (
-                        <div className="w-full h-48 bg-muted rounded-md mb-4 overflow-hidden">
-                          <img
-                            src={event.image_url || "/placeholder.svg"}
-                            alt={event.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <CardTitle className="text-xl">{event.title}</CardTitle>
-                      <CardDescription className="line-clamp-2">{event.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          {new Date(event.start_date).toLocaleDateString()}
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          {event.location_city}, {event.location_state}
-                        </div>
-                        <div className="pt-4">
-                          <Button className="w-full" asChild>
-                            <Link href={`/events/${event.id}`}>View Details</Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              <UpcomingEventsPagination events={upcomingEvents} />
             </div>
           </section>
         )}

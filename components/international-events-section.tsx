@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -28,13 +28,11 @@ interface Country {
 }
 
 export function InternationalEventsSection() {
-  const [events, setEvents] = useState<Event[]>([])
-  const [loading, setLoading] = useState(false)
-  const [hasMore, setHasMore] = useState(true)
-  const [page, setPage] = useState(1)
+  const [allEvents, setAllEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
   const [usaCountryId, setUsaCountryId] = useState<string>("")
+  const [currentPage, setCurrentPage] = useState(1)
   
-  const observerTarget = useRef<HTMLDivElement>(null)
   const supabase = createBrowserClient()
 
   // Get USA country ID to exclude
@@ -53,67 +51,31 @@ export function InternationalEventsSection() {
     getUsaId()
   }, [supabase])
 
-  // Load initial events
+  // Load all international events
   useEffect(() => {
     if (!usaCountryId) return
-    loadEvents()
-  }, [usaCountryId])
-
-  const loadEvents = async () => {
-    if (loading || !hasMore || !usaCountryId) return
     
-    setLoading(true)
-    const now = new Date().toISOString()
-    const offset = (page - 1) * 6
+    const loadEvents = async () => {
+      setLoading(true)
+      setCurrentPage(1)
+      const now = new Date().toISOString()
 
-    const { data, count } = await supabase
-      .from("events")
-      .select("*", { count: "exact" })
-      .in("status", ["upcoming", "ongoing"])
-      .gte("start_date", now)
-      .neq("country_id", usaCountryId) // Exclude USA events
-      .order("start_date", { ascending: true })
-      .range(offset, offset + 5)
+      const { data } = await supabase
+        .from("events")
+        .select("*")
+        .in("status", ["upcoming", "ongoing"])
+        .gte("start_date", now)
+        .neq("country_id", usaCountryId)
+        .order("start_date", { ascending: true })
 
-    if (data) {
-      setEvents(prev => page === 1 ? data : [...prev, ...data])
-      setHasMore((offset + 6) < (count || 0))
-    }
-    
-    setLoading(false)
-  }
-
-  // Intersection Observer for lazy loading
-  const handleObserver = useCallback((entries: IntersectionObserverEntry[]) => {
-    const target = entries[0]
-    if (target.isIntersecting && hasMore && !loading) {
-      setPage(prev => prev + 1)
-    }
-  }, [hasMore, loading])
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(handleObserver, {
-      threshold: 0.5
-    })
-
-    const currentTarget = observerTarget.current
-    if (currentTarget) {
-      observer.observe(currentTarget)
-    }
-
-    return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget)
+      if (data) {
+        setAllEvents(data)
       }
+      setLoading(false)
     }
-  }, [handleObserver])
 
-  // Load more when page changes
-  useEffect(() => {
-    if (page > 1) {
-      loadEvents()
-    }
-  }, [page])
+    loadEvents()
+  }, [usaCountryId, supabase])
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -125,6 +87,23 @@ export function InternationalEventsSection() {
 
   const formatPrice = (price: number) => {
     return price === 0 ? "Free" : `$${price.toFixed(2)}`
+  }
+
+  // Pagination logic
+  const ITEMS_PER_PAGE = 6
+  const totalPages = Math.ceil(allEvents.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedEvents = allEvents.slice(startIndex, endIndex)
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1))
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   if (!usaCountryId) return null
@@ -144,11 +123,11 @@ export function InternationalEventsSection() {
           </div>
         </div>
 
-        {loading && events.length === 0 ? (
+        {loading ? (
           <div className="flex justify-center items-center py-16">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-        ) : events.length === 0 ? (
+        ) : allEvents.length === 0 ? (
           <div className="text-center py-16">
             <Plane className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-lg">
@@ -161,7 +140,7 @@ export function InternationalEventsSection() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.map((event) => (
+              {paginatedEvents.map((event) => (
                 <Link key={event.id} href={`/events/${event.id}`}>
                   <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer group">
                     <div className="relative h-48 overflow-hidden rounded-t-lg">
@@ -211,29 +190,72 @@ export function InternationalEventsSection() {
               ))}
             </div>
 
-            {/* Lazy Loading Trigger */}
-            {hasMore && (
-              <div ref={observerTarget} className="flex justify-center py-8">
-                {loading && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Loading more events...</span>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex flex-col items-center gap-4 mt-8">
+                <div className="flex items-center justify-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                  >
+                    <ArrowRight className="h-4 w-4 mr-1 rotate-180" />
+                    Previous
+                  </Button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNumber
+                      if (totalPages <= 5) {
+                        pageNumber = i + 1
+                      } else if (currentPage <= 3) {
+                        pageNumber = i + 1
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNumber = totalPages - 4 + i
+                      } else {
+                        pageNumber = currentPage - 2 + i
+                      }
+
+                      return (
+                        <Button
+                          key={pageNumber}
+                          variant={currentPage === pageNumber ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNumber)}
+                        >
+                          {pageNumber}
+                        </Button>
+                      )
+                    })}
                   </div>
-                )}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                    <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+
+                <div className="text-sm text-muted-foreground">
+                  Showing {startIndex + 1} to {Math.min(endIndex, allEvents.length)} of {allEvents.length} events
+                </div>
               </div>
             )}
 
             {/* View All Button */}
-            {!hasMore && events.length > 0 && (
-              <div className="flex justify-center mt-8">
-                <Button asChild size="lg" variant="outline">
-                  <Link href="/events?international=true">
-                    View All International Events
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Link>
-                </Button>
-              </div>
-            )}
+            <div className="flex justify-center mt-8">
+              <Button asChild size="lg" variant="outline">
+                <Link href="/events?international=true">
+                  View All International Events
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+            </div>
           </>
         )}
       </div>
