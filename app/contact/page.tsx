@@ -21,7 +21,7 @@ export default function ContactPage() {
             <CardHeader className="text-center">
               <Mail className="h-8 w-8 text-primary mx-auto mb-2" />
               <CardTitle>Email</CardTitle>
-              <CardDescription>info@eventmatch.com</CardDescription>
+              <CardDescription>info@ourloveconnection.com</CardDescription>
             </CardHeader>
           </Card>
           <Card>
