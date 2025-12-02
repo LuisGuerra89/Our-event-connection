@@ -41,6 +41,8 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
   const [locationError, setLocationError] = useState<string | null>(null)
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
+  const [noNearbyEvents, setNoNearbyEvents] = useState(false)
+  const [userLocationName, setUserLocationName] = useState<string | null>(null)
 
   // Fetch user profile info
   useEffect(() => {
@@ -85,15 +87,37 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
           const { latitude, longitude } = position.coords
           setUserLocation({ lat: latitude, lon: longitude })
 
+          // Get user's location name (city, state)
+          try {
+            const geoResponse = await fetch(
+              `/api/location/reverse-geocode?lat=${latitude}&lng=${longitude}`
+            )
+            if (geoResponse.ok) {
+              const geoData = await geoResponse.json()
+              if (geoData.city && geoData.state) {
+                setUserLocationName(`${geoData.city}, ${geoData.state}`)
+              } else if (geoData.state) {
+                setUserLocationName(geoData.state)
+              }
+            }
+          } catch (error) {
+            console.error("Error getting location name:", error)
+          }
+
           // Fetch events near user's location
           try {
             const response = await fetch(
-              `/api/events/nearby?lat=${latitude}&lon=${longitude}&limit=6`
+              `/api/events/nearby?lat=${latitude}&lon=${longitude}&limit=6&radius=50`
             )
             if (response.ok) {
               const data = await response.json()
               if (data.events && data.events.length > 0) {
                 setEvents(data.events)
+                setNoNearbyEvents(false)
+              } else {
+                // No events found within radius
+                setEvents([])
+                setNoNearbyEvents(true)
               }
             }
           } catch (error) {
@@ -124,7 +148,19 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
     return (
       <div className="text-center py-12">
         <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <p className="text-muted-foreground">No events found near your location</p>
+        {noNearbyEvents ? (
+          <>
+            <p className="text-muted-foreground mb-2">
+              No events found within 50 miles of your location
+              {userLocationName && <span className="block text-sm">({userLocationName})</span>}
+            </p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Try browsing all events or check back later for new events in your area.
+            </p>
+          </>
+        ) : (
+          <p className="text-muted-foreground">No events found near your location</p>
+        )}
         <Button className="mt-4" asChild>
           <Link href="/events">Browse All Events</Link>
         </Button>
@@ -136,7 +172,7 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
     <div>
       {userLocation && !locationError && (
         <p className="text-sm text-muted-foreground mb-6 text-center">
-          Showing events near your location
+          Showing events near {userLocationName || "your location"}
         </p>
       )}
       {locationError && (

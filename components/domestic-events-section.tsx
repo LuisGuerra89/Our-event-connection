@@ -54,12 +54,57 @@ export function DomesticEventsSection() {
   const [cities, setCities] = useState<City[]>([])
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(false)
+  const [detectingLocation, setDetectingLocation] = useState(true)
   
   const [selectedCountry, setSelectedCountry] = useState<string>("")
   const [selectedState, setSelectedState] = useState<string>("")
   const [selectedCity, setSelectedCity] = useState<string>("")
+  const [userDetectedState, setUserDetectedState] = useState<string | null>(null)
 
   const supabase = createBrowserClient()
+
+  // Auto-detect user's location on mount
+  useEffect(() => {
+    const detectUserLocation = async () => {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              const response = await fetch(
+                `/api/location/reverse-geocode?lat=${position.coords.latitude}&lng=${position.coords.longitude}`
+              )
+              if (response.ok) {
+                const data = await response.json()
+                if (data.stateId) {
+                  setUserDetectedState(data.state)
+                  // Will be set after states are loaded
+                  setSelectedState(data.stateId)
+                }
+                if (data.cityId) {
+                  setSelectedCity(data.cityId)
+                }
+                if (data.countryId) {
+                  setSelectedCountry(data.countryId)
+                }
+              }
+            } catch (error) {
+              console.error("Error detecting location:", error)
+            } finally {
+              setDetectingLocation(false)
+            }
+          },
+          () => {
+            // Location denied, continue without auto-detection
+            setDetectingLocation(false)
+          },
+          { timeout: 5000 }
+        )
+      } else {
+        setDetectingLocation(false)
+      }
+    }
+    detectUserLocation()
+  }, [])
 
   // Load countries on mount (USA and others)
   useEffect(() => {
@@ -77,13 +122,16 @@ export function DomesticEventsSection() {
       
       if (data) {
         setCountries(data)
-        // Find USA by default
-        const usa = data.find(c => c.code === "US" || c.name === "United States" || c.name.toLowerCase().includes("united states"))
-        if (usa) {
-          setSelectedCountry(usa.id)
-        } else if (data.length > 0) {
-          // Fallback to first country if USA not found
-          setSelectedCountry(data[0].id)
+        // Only set default country if not already detected
+        if (!selectedCountry) {
+          // Find USA by default
+          const usa = data.find(c => c.code === "US" || c.name === "United States" || c.name.toLowerCase().includes("united states"))
+          if (usa) {
+            setSelectedCountry(usa.id)
+          } else if (data.length > 0) {
+            // Fallback to first country if USA not found
+            setSelectedCountry(data[0].id)
+          }
         }
       }
     }
@@ -228,7 +276,10 @@ export function DomesticEventsSection() {
           <div>
             <h2 className="text-3xl font-bold mb-2">Domestic Events</h2>
             <p className="text-muted-foreground">
-              Find events near you by selecting state and city
+              {userDetectedState 
+                ? `Showing events in ${userDetectedState} (auto-detected)`
+                : "Find events near you by selecting state and city"
+              }
             </p>
           </div>
           
@@ -236,7 +287,7 @@ export function DomesticEventsSection() {
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <Select value={selectedState || "all-states"} onValueChange={(value) => setSelectedState(value === "all-states" ? "" : value)}>
               <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Select State" />
+                <SelectValue placeholder={detectingLocation ? "Detecting..." : "Select State"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all-states">All States</SelectItem>
@@ -266,25 +317,42 @@ export function DomesticEventsSection() {
           </div>
         </div>
 
-        {loading ? (
+        {loading || detectingLocation ? (
           <div className="flex justify-center items-center py-16">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            {detectingLocation && (
+              <span className="ml-3 text-muted-foreground">Detecting your location...</span>
+            )}
           </div>
         ) : events.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-muted-foreground text-lg">
-              No domestic events found for the selected location.
+            <MapPin className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground text-lg mb-2">
+              {userDetectedState 
+                ? `No events found in ${userDetectedState}`
+                : "No domestic events found for the selected location."
+              }
             </p>
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => {
-                setSelectedState("")
-                setSelectedCity("")
-              }}
-            >
-              Clear Filters
-            </Button>
+            {userDetectedState && (
+              <p className="text-sm text-muted-foreground mb-4">
+                Try selecting a different state or view all events
+              </p>
+            )}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedState("")
+                  setSelectedCity("")
+                  setUserDetectedState(null)
+                }}
+              >
+                View All States
+              </Button>
+              <Button asChild>
+                <Link href="/events">Browse All Events</Link>
+              </Button>
+            </div>
           </div>
         ) : (
           <>
