@@ -161,7 +161,7 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <Button
                     type="button"
                     variant="outline"
@@ -171,7 +171,7 @@ export default function LoginPage() {
                     <Chrome className="mr-2 h-4 w-4" />
                     Google
                   </Button>
-                  <Button
+                  {/* <Button
                     type="button"
                     variant="outline"
                     onClick={() => handleSocialLogin('facebook')}
@@ -179,7 +179,7 @@ export default function LoginPage() {
                   >
                     <Facebook className="mr-2 h-4 w-4" />
                     Facebook
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
               <div className="mt-4 text-center text-sm">

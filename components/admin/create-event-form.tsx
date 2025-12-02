@@ -11,8 +11,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, X } from "lucide-react"
+import { Loader2, X, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useEventDateValidation } from "@/hooks/use-event-date-validation"
 import AddressAutocompleteWithLocation from "@/components/address-autocomplete-with-location"
 
 interface Country {
@@ -48,10 +49,14 @@ interface Enum {
 export default function CreateEventForm() {
   const router = useRouter()
   const { toast } = useToast()
+  const { validateDates } = useEventDateValidation()
   const inputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
+
+  // Date validation errors
+  const [dateErrors, setDateErrors] = useState<Record<string, string>>({})
 
   const [countries, setCountries] = useState<Country[]>([])
   const [states, setStates] = useState<State[]>([])
@@ -281,6 +286,21 @@ export default function CreateEventForm() {
       const regEndDate = formData.get("registration_end_date") as string
       if (!regStartDate || !regEndDate) {
         throw new Error("Registration start and end dates are required")
+      }
+
+      // Validate all dates before creating event
+      const startDate = formData.get("start_date") as string
+      const endDate = formData.get("end_date") as string
+      const dateValidationErrors = validateDates({
+        start_date: startDate,
+        end_date: endDate,
+        registration_start_date: regStartDate,
+        registration_end_date: regEndDate,
+      })
+
+      if (Object.keys(dateValidationErrors).length > 0) {
+        setDateErrors(dateValidationErrors)
+        throw new Error("Please fix date validation errors before submitting")
       }
 
       const eventData = {
@@ -522,27 +542,101 @@ export default function CreateEventForm() {
           <CardTitle>Event Dates</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {Object.keys(dateErrors).length > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4 flex gap-2">
+              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-red-900 mb-2">Date validation errors:</p>
+                <ul className="text-sm text-red-800 space-y-1">
+                  {Object.entries(dateErrors).map(([key, error]) => (
+                    <li key={key}>• {error}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="start_date">Start Date & Time *</Label>
-              <Input id="start_date" name="start_date" type="datetime-local" required />
+              <Input 
+                id="start_date" 
+                name="start_date" 
+                type="datetime-local" 
+                required 
+                onChange={(e) => {
+                  const errors = validateDates({
+                    start_date: e.target.value,
+                    end_date: (document.getElementById("end_date") as HTMLInputElement)?.value,
+                    registration_start_date: (document.getElementById("registration_start_date") as HTMLInputElement)?.value,
+                    registration_end_date: (document.getElementById("registration_end_date") as HTMLInputElement)?.value,
+                  })
+                  setDateErrors(errors)
+                }}
+              />
+              {dateErrors.start_date && <p className="text-sm text-red-600">{dateErrors.start_date}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="end_date">End Date & Time *</Label>
-              <Input id="end_date" name="end_date" type="datetime-local" required />
+              <Input 
+                id="end_date" 
+                name="end_date" 
+                type="datetime-local" 
+                required 
+                onChange={(e) => {
+                  const errors = validateDates({
+                    start_date: (document.getElementById("start_date") as HTMLInputElement)?.value,
+                    end_date: e.target.value,
+                    registration_start_date: (document.getElementById("registration_start_date") as HTMLInputElement)?.value,
+                    registration_end_date: (document.getElementById("registration_end_date") as HTMLInputElement)?.value,
+                  })
+                  setDateErrors(errors)
+                }}
+              />
+              {dateErrors.end_date && <p className="text-sm text-red-600">{dateErrors.end_date}</p>}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="registration_start_date">Registration Start Date *</Label>
-              <Input id="registration_start_date" name="registration_start_date" type="datetime-local" required />
+              <Input 
+                id="registration_start_date" 
+                name="registration_start_date" 
+                type="datetime-local" 
+                required 
+                onChange={(e) => {
+                  const errors = validateDates({
+                    start_date: (document.getElementById("start_date") as HTMLInputElement)?.value,
+                    end_date: (document.getElementById("end_date") as HTMLInputElement)?.value,
+                    registration_start_date: e.target.value,
+                    registration_end_date: (document.getElementById("registration_end_date") as HTMLInputElement)?.value,
+                  })
+                  setDateErrors(errors)
+                }}
+              />
+              {dateErrors.registration_start_date && <p className="text-sm text-red-600">{dateErrors.registration_start_date}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="registration_end_date">Registration End Date *</Label>
-              <Input id="registration_end_date" name="registration_end_date" type="datetime-local" required />
+              <Input 
+                id="registration_end_date" 
+                name="registration_end_date" 
+                type="datetime-local" 
+                required 
+                onChange={(e) => {
+                  const errors = validateDates({
+                    start_date: (document.getElementById("start_date") as HTMLInputElement)?.value,
+                    end_date: (document.getElementById("end_date") as HTMLInputElement)?.value,
+                    registration_start_date: (document.getElementById("registration_start_date") as HTMLInputElement)?.value,
+                    registration_end_date: e.target.value,
+                  })
+                  setDateErrors(errors)
+                }}
+              />
+              {dateErrors.registration_end_date && <p className="text-sm text-red-600">{dateErrors.registration_end_date}</p>}
             </div>
           </div>
         </CardContent>
