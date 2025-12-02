@@ -14,6 +14,17 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { CheckCircle2, AlertCircle, Clock, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { ImageUpload } from "@/components/admin/image-upload"
+import AddressAutocompleteWithLocation from "@/components/address-autocomplete-with-location"
+
+interface LocationData {
+  address: string
+  city: string
+  state: string
+  country: string
+  countryId?: string
+  stateId?: string
+  cityId?: string
+}
 
 interface BecomeAffiliateFormProps {
   userId: string
@@ -37,6 +48,16 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
   const [errorMessage, setErrorMessage] = useState("")
   const [hasChanges, setHasChanges] = useState(false)
   const [showNewForm, setShowNewForm] = useState(false)
+  const [selectedLocation, setSelectedLocation] = useState<LocationData>({
+    address: existingAffiliate?.address || "",
+    city: existingAffiliate?.city || "",
+    state: existingAffiliate?.state || "",
+    country: existingAffiliate?.country || "",
+  })
+  const [countries, setCountries] = useState<any[]>([])
+  const [states, setStates] = useState<any[]>([])
+  const [cities, setCities] = useState<any[]>([])
+  const [loadingData, setLoadingData] = useState(false)
   const router = useRouter()
 
   // Check if existing affiliate is approved (show option to create new)
@@ -54,6 +75,28 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
     country: existingAffiliate?.country || "",
     imageUrl: existingAffiliate?.image_url || "",
   })
+
+  // Load countries, states, cities from Supabase
+  useEffect(() => {
+    const loadLocationData = async () => {
+      const supabase = createClient()
+      setLoadingData(true)
+      try {
+        const { data: countriesData } = await supabase.from("countries").select("*").order("name")
+        const { data: statesData } = await supabase.from("states").select("*").order("name")
+        const { data: citiesData } = await supabase.from("cities").select("*").order("name")
+        
+        setCountries(countriesData || [])
+        setStates(statesData || [])
+        setCities(citiesData || [])
+      } catch (err) {
+        console.error("Error loading location data:", err)
+      } finally {
+        setLoadingData(false)
+      }
+    }
+    loadLocationData()
+  }, [])
 
   // Update form fields when existingAffiliate changes
   useEffect(() => {
@@ -75,6 +118,12 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
       setState(initialValues.state)
       setCountry(initialValues.country)
       setImageUrl(initialValues.imageUrl)
+      setSelectedLocation({
+        address: initialValues.address,
+        city: initialValues.city,
+        state: initialValues.state,
+        country: initialValues.country,
+      })
       setOriginalValues(initialValues)
       setHasChanges(false)
     }
@@ -109,10 +158,10 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
         name: businessName,
         image_url: imageUrl || null,
         description,
-        address,
-        city,
-        state,
-        country,
+        address: selectedLocation.address,
+        city: selectedLocation.city,
+        state: selectedLocation.state,
+        country: selectedLocation.country,
         approval_status: "pending",
         application_date: new Date().toISOString(),
       }
@@ -443,15 +492,23 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
             {/* Location Information */}
             <div className="space-y-4">
               <div>
-                <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
-                  placeholder="123 Main Street"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  required
-                  className="mt-2"
-                />
+                <p className="text-xs text-muted-foreground mb-3">
+                  Type an address to search with Google Maps autocomplete
+                </p>
+                {!loadingData && (
+                  <AddressAutocompleteWithLocation
+                    onAddressSelect={(location) => {
+                      setSelectedLocation(location)
+                      setAddress(location.address)
+                      setCity(location.city)
+                      setState(location.state)
+                      setCountry(location.country)
+                    }}
+                    countries={countries}
+                    states={states}
+                    cities={cities}
+                  />
+                )}
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
@@ -460,8 +517,8 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
                   <Input
                     id="city"
                     placeholder="City"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    value={selectedLocation.city}
+                    onChange={(e) => setSelectedLocation({...selectedLocation, city: e.target.value})}
                     className="mt-2"
                   />
                 </div>
@@ -470,8 +527,8 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
                   <Input
                     id="state"
                     placeholder="State"
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
+                    value={selectedLocation.state}
+                    onChange={(e) => setSelectedLocation({...selectedLocation, state: e.target.value})}
                     className="mt-2"
                   />
                 </div>
@@ -482,8 +539,8 @@ export function BecomeAffiliateForm({ userId, profile, existingAffiliate }: Beco
                 <Input
                   id="country"
                   placeholder="Country"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
+                  value={selectedLocation.country}
+                  onChange={(e) => setSelectedLocation({...selectedLocation, country: e.target.value})}
                   className="mt-2"
                 />
               </div>

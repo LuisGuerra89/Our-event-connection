@@ -14,8 +14,6 @@ export default async function ApplyAffiliatePage() {
     redirect("/auth/login?redirect=/affiliates/apply")
   }
 
-  console.log("=== ApplyAffiliatePage Debug ===")
-  console.log("User ID:", user.id)
 
   // Get user profile
   const { data: profile } = await supabase
@@ -31,9 +29,7 @@ export default async function ApplyAffiliatePage() {
     .eq("user_id", user.id)
     .order("application_date", { ascending: false })
 
-  console.log("Affiliate Query Error:", affiliateError)
-  console.log("Affiliates Data:", affiliatesData)
-  console.log("Affiliates Count:", affiliatesData?.length)
+ 
 
   // Only load existing affiliate if status is "pending" (for editing)
   // If approved, allow them to create a new application
@@ -47,9 +43,6 @@ export default async function ApplyAffiliatePage() {
     // but don't set existingAffiliate so it treats it as a new form
   }
 
-  console.log("Existing Affiliate (pending only):", existingAffiliate)
-  console.log("All Affiliates:", affiliatesData)
-  console.log("=== End Debug ===")
 
   return (
     <PublicPageLayout>
