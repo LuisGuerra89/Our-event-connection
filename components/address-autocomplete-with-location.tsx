@@ -21,7 +21,7 @@ interface AddressAutocompleteProps {
   placeholder?: string
   onAddressSelect: (data: LocationData) => void
   countries: Array<{ id: string; name: string }>
-  states: Array<{ id: string; name: string; country_id: string }>
+  states: Array<{ id: string; name: string; country_id: string; code?: string }>
   cities: Array<{ id: string; name: string; state_id: string }>
   error?: string
   disabled?: boolean
@@ -164,6 +164,7 @@ export default function AddressAutocompleteWithLocation({
           if (status === google.maps.places.PlacesServiceStatus.OK && place?.address_components) {
             let country = ""
             let state = ""
+            let stateCode = ""
             let city = ""
             const formattedAddress = place.formatted_address || ""
 
@@ -172,7 +173,8 @@ export default function AddressAutocompleteWithLocation({
                 country = component.long_name
               }
               if (component.types.includes("administrative_area_level_1")) {
-                state = component.short_name || component.long_name
+                state = component.long_name // Use long_name for full state name
+                stateCode = component.short_name // Keep short_name for code
               }
               if (component.types.includes("locality")) {
                 city = component.long_name
@@ -189,16 +191,35 @@ export default function AddressAutocompleteWithLocation({
             let stateId = ""
             let cityId = ""
 
+            console.log("Location data extracted:", { country, state, stateCode, city })
+
             if (countryObj && state) {
-              const stateObj = states.find(
-                (s) => s.country_id === countryObj.id && s.name.toUpperCase() === state.toUpperCase()
+              // Try to find state by full name first
+              let stateObj = states.find(
+                (s) => s.country_id === countryObj.id && s.name.toLowerCase() === state.toLowerCase()
               )
+              
+              console.log("State lookup (by name):", { searchName: state, found: !!stateObj, available: states.filter(s => s.country_id === countryObj.id).map(s => s.name) })
+              
+              // If not found, try by code
+              if (!stateObj && stateCode) {
+                stateObj = states.find(
+                  (s) => s.country_id === countryObj.id && s.code?.toUpperCase() === stateCode?.toUpperCase()
+                )
+                console.log("State lookup (by code):", { searchCode: stateCode, found: !!stateObj })
+              }
+
               if (stateObj) {
                 stateId = stateObj.id
+                console.log("State found:", { stateId, stateName: stateObj.name })
+                
                 if (city) {
                   const cityObj = cities.find((c) => c.state_id === stateId && c.name.toLowerCase() === city.toLowerCase())
+                  console.log("City lookup:", { searchCity: city, stateId, found: !!cityObj, availableCities: cities.filter(c => c.state_id === stateId).map(c => c.name) })
+                  
                   if (cityObj) {
                     cityId = cityObj.id
+                    console.log("City found:", { cityId, cityName: cityObj.name })
                   }
                 }
               }
