@@ -16,7 +16,7 @@ export async function submitContactForm(formData: FormData) {
 
   if (error) {
     console.error("Contact form error:", error)
-    return { error: error.message }
+    redirect("/contact?error=Failed to submit form")
   }
 
   redirect("/contact/success")
