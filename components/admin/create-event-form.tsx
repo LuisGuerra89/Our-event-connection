@@ -24,6 +24,7 @@ interface State {
   id: string
   name: string
   country_id: string
+  code?: string
 }
 
 interface City {
@@ -108,7 +109,7 @@ export default function CreateEventForm() {
 
   const loadStates = async (countryId: string) => {
     const supabase = createBrowserClient()
-    const { data } = await supabase.from("states").select("id, name, country_id").eq("country_id", countryId).order("name")
+    const { data } = await supabase.from("states").select("id, name, country_id, code").eq("country_id", countryId).order("name")
     if (data) setStates(data)
   }
 

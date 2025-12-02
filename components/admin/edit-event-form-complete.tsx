@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import AddressAutocompleteWithLocation from "@/components/address-autocomplete-with-location"
 
 interface Country {
   id: string
@@ -23,6 +24,7 @@ interface State {
   id: string
   name: string
   country_id: string
+  code?: string
 }
 
 interface City {
@@ -72,6 +74,7 @@ interface Event {
 export function EditEventFormComplete({ event }: { event: Event }) {
   const router = useRouter()
   const { toast } = useToast()
+  const inputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
@@ -121,7 +124,7 @@ export function EditEventFormComplete({ event }: { event: Event }) {
 
   const loadStates = async (countryId: string) => {
     const supabase = createBrowserClient()
-    const { data } = await supabase.from("states").select("id, name, country_id").eq("country_id", countryId).order("name")
+    const { data } = await supabase.from("states").select("id, name, country_id, code").eq("country_id", countryId).order("name")
     if (data) setStates(data)
   }
 
@@ -367,8 +370,22 @@ export function EditEventFormComplete({ event }: { event: Event }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Address *</Label>
-            <Input id="address" name="address" defaultValue={event.location_address} required />
+            <AddressAutocompleteWithLocation
+              label="Address *"
+              placeholder="Start typing your address..."
+              onAddressSelect={(data) => {
+                if (inputRef.current) {
+                  inputRef.current.value = data.address
+                }
+                setSelectedCountry(data.countryId || "")
+                setSelectedState(data.stateId || "")
+                setSelectedCity(data.cityId || "")
+              }}
+              countries={countries}
+              states={states}
+              cities={cities}
+            />
+            <input type="hidden" name="address" id="address" ref={inputRef} defaultValue={event.location_address} required />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
