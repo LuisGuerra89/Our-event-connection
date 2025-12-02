@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import AddressAutocompleteWithLocation from "@/components/address-autocomplete-with-location"
 
 interface Country {
   id: string
@@ -46,6 +47,7 @@ interface Enum {
 export default function CreateEventForm() {
   const router = useRouter()
   const { toast } = useToast()
+  const inputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
@@ -443,8 +445,23 @@ export default function CreateEventForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Address *</Label>
-            <Input id="address" name="address" placeholder="Street address" required />
+            <AddressAutocompleteWithLocation
+              label="Address *"
+              placeholder="Start typing your address..."
+              onAddressSelect={(data) => {
+                // Store the address in a data attribute for form submission
+                if (inputRef.current) {
+                  inputRef.current.value = data.address
+                }
+                setSelectedCountry(data.countryId || "")
+                setSelectedState(data.stateId || "")
+                setSelectedCity(data.cityId || "")
+              }}
+              countries={countries}
+              states={states}
+              cities={cities}
+            />
+            <input type="hidden" name="address" id="address" ref={inputRef} required />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
