@@ -11,6 +11,7 @@ import { format } from "date-fns"
 import Link from "next/link"
 import Image from "next/image"
 import { MembershipRequiredModal } from "@/components/membership-required-modal"
+import { EventMap } from "@/components/event-map"
 
 interface EventDetailsProps {
   event: any
@@ -283,7 +284,7 @@ export function EventDetails({ event, userId, isRegistered, registrationStatus }
             {/* Location Details */}
             <div className="flex items-start gap-3">
               <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
+              <div className="w-full">
                 <p className="font-medium">Location</p>
                 <p className="text-sm text-muted-foreground">
                   {event.location_city || event.city_name || "City"}, {event.location_state || event.state_name || "State"}
@@ -291,6 +292,28 @@ export function EventDetails({ event, userId, isRegistered, registrationStatus }
                 <p className="text-sm text-muted-foreground">
                   {event.location_country || event.country_name || "Country"}
                 </p>
+                
+                {/* Google Map */}
+                {event.latitude && event.longitude && (
+                  <div className="mt-4">
+                    <EventMap
+                      events={[{
+                        id: event.id,
+                        title: event.title,
+                        latitude: event.latitude,
+                        longitude: event.longitude,
+                        location_name: event.location_name,
+                        location_address: event.location_address,
+                        location_city: event.location_city || event.city_name,
+                        location_state: event.location_state || event.state_name,
+                        start_date: event.start_date,
+                      }]}
+                      center={{ lat: event.latitude, lng: event.longitude }}
+                      zoom={15}
+                      height="300px"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

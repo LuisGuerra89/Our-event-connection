@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, Users, Loader2 } from "lucide-react"
+import { Calendar, MapPin, Users, Loader2, Map } from "lucide-react"
 import Link from "next/link"
+import { EventMap } from "@/components/event-map"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface Event {
   id: string
@@ -100,56 +102,133 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
         </p>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {events.slice(0, 6).map((event) => (
-          <Card key={event.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              {event.image_url && (
-                <div className="w-full h-48 bg-muted rounded-md mb-4 overflow-hidden">
-                  <img
-                    src={event.image_url}
-                    alt={event.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform"
-                  />
-                </div>
-              )}
-              <CardTitle className="text-xl line-clamp-1">{event.title}</CardTitle>
-              <CardDescription className="line-clamp-2">{event.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>
-                    {new Date(event.start_date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span className="line-clamp-1">
-                    {event.location_city}, {event.location_state}
-                  </span>
-                </div>
-                {event.capacity > 0 && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    <span>{event.capacity} spots available</span>
+      <Tabs defaultValue="grid" className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="grid">Grid View</TabsTrigger>
+          <TabsTrigger value="map">
+            <Map className="h-4 w-4 mr-2" />
+            Map View
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="grid">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {events.slice(0, 6).map((event) => (
+              <Card key={event.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  {event.image_url && (
+                    <div className="w-full h-48 bg-muted rounded-md mb-4 overflow-hidden">
+                      <img
+                        src={event.image_url}
+                        alt={event.title}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform"
+                      />
+                    </div>
+                  )}
+                  <CardTitle className="text-xl line-clamp-1">{event.title}</CardTitle>
+                  <CardDescription className="line-clamp-2">{event.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        {new Date(event.start_date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      <span className="line-clamp-1">
+                        {event.location_city}, {event.location_state}
+                      </span>
+                    </div>
+                    {event.capacity > 0 && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Users className="h-4 w-4" />
+                        <span>{event.capacity} spots available</span>
+                      </div>
+                    )}
+                    <div className="pt-4">
+                      <Button className="w-full" asChild>
+                        <Link href={`/events/${event.id}`}>View Details</Link>
+                      </Button>
+                    </div>
                   </div>
-                )}
-                <div className="pt-4">
-                  <Button className="w-full" asChild>
-                    <Link href={`/events/${event.id}`}>View Details</Link>
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="map">
+          <div className="mb-6">
+            <EventMap
+              events={events
+                .filter((e) => e.latitude && e.longitude)
+                .map((e) => ({
+                  id: e.id,
+                  title: e.title,
+                  latitude: e.latitude!,
+                  longitude: e.longitude!,
+                  location_name: e.location_city,
+                  location_address: e.location_state,
+                  location_city: e.location_city,
+                  location_state: e.location_state,
+                  start_date: e.start_date,
+                }))}
+              center={userLocation ? { lat: userLocation.lat, lng: userLocation.lon } : undefined}
+              zoom={10}
+              height="500px"
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {events.slice(0, 6).map((event) => (
+              <Card key={event.id} className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex gap-4">
+                    {event.image_url && (
+                      <div className="w-24 h-24 bg-muted rounded-md overflow-hidden flex-shrink-0">
+                        <img
+                          src={event.image_url}
+                          alt={event.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm mb-2 line-clamp-1">{event.title}</h3>
+                      <div className="space-y-1 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-3 w-3" />
+                          <span>
+                            {new Date(event.start_date).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-3 w-3" />
+                          <span className="line-clamp-1">
+                            {event.location_city}, {event.location_state}
+                          </span>
+                        </div>
+                      </div>
+                      <Button size="sm" className="mt-2 w-full" asChild>
+                        <Link href={`/events/${event.id}`}>View</Link>
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
