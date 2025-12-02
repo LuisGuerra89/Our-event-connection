@@ -210,20 +210,18 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
         <TabsContent value="map">
           <div className="mb-6">
             <EventMap
-              events={events
-                .filter((e) => e.latitude && e.longitude)
-                .map((e) => ({
-                  id: e.id,
-                  title: e.title,
-                  latitude: e.latitude!,
-                  longitude: e.longitude!,
-                  location_name: e.location_city,
-                  location_address: e.location_state,
-                  location_city: e.location_city,
-                  location_state: e.location_state,
-                  start_date: e.start_date,
-                  image_url: e.image_url || undefined,
-                }))}
+              events={events.map((e) => ({
+                id: e.id,
+                title: e.title,
+                latitude: e.latitude || 0,
+                longitude: e.longitude || 0,
+                location_name: e.location_city,
+                location_address: `${e.location_city}, ${e.location_state}`,
+                location_city: e.location_city,
+                location_state: e.location_state,
+                start_date: e.start_date,
+                image_url: e.image_url || undefined,
+              }))}
               center={userLocation ? { lat: userLocation.lat, lng: userLocation.lon } : undefined}
               zoom={10}
               height="500px"
@@ -237,19 +235,16 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
             {events
               .slice(0, 6)
               .map((event) => {
-              const hasCoordinates = event.latitude && event.longitude
               return (
               <Card 
                 key={event.id} 
-                className={`hover:shadow-lg transition-all ${hasCoordinates ? 'cursor-pointer' : ''} ${
+                className={`hover:shadow-lg transition-all cursor-pointer ${
                   selectedEventId === event.id 
                     ? 'ring-2 ring-primary shadow-lg bg-primary/5' 
                     : ''
                 }`}
                 onClick={() => {
-                  if (hasCoordinates) {
-                    setSelectedEventId(selectedEventId === event.id ? null : event.id)
-                  }
+                  setSelectedEventId(selectedEventId === event.id ? null : event.id)
                 }}
               >
                 <CardContent className="p-4">
@@ -289,9 +284,6 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
                             {event.location_city}, {event.location_state}
                           </span>
                         </div>
-                        {!hasCoordinates && (
-                          <p className="text-xs text-amber-600">Location not on map</p>
-                        )}
                       </div>
                       <Button 
                         size="sm" 

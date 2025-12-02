@@ -112,11 +112,13 @@ export function EventMap({
   const [mapCenter, setMapCenter] = useState(center)
   const [map, setMap] = useState<google.maps.Map | null>(null)
   const [currentZoom, setCurrentZoom] = useState(zoom)
+  const [geocodedEvents, setGeocodedEvents] = useState<EventLocation[]>([])
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""
 
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: apiKey,
+    libraries: ["places"],
   })
 
   const onLoad = useCallback((map: google.maps.Map) => {
@@ -128,20 +130,76 @@ export function EventMap({
   }, [])
 
   useEffect(() => {
-    if (!center && events.length > 0) {
-      setMapCenter({
-        lat: events[0].latitude,
-        lng: events[0].longitude,
-      })
+    if (!center && geocodedEvents.length > 0) {
+      const firstWithCoords = geocodedEvents.find(e => e.latitude && e.longitude)
+      if (firstWithCoords) {
+        setMapCenter({
+          lat: firstWithCoords.latitude,
+          lng: firstWithCoords.longitude,
+        })
+      }
     } else if (center) {
       setMapCenter(center)
     }
-  }, [center, events])
+  }, [center, geocodedEvents])
+
+  // Geocode events that don't have coordinates
+  useEffect(() => {
+    if (!isLoaded) return
+
+    const geocodeEvents = async () => {
+      const geocoder = new window.google.maps.Geocoder()
+      const results: EventLocation[] = []
+
+      for (const event of events) {
+        if (event.latitude && event.longitude) {
+          results.push(event)
+        } else {
+          // Build address string from available fields
+          const addressParts = [
+            event.location_address,
+            event.location_city,
+            event.location_state,
+          ].filter(Boolean)
+          
+          if (addressParts.length > 0) {
+            const address = addressParts.join(", ")
+            try {
+              const response = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
+                geocoder.geocode({ address }, (results, status) => {
+                  if (status === "OK" && results) {
+                    resolve(results)
+                  } else {
+                    reject(new Error(`Geocoding failed: ${status}`))
+                  }
+                })
+              })
+              
+              if (response.length > 0) {
+                const location = response[0].geometry.location
+                results.push({
+                  ...event,
+                  latitude: location.lat(),
+                  longitude: location.lng(),
+                })
+              }
+            } catch (error) {
+              console.warn(`Could not geocode address for event ${event.id}:`, error)
+            }
+          }
+        }
+      }
+
+      setGeocodedEvents(results)
+    }
+
+    geocodeEvents()
+  }, [events, isLoaded])
 
   // Center map on selected event when selectedEventId changes
   useEffect(() => {
     if (selectedEventId && map) {
-      const event = events.find(e => e.id === selectedEventId)
+      const event = geocodedEvents.find(e => e.id === selectedEventId)
       if (event && event.latitude && event.longitude) {
         map.panTo({ lat: event.latitude, lng: event.longitude })
         setTimeout(() => {
@@ -153,7 +211,7 @@ export function EventMap({
     } else if (!selectedEventId) {
       setSelectedEvent(null)
     }
-  }, [selectedEventId, events, map])
+  }, [selectedEventId, geocodedEvents, map])
 
   const handleEventClick = (event: EventLocation) => {
     setSelectedEvent(event)
@@ -227,7 +285,7 @@ export function EventMap({
       )}
 
       {/* Event markers */}
-      {events.map((event) => {
+      {geocodedEvents.map((event) => {
         const isSelected = selectedEventId === event.id
         return (
           <Marker
