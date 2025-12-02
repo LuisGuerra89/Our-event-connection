@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -47,6 +47,26 @@ export function CategoryForm({ category, mode }: CategoryFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [existingOrders, setExistingOrders] = useState<number[]>([])
+
+  useEffect(() => {
+    // Fetch all existing display orders for validation
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch("/api/admin/categories?select=display_order")
+        if (response.ok) {
+          const categories = await response.json()
+          const orders = categories
+            .map((cat: any) => cat.display_order)
+            .filter((order: number) => order !== category?.display_order) // Exclude current category's order when editing
+          setExistingOrders(orders)
+        }
+      } catch (error) {
+        console.error("Failed to fetch existing orders:", error)
+      }
+    }
+    fetchOrders()
+  }, [category?.display_order])
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
@@ -75,6 +95,26 @@ export function CategoryForm({ category, mode }: CategoryFormProps) {
   }
 
   async function onSubmit(values: CategoryFormValues) {
+    // Client-side validation for unique order
+    if (existingOrders.includes(values.display_order)) {
+      toast({
+        title: "Invalid Order",
+        description: "This display order is already in use. Please choose a different number.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate order is not negative (extra safety check)
+    if (values.display_order < 0) {
+      toast({
+        title: "Invalid Order",
+        description: "Display order cannot be negative.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -205,16 +245,36 @@ export function CategoryForm({ category, mode }: CategoryFormProps) {
             <FormField
               control={form.control}
               name="display_order"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Display Order *</FormLabel>
-                  <FormControl>
-                    <Input type="number" min="0" placeholder="0" {...field} />
-                  </FormControl>
-                  <FormDescription>Lower numbers appear first</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const orderValue = field.value
+                const isOrderDuplicate = orderValue !== undefined && existingOrders.includes(Number(orderValue))
+                
+                return (
+                  <FormItem>
+                    <FormLabel>Display Order *</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(e)
+                        }}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Lower numbers appear first. Must be unique and 0 or greater.
+                      {isOrderDuplicate && (
+                        <span className="block mt-1 text-red-500 font-semibold">
+                          This order number is already in use. Please choose a different number.
+                        </span>
+                      )}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )
+              }}
             />
           </CardContent>
         </Card>
