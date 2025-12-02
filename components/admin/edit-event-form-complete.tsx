@@ -397,6 +397,7 @@ export function EditEventFormComplete({ event }: { event: Event }) {
             <AddressAutocompleteWithLocation
               label="Address *"
               placeholder="Start typing your address..."
+              initialAddress={event.location_address}
               onAddressSelect={(data) => {
                 if (inputRef.current) {
                   inputRef.current.value = data.address

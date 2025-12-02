@@ -25,6 +25,7 @@ interface AddressAutocompleteProps {
   cities: Array<{ id: string; name: string; state_id: string }>
   error?: string
   disabled?: boolean
+  initialAddress?: string
 }
 
 export default function AddressAutocompleteWithLocation({
@@ -36,8 +37,9 @@ export default function AddressAutocompleteWithLocation({
   cities,
   error,
   disabled = false,
+  initialAddress = "",
 }: AddressAutocompleteProps) {
-  const [address, setAddress] = useState("")
+  const [address, setAddress] = useState(initialAddress)
   const [suggestions, setSuggestions] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
