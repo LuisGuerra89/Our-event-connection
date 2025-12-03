@@ -20,14 +20,14 @@ export default async function AdminEventsPage() {
     .order("start_date", { ascending: true })
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold mb-2">Event Management</h1>
-          <p className="text-muted-foreground">Create and manage all platform events</p>
+    <div className="container mx-auto p-4 md:p-6 max-w-7xl">
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl md:text-4xl font-bold mb-2">Event Management</h1>
+          <p className="text-muted-foreground text-sm md:text-base">Create and manage all platform events</p>
         </div>
-        <Link href="/admin/events/create">
-          <Button>
+        <Link href="/admin/events/create" className="w-full md:w-auto">
+          <Button className="w-full md:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Create Event
           </Button>

@@ -92,7 +92,7 @@ export function SiteSettingsForm({ settings }: { settings: Setting[] }) {
 
         <div className="flex items-center gap-2">
           <Switch id="smtp_ssl" name="smtp_ssl" defaultChecked={getSettingValue("smtp_ssl") === "true"} />
-          <Label htmlFor="smtp_ssl">Use SSL</Label>
+          <Label htmlFor="smtp_ssl">Use SSL (port 465) - Uncheck for TLS (port 587)</Label>
         </div>
 
         <div>

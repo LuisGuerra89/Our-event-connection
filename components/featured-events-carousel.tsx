@@ -98,7 +98,7 @@ export function FeaturedEventsCarousel({ events }: FeaturedEventsCarouselProps) 
                 )}
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" asChild>
                   <Link href={`/events/${currentEvent.id}`}>View Event Details</Link>
                 </Button>

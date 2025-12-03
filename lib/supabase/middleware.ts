@@ -34,6 +34,7 @@ export async function updateSession(request: NextRequest) {
   const isAuthRoute = request.nextUrl.pathname.startsWith("/auth")
   const isHomePage = request.nextUrl.pathname === "/"
   const isOnboardingRoute = request.nextUrl.pathname.startsWith("/onboarding")
+  const isApiRoute = request.nextUrl.pathname.startsWith("/api")
   const isPublicRoute =
     request.nextUrl.pathname.startsWith("/events") ||
     request.nextUrl.pathname.startsWith("/about") ||
@@ -45,7 +46,7 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/pricing")
 
   // Redirect to login if not authenticated and trying to access protected routes
-  if (!user && !isAuthRoute && !isHomePage && !isPublicRoute) {
+  if (!user && !isAuthRoute && !isHomePage && !isPublicRoute && !isApiRoute) {
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
     return NextResponse.redirect(url)

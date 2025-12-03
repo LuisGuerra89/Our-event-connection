@@ -74,51 +74,69 @@ export function AvailableMatches({ matches, currentUserId }: AvailableMatchesPro
     }
 
     return (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {matches.map((match) => (
-                <Card key={match.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                            <Avatar className="h-12 w-12">
-                                <AvatarImage src={match.profile.profile_image_url || undefined} />
-                                <AvatarFallback>
+                <Card key={match.id} className="hover:shadow-lg transition-shadow overflow-hidden flex flex-col h-full">
+                    {/* Profile Image Header */}
+                    {match.profile.profile_image_url ? (
+                        <div className="relative h-40 w-full bg-muted overflow-hidden">
+                            <img
+                                src={match.profile.profile_image_url}
+                                alt={match.profile.full_name || "User"}
+                                className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                        </div>
+                    ) : (
+                        <div className="h-40 w-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                            <Avatar className="h-20 w-20">
+                                <AvatarFallback className="text-xl font-bold">
                                     {match.profile.full_name?.charAt(0) || "?"}
                                 </AvatarFallback>
                             </Avatar>
-
-                            <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold truncate">
-                                    {match.profile.full_name || "Unknown User"}
-                                </h3>
-
-                                {match.profile.bio && (
-                                    <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                                        {match.profile.bio}
-                                    </p>
-                                )}
-
-                                <div className="flex items-center gap-2 mt-3">
-                                    <Button
-                                        size="sm"
-                                        onClick={() => handleStartChat(match.matched_user_id)}
-                                        disabled={loadingMatchId === match.matched_user_id}
-                                        className="w-full"
-                                    >
-                                        {loadingMatchId === match.matched_user_id ? (
-                                            <>
-                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                Opening...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <MessageSquare className="h-4 w-4 mr-2" />
-                                                Send Message
-                                            </>
-                                        )}
-                                    </Button>
-                                </div>
-                            </div>
                         </div>
+                    )}
+
+                    <CardContent className="p-5 flex-1 flex flex-col">
+                        {/* User Info */}
+                        <div className="flex-1">
+                            <h3 className="font-bold text-lg">
+                                {match.profile.full_name || "Unknown User"}
+                            </h3>
+
+                            {match.profile.bio && (
+                                <p className="text-sm text-muted-foreground line-clamp-3 mt-2">
+                                    {match.profile.bio}
+                                </p>
+                            )}
+
+                            {match.match_score && match.match_score < 100 && (
+                                <div className="flex items-center gap-2 mt-3">
+                                    <span className="text-xs font-semibold text-muted-foreground">Match Score:</span>
+                                    <span className="text-sm font-bold text-primary">{match.match_score}%</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Send Message Button */}
+                        <Button
+                            onClick={() => handleStartChat(match.matched_user_id)}
+                            disabled={loadingMatchId === match.matched_user_id}
+                            className="w-full mt-4"
+                            size="sm"
+                        >
+                            {loadingMatchId === match.matched_user_id ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Opening...
+                                </>
+                            ) : (
+                                <>
+                                    <MessageSquare className="h-4 w-4 mr-2" />
+                                    Send Message
+                                </>
+                            )}
+                        </Button>
                     </CardContent>
                 </Card>
             ))}

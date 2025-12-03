@@ -7,7 +7,7 @@ export function Logo({ className = "" }: { className?: string }) {
       <div className="relative">
         <Heart className="h-8 w-8 fill-red-500 text-red-500" />
       </div>
-      <span className="text-primary">Our Event Connection</span>
+      <span className="text-primary">Our Love Connection</span>
     </Link>
   )
 }

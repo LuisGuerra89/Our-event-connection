@@ -52,12 +52,10 @@ export default async function DashboardEventsPage() {
   const eventIds = registrations.map((r) => r.event_id)
   const { data: events } = await supabase
     .from("events")
-    .select(
-      `
+    .select(`
       *,
-      locations!inner(country_name, state_name, city_name)
-    `
-    )
+      locations(country_name, state_name, city_name)
+    `)
     .in("id", eventIds)
     .order("start_date", { ascending: true })
 
@@ -80,11 +78,12 @@ export default async function DashboardEventsPage() {
 
         <div className="grid gap-6">
           {events?.map((event) => {
-            const location = event.locations as unknown as {
+            const locationData = Array.isArray(event.locations) ? event.locations[0] : event.locations
+            const location = locationData as unknown as {
               country_name: string
               state_name: string
               city_name: string
-            }
+            } | null
 
             const startDate = new Date(event.start_date)
             const endDate = new Date(event.end_date)
@@ -141,16 +140,18 @@ export default async function DashboardEventsPage() {
                     </div>
 
                     {/* Location */}
-                    <div className="flex items-start gap-3">
-                      <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium">Location</p>
-                        <p className="text-sm text-muted-foreground">
-                          {location.city_name}, {location.state_name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{location.country_name}</p>
+                    {location && (
+                      <div className="flex items-start gap-3">
+                        <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium">Location</p>
+                          <p className="text-sm text-muted-foreground">
+                            {location.city_name}, {location.state_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{location.country_name}</p>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Venue */}
                     <div className="flex items-start gap-3">

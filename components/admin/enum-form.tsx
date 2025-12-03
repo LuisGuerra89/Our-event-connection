@@ -108,19 +108,21 @@ export function EnumForm({ initialData }: EnumFormProps) {
         <Label htmlFor="enum_type">
           Enum Type * <span className="text-xs text-muted-foreground">(e.g., event_type, venue_type, skin_tone)</span>
         </Label>
-        <Input
-          id="enum_type"
-          value={enumType}
-          onChange={(e) => setEnumType(e.target.value)}
-          placeholder="event_type"
-          required
-          list="existing-types"
-        />
-        <datalist id="existing-types">
-          {enumTypes.map((type) => (
-            <option key={type} value={type} />
-          ))}
-        </datalist>
+        <Select value={enumType} onValueChange={setEnumType} required>
+          <SelectTrigger>
+            <SelectValue placeholder="Select or type an existing enum type" />
+          </SelectTrigger>
+          <SelectContent>
+            {enumTypes.map((type) => (
+              <SelectItem key={type} value={type}>
+                {type}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground mt-1">
+          Select an existing type or use the input field to add a new one
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -141,38 +143,38 @@ export function EnumForm({ initialData }: EnumFormProps) {
           <Label htmlFor="parent_type">
             Parent Type <span className="text-xs text-muted-foreground">(Optional)</span>
           </Label>
-          <Input
-            id="parent_type"
-            value={parentType}
-            onChange={(e) => setParentType(e.target.value)}
-            placeholder="event_type"
-            list="parent-types"
-          />
-          <datalist id="parent-types">
-            {Array.from(new Set(parentEnums.map((e) => e.type))).map((type) => (
-              <option key={type} value={type} />
-            ))}
-          </datalist>
+          <Select value={parentType} onValueChange={setParentType}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select parent type" />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from(new Set(parentEnums.map((e) => e.type))).map((type) => (
+                <SelectItem key={type} value={type}>
+                  {type}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="parent_value">
             Parent Value <span className="text-xs text-muted-foreground">(Optional)</span>
           </Label>
-          <Input
-            id="parent_value"
-            value={parentValue}
-            onChange={(e) => setParentValue(e.target.value)}
-            placeholder="Speed Dating"
-            list="parent-values"
-          />
-          <datalist id="parent-values">
-            {parentEnums
-              .filter((e) => e.type === parentType)
-              .map((e) => (
-                <option key={e.value} value={e.value} />
-              ))}
-          </datalist>
+          <Select value={parentValue} onValueChange={setParentValue} disabled={!parentType}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select parent value" />
+            </SelectTrigger>
+            <SelectContent>
+              {parentEnums
+                .filter((e) => e.type === parentType)
+                .map((e) => (
+                  <SelectItem key={e.value} value={e.value}>
+                    {e.value}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

@@ -152,7 +152,7 @@ export function Footer() {
               </li>
               <li>
                 <a 
-                  href="mailto:support@eventmatch.com" 
+                  href="mailto:support@ourloveconnection.com" 
                   className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
                 >
                   <Mail className="h-3 w-3" />
@@ -167,7 +167,7 @@ export function Footer() {
         <div className="mt-12 pt-8 border-t">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground text-center md:text-left">
-              &copy; {currentYear} Our Event Connection. All rights reserved.
+              &copy; {currentYear} Our Love Connection. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm">
               <Link href="/sitemap" className="text-muted-foreground hover:text-foreground transition-colors">

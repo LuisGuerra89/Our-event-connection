@@ -4,6 +4,9 @@ import { PublicPageLayout } from "@/components/public-page-layout"
 export default async function HowItWorksPage() {
   const supabase = await createServerClient()
 
+  // Get authenticated user
+  const { data: { user } } = await supabase.auth.getUser()
+
   const { data: content } = await supabase
     .from("cms_content")
     .select("*")

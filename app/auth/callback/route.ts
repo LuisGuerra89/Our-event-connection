@@ -4,8 +4,9 @@ import { NextResponse } from "next/server"
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get("code")
+  const ref = requestUrl.searchParams.get("ref") // Get referral code from URL
 
-  console.log("[v0] Auth callback received, code:", code ? "present" : "missing")
+  console.log("[v0] Auth callback received, code:", code ? "present" : "missing", "referral:", ref || "none")
 
   if (code) {
     const supabase = await createServerClient()
@@ -20,8 +21,26 @@ export async function GET(request: Request) {
 
       console.log("[v0] Successfully exchanged code for session")
 
-      // Get user and check profile completion
+      // Get user and update metadata with referral code if present
       const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user && ref) {
+        console.log("[v0] Updating user metadata with referral code:", ref)
+        
+        // Update auth user metadata with referral code
+        const { error: updateError } = await supabase.auth.updateUser({
+          data: {
+            referral_code: ref,
+            ...(user.user_metadata || {})
+          }
+        })
+        
+        if (updateError) {
+          console.log("[v0] Warning: Failed to update user metadata with referral code:", updateError)
+        } else {
+          console.log("[v0] Successfully updated user metadata with referral code")
+        }
+      }
       
       if (user) {
       const { data: profile, error: profileError } = await supabase
@@ -41,10 +60,10 @@ export async function GET(request: Request) {
         return NextResponse.redirect(new URL("/admin", request.url))
       }
 
-      // If profile is not complete (social login) or was skipped, redirect to complete profile page
+      // If profile is not complete (social login) or was skipped, redirect to login for new email signups
       if (profile && (profile.questionnaire_completed === false || profile.questionnaire_skipped === true)) {
-        console.log("[v0] Profile incomplete or skipped, redirecting to /onboarding/complete-profile")
-        return NextResponse.redirect(new URL("/onboarding/complete-profile", request.url))
+        console.log("[v0] Profile incomplete or skipped, redirecting to /auth/login")
+        return NextResponse.redirect(new URL("/auth/login?message=Email confirmed successfully. Please log in.", request.url))
       }
 
         // Check if user has completed waiver

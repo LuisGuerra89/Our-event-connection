@@ -16,6 +16,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Edit, MapPin } from "lucide-react"
+import AddressAutocompleteWithLocation from "@/components/address-autocomplete-with-location"
 
 const editAddressSchema = z.object({
   address1: z.string().min(1, "Address is required"),
@@ -36,6 +37,7 @@ export function EditAddress({ profile }: EditAddressProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
+  const [countriesData, setCountriesData] = useState<any[]>([])
 
   const form = useForm<EditAddressData>({
     resolver: zodResolver(editAddressSchema),
@@ -147,7 +149,20 @@ export function EditAddress({ profile }: EditAddressProps) {
                 <FormItem>
                   <FormLabel>Street Address</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <AddressAutocompleteWithLocation
+                      label=""
+                      placeholder="Street address"
+                      onAddressSelect={(data) => {
+                        field.onChange(data.address)
+                        form.setValue("country", data.country || form.getValues("country"))
+                        form.setValue("state", data.state || form.getValues("state"))
+                        form.setValue("city", data.city || form.getValues("city"))
+                      }}
+                      countries={countriesData}
+                      states={[]}
+                      cities={[]}
+                      initialAddress={field.value}
+                    />
                   </FormControl>
                 </FormItem>
               )}

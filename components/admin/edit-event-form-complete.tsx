@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -11,8 +11,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, X } from "lucide-react"
+import { Loader2, X, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useEventDateValidation } from "@/hooks/use-event-date-validation"
+import AddressAutocompleteWithLocation from "@/components/address-autocomplete-with-location"
 
 interface Country {
   id: string
@@ -23,6 +25,7 @@ interface State {
   id: string
   name: string
   country_id: string
+  code?: string
 }
 
 interface City {
@@ -72,9 +75,14 @@ interface Event {
 export function EditEventFormComplete({ event }: { event: Event }) {
   const router = useRouter()
   const { toast } = useToast()
+  const { validateDates } = useEventDateValidation()
+  const inputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
+
+  // Date validation errors
+  const [dateErrors, setDateErrors] = useState<Record<string, string>>({})
 
   const [countries, setCountries] = useState<Country[]>([])
   const [states, setStates] = useState<State[]>([])
@@ -121,7 +129,7 @@ export function EditEventFormComplete({ event }: { event: Event }) {
 
   const loadStates = async (countryId: string) => {
     const supabase = createBrowserClient()
-    const { data } = await supabase.from("states").select("id, name, country_id").eq("country_id", countryId).order("name")
+    const { data } = await supabase.from("states").select("id, name, country_id, code").eq("country_id", countryId).order("name")
     if (data) setStates(data)
   }
 
@@ -211,6 +219,25 @@ export function EditEventFormComplete({ event }: { event: Event }) {
 
     try {
       const formData = new FormData(e.currentTarget)
+      
+      // Validate dates before submitting
+      const startDate = formData.get("start_date") as string
+      const endDate = formData.get("end_date") as string
+      const regStartDate = formData.get("registration_start_date") as string
+      const regEndDate = formData.get("registration_end_date") as string
+
+      const dateValidationErrors = validateDates({
+        start_date: startDate,
+        end_date: endDate,
+        registration_start_date: regStartDate || undefined,
+        registration_end_date: regEndDate || undefined,
+      })
+
+      if (Object.keys(dateValidationErrors).length > 0) {
+        setDateErrors(dateValidationErrors)
+        throw new Error("Please fix date validation errors before submitting")
+      }
+
       const supabase = createBrowserClient()
 
       const eventData = {
@@ -218,8 +245,8 @@ export function EditEventFormComplete({ event }: { event: Event }) {
         description: formData.get("description") as string,
         event_type: eventType,
         venue_type: venueType,
-        start_date: formData.get("start_date") as string,
-        end_date: formData.get("end_date") as string,
+        start_date: startDate,
+        end_date: endDate,
         location_name: formData.get("venue") as string,
         location_address: formData.get("address") as string,
         location_city: "",
@@ -232,8 +259,8 @@ export function EditEventFormComplete({ event }: { event: Event }) {
         gender_limitation: genderLimitation,
         min_age: Number.parseInt(formData.get("min_age") as string) || null,
         max_age: Number.parseInt(formData.get("max_age") as string) || null,
-        registration_start_date: formData.get("registration_start_date") as string || null,
-        registration_end_date: formData.get("registration_end_date") as string || null,
+        registration_start_date: regStartDate || null,
+        registration_end_date: regEndDate || null,
         price: Number.parseFloat(formData.get("entry_fee") as string) || 0,
         refund_policy: formData.get("refund_policy") as string,
         subscription_required: subscriptionRequired,
@@ -367,8 +394,23 @@ export function EditEventFormComplete({ event }: { event: Event }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Address *</Label>
-            <Input id="address" name="address" defaultValue={event.location_address} required />
+            <AddressAutocompleteWithLocation
+              label="Address *"
+              placeholder="Start typing your address..."
+              initialAddress={event.location_address}
+              onAddressSelect={(data) => {
+                if (inputRef.current) {
+                  inputRef.current.value = data.address
+                }
+                setSelectedCountry(data.countryId || "")
+                setSelectedState(data.stateId || "")
+                setSelectedCity(data.cityId || "")
+              }}
+              countries={countries}
+              states={states}
+              cities={cities}
+            />
+            <input type="hidden" name="address" id="address" ref={inputRef} defaultValue={event.location_address} required />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -428,6 +470,20 @@ export function EditEventFormComplete({ event }: { event: Event }) {
           <CardTitle>Event Dates</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {Object.keys(dateErrors).length > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4 flex gap-2">
+              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-red-900 mb-2">Date validation errors:</p>
+                <ul className="text-sm text-red-800 space-y-1">
+                  {Object.entries(dateErrors).map(([key, error]) => (
+                    <li key={key}>• {error}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="start_date">Start Date & Time *</Label>
@@ -437,7 +493,17 @@ export function EditEventFormComplete({ event }: { event: Event }) {
                 type="datetime-local"
                 defaultValue={formatDateTimeLocal(event.start_date)}
                 required
+                onChange={(e) => {
+                  const errors = validateDates({
+                    start_date: e.target.value,
+                    end_date: (document.getElementById("end_date") as HTMLInputElement)?.value,
+                    registration_start_date: (document.getElementById("registration_start_date") as HTMLInputElement)?.value,
+                    registration_end_date: (document.getElementById("registration_end_date") as HTMLInputElement)?.value,
+                  })
+                  setDateErrors(errors)
+                }}
               />
+              {dateErrors.start_date && <p className="text-sm text-red-600">{dateErrors.start_date}</p>}
             </div>
 
             <div className="space-y-2">
@@ -448,7 +514,17 @@ export function EditEventFormComplete({ event }: { event: Event }) {
                 type="datetime-local"
                 defaultValue={formatDateTimeLocal(event.end_date)}
                 required
+                onChange={(e) => {
+                  const errors = validateDates({
+                    start_date: (document.getElementById("start_date") as HTMLInputElement)?.value,
+                    end_date: e.target.value,
+                    registration_start_date: (document.getElementById("registration_start_date") as HTMLInputElement)?.value,
+                    registration_end_date: (document.getElementById("registration_end_date") as HTMLInputElement)?.value,
+                  })
+                  setDateErrors(errors)
+                }}
               />
+              {dateErrors.end_date && <p className="text-sm text-red-600">{dateErrors.end_date}</p>}
             </div>
           </div>
 
@@ -460,7 +536,17 @@ export function EditEventFormComplete({ event }: { event: Event }) {
                 name="registration_start_date"
                 type="datetime-local"
                 defaultValue={formatDateTimeLocal(event.registration_start_date || "")}
+                onChange={(e) => {
+                  const errors = validateDates({
+                    start_date: (document.getElementById("start_date") as HTMLInputElement)?.value,
+                    end_date: (document.getElementById("end_date") as HTMLInputElement)?.value,
+                    registration_start_date: e.target.value,
+                    registration_end_date: (document.getElementById("registration_end_date") as HTMLInputElement)?.value,
+                  })
+                  setDateErrors(errors)
+                }}
               />
+              {dateErrors.registration_start_date && <p className="text-sm text-red-600">{dateErrors.registration_start_date}</p>}
             </div>
 
             <div className="space-y-2">
@@ -470,7 +556,17 @@ export function EditEventFormComplete({ event }: { event: Event }) {
                 name="registration_end_date"
                 type="datetime-local"
                 defaultValue={formatDateTimeLocal(event.registration_end_date || "")}
+                onChange={(e) => {
+                  const errors = validateDates({
+                    start_date: (document.getElementById("start_date") as HTMLInputElement)?.value,
+                    end_date: (document.getElementById("end_date") as HTMLInputElement)?.value,
+                    registration_start_date: (document.getElementById("registration_start_date") as HTMLInputElement)?.value,
+                    registration_end_date: e.target.value,
+                  })
+                  setDateErrors(errors)
+                }}
               />
+              {dateErrors.registration_end_date && <p className="text-sm text-red-600">{dateErrors.registration_end_date}</p>}
             </div>
           </div>
         </CardContent>

@@ -66,11 +66,11 @@ export async function createUserProfile(
     // Handle referral if provided
     if (referralCode) {
       try {
-        // Find the referrer by referral_code
+        // Find the referrer by referral_code (case-insensitive)
         const { data: referrer, error: referrerError } = await supabase
           .from("profiles")
           .select("id")
-          .eq("referral_code", referralCode.toUpperCase())
+          .ilike("referral_code", referralCode)
           .maybeSingle()
 
         if (referrerError) {

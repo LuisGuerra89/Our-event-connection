@@ -150,11 +150,11 @@ export async function submitWaiver(formData: FormData) {
     if (referralCode && referralCode.trim() !== "") {
       console.log("[v0] Server Action - Processing referral code:", referralCode)
 
-      // Find the referrer
+      // Find the referrer (case-insensitive)
       const { data: referrer, error: referrerError } = await supabase
         .from("profiles")
         .select("id")
-        .eq("referral_code", referralCode.toUpperCase())
+        .ilike("referral_code", referralCode)
         .maybeSingle()
 
       if (referrerError) {

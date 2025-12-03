@@ -53,13 +53,60 @@ export function DomesticEventsSection() {
   const [states, setStates] = useState<State[]>([])
   const [cities, setCities] = useState<City[]>([])
   const [events, setEvents] = useState<Event[]>([])
+  const [allEvents, setAllEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(false)
-  
+  const [detectingLocation, setDetectingLocation] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+
   const [selectedCountry, setSelectedCountry] = useState<string>("")
   const [selectedState, setSelectedState] = useState<string>("")
   const [selectedCity, setSelectedCity] = useState<string>("")
+  const [userDetectedState, setUserDetectedState] = useState<string | null>(null)
 
   const supabase = createBrowserClient()
+
+  // Auto-detect user's location on mount
+  useEffect(() => {
+    const detectUserLocation = async () => {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              const response = await fetch(
+                `/api/location/reverse-geocode?lat=${position.coords.latitude}&lng=${position.coords.longitude}`
+              )
+              if (response.ok) {
+                const data = await response.json()
+                if (data.stateId) {
+                  setUserDetectedState(data.state)
+                  // Will be set after states are loaded
+                  setSelectedState(data.stateId)
+                }
+                if (data.cityId) {
+                  setSelectedCity(data.cityId)
+                }
+                if (data.countryId) {
+                  setSelectedCountry(data.countryId)
+                }
+              }
+            } catch (error) {
+              console.error("Error detecting location:", error)
+            } finally {
+              setDetectingLocation(false)
+            }
+          },
+          () => {
+            // Location denied, continue without auto-detection
+            setDetectingLocation(false)
+          },
+          { timeout: 5000 }
+        )
+      } else {
+        setDetectingLocation(false)
+      }
+    }
+    detectUserLocation()
+  }, [])
 
   // Load countries on mount (USA and others)
   useEffect(() => {
@@ -69,26 +116,35 @@ export function DomesticEventsSection() {
         .select("*")
         .eq("status", "active")
         .order("name")
-      
+
       if (error) {
         console.error("Error loading countries:", error)
         return
       }
-      
+
       if (data) {
         setCountries(data)
-        // Find USA by default
-        const usa = data.find(c => c.code === "US" || c.name === "United States" || c.name.toLowerCase().includes("united states"))
-        if (usa) {
-          setSelectedCountry(usa.id)
-        } else if (data.length > 0) {
-          // Fallback to first country if USA not found
-          setSelectedCountry(data[0].id)
-        }
+        // Don't set default country here - wait for location detection
+        // The location detection useEffect will set the country
       }
     }
     loadCountries()
   }, [supabase])
+
+  // Set default country to USA only after location detection completes or fails
+  useEffect(() => {
+    if (!detectingLocation && !selectedCountry && countries.length > 0) {
+      // Location detection is done, but no country was set
+      // Default to USA
+      const usa = countries.find(c => c.code === "US" || c.name === "United States" || c.name.toLowerCase().includes("united states"))
+      if (usa) {
+        setSelectedCountry(usa.id)
+      } else if (countries.length > 0) {
+        // Fallback to first country if USA not found
+        setSelectedCountry(countries[0].id)
+      }
+    }
+  }, [detectingLocation, selectedCountry, countries])
 
   // Load states when country changes
   useEffect(() => {
@@ -96,7 +152,7 @@ export function DomesticEventsSection() {
       setStates([])
       return
     }
-    
+
     const loadStates = async () => {
       const { data, error } = await supabase
         .from("states")
@@ -104,17 +160,21 @@ export function DomesticEventsSection() {
         .eq("country_id", selectedCountry)
         .eq("status", "active")
         .order("name")
-      
+
       if (error) {
         console.error("Error loading states:", error)
         return
       }
-      
+
       if (data) {
         setStates(data)
-        setSelectedState("")
-        setSelectedCity("")
-        setCities([])
+        // Only reset state/city if they weren't set by location detection
+        // Check if the current selectedState is valid for this country
+        const isStateValid = data.some(s => s.id === selectedState)
+        if (!isStateValid) {
+          setSelectedState("")
+          setSelectedCity("")
+        }
       }
     }
     loadStates()
@@ -126,7 +186,7 @@ export function DomesticEventsSection() {
       setCities([])
       return
     }
-    
+
     const loadCities = async () => {
       const { data, error } = await supabase
         .from("cities")
@@ -134,12 +194,12 @@ export function DomesticEventsSection() {
         .eq("state_id", selectedState)
         .eq("status", "active")
         .order("name")
-      
+
       if (error) {
         console.error("Error loading cities:", error)
         return
       }
-      
+
       if (data) {
         setCities(data)
         setSelectedCity("")
@@ -152,15 +212,15 @@ export function DomesticEventsSection() {
   useEffect(() => {
     const loadEvents = async () => {
       setLoading(true)
+      setCurrentPage(1) // Reset to first page when filters change
       const now = new Date().toISOString()
-      
+
       let query = supabase
         .from("events")
         .select("*")
         .in("status", ["upcoming", "ongoing"])
         .gte("start_date", now)
         .order("start_date", { ascending: true })
-        .limit(6)
 
       // Filter by country (domestic = USA)
       if (selectedCountry) {
@@ -183,18 +243,10 @@ export function DomesticEventsSection() {
         console.error("Error loading events:", error)
       }
 
-      console.log("Domestic Events Query:", {
-        selectedCountry,
-        selectedState,
-        selectedCity,
-        eventsFound: data?.length || 0,
-        events: data
-      })
-
       if (data) {
-        setEvents(data)
+        setAllEvents(data)
       } else {
-        setEvents([])
+        setAllEvents([])
       }
       setLoading(false)
     }
@@ -221,6 +273,23 @@ export function DomesticEventsSection() {
     return url
   }
 
+  // Pagination logic
+  const ITEMS_PER_PAGE = 6
+  const totalPages = Math.ceil(allEvents.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedEvents = allEvents.slice(startIndex, endIndex)
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1))
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
   return (
     <section className="py-16 bg-muted/30">
       <div className="container mx-auto px-4">
@@ -228,15 +297,18 @@ export function DomesticEventsSection() {
           <div>
             <h2 className="text-3xl font-bold mb-2">Domestic Events</h2>
             <p className="text-muted-foreground">
-              Find events near you by selecting state and city
+              {userDetectedState
+                ? `Showing events in ${userDetectedState} (auto-detected)`
+                : "Find events near you by selecting state and city"
+              }
             </p>
           </div>
-          
+
           {/* Location Filters */}
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <Select value={selectedState || "all-states"} onValueChange={(value) => setSelectedState(value === "all-states" ? "" : value)}>
               <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Select State" />
+                <SelectValue placeholder={detectingLocation ? "Detecting..." : "Select State"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all-states">All States</SelectItem>
@@ -266,30 +338,47 @@ export function DomesticEventsSection() {
           </div>
         </div>
 
-        {loading ? (
+        {loading || detectingLocation ? (
           <div className="flex justify-center items-center py-16">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            {detectingLocation && (
+              <span className="ml-3 text-muted-foreground">Detecting your location...</span>
+            )}
           </div>
-        ) : events.length === 0 ? (
+        ) : allEvents.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-muted-foreground text-lg">
-              No domestic events found for the selected location.
+            <MapPin className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground text-lg mb-2">
+              {userDetectedState
+                ? `No events found in ${userDetectedState}`
+                : "No domestic events found for the selected location."
+              }
             </p>
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => {
-                setSelectedState("")
-                setSelectedCity("")
-              }}
-            >
-              Clear Filters
-            </Button>
+            {userDetectedState && (
+              <p className="text-sm text-muted-foreground mb-4">
+                Try selecting a different state or view all events
+              </p>
+            )}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedState("")
+                  setSelectedCity("")
+                  setUserDetectedState(null)
+                }}
+              >
+                View All States
+              </Button>
+              <Button asChild>
+                <Link href="/events">Browse All Events</Link>
+              </Button>
+            </div>
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.map((event) => (
+              {paginatedEvents.map((event) => (
                 <Link key={event.id} href={`/events/${event.id}`}>
                   <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer group">
                     <div className="relative h-48 overflow-hidden rounded-t-lg">
@@ -332,6 +421,63 @@ export function DomesticEventsSection() {
                 </Link>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex flex-col items-center gap-4 mt-8">
+                <div className="flex items-center justify-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                  >
+                    <ArrowRight className="h-4 w-4 mr-1 rotate-180" />
+                    Previous
+                  </Button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNumber
+                      if (totalPages <= 5) {
+                        pageNumber = i + 1
+                      } else if (currentPage <= 3) {
+                        pageNumber = i + 1
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNumber = totalPages - 4 + i
+                      } else {
+                        pageNumber = currentPage - 2 + i
+                      }
+
+                      return (
+                        <Button
+                          key={pageNumber}
+                          variant={currentPage === pageNumber ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNumber)}
+                        >
+                          {pageNumber}
+                        </Button>
+                      )
+                    })}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                    <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+
+                <div className="text-sm text-muted-foreground">
+                  Showing {startIndex + 1} to {Math.min(endIndex, allEvents.length)} of {allEvents.length} events
+                </div>
+              </div>
+            )}
 
             {/* View All Button */}
             <div className="flex justify-center mt-8">

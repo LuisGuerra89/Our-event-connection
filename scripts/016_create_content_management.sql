@@ -28,7 +28,7 @@ CREATE POLICY "cms_content_delete_admin" ON cms_content FOR DELETE USING (is_adm
 
 -- Insert default pages
 INSERT INTO cms_content (page_key, title, content) VALUES
-  ('about_us', 'About Us', 'Welcome to our event platform...'),
+  ('about_us', 'About Us', 'Welcome to our love platform...'),
   ('how_it_works', 'How It Works', 'Step-by-step guide...'),
   ('terms_conditions', 'Terms and Conditions', 'Terms and conditions content...'),
   ('privacy_policy', 'Privacy Policy', 'Privacy policy content...'),

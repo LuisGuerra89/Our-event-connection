@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, CreditCard, Gift, Check, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { sendPaymentConfirmationEmail } from "@/app/events/actions"
 
 interface EventCheckoutFormProps {
   eventId: string
@@ -179,11 +180,26 @@ export function EventCheckoutForm({
     try {
       const supabase = createBrowserClient()
 
+      // Get user email
+      const { data: userData } = await supabase
+        .from("profiles")
+        .select("email, first_name, last_name")
+        .eq("id", userId)
+        .single()
+
+      // Get event details
+      const { data: eventData } = await supabase
+        .from("events")
+        .select("title, event_date, location")
+        .eq("id", eventId)
+        .single()
+
       let totalAmount = 0
       let baseAmount = 0
       let taxAmount = 0
       let discountAmount = 0
       let couponId = null
+      let transactionId = ""
 
       if (appliedCoupon) {
         // Free ticket with coupon
@@ -219,6 +235,9 @@ export function EventCheckoutForm({
       // For now, we'll simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000))
 
+      // Generate transaction ID
+      transactionId = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
       // Create payment record
       const { error: paymentError } = await supabase.from("payments").insert({
         user_id: userId,
@@ -229,7 +248,7 @@ export function EventCheckoutForm({
         total_amount: totalAmount,
         payment_method: appliedCoupon ? "coupon" : "card",
         payment_status: "success",
-        transaction_id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        transaction_id: transactionId
       })
 
       if (paymentError) throw paymentError
@@ -245,6 +264,36 @@ export function EventCheckoutForm({
 
       // Note: current_attendees is automatically updated by a database trigger
       // when a new event_attendees record is inserted
+
+      // Send confirmation email
+      if (userData?.email) {
+        const userName = userData.first_name 
+          ? `${userData.first_name} ${userData.last_name || ""}`.trim()
+          : "Guest"
+
+        const eventDate = eventData?.event_date
+          ? new Date(eventData.event_date).toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric"
+            })
+          : "TBA"
+
+        await sendPaymentConfirmationEmail({
+          userEmail: userData.email,
+          userName: userName,
+          eventTitle: eventData?.title || eventTitle,
+          eventDate: eventDate,
+          eventLocation: eventData?.location || "TBA",
+          baseAmount: baseAmount,
+          taxAmount: taxAmount,
+          discountAmount: discountAmount,
+          totalAmount: totalAmount,
+          transactionId: transactionId,
+          isCouponPayment: !!appliedCoupon
+        })
+      }
 
       toast({
         title: appliedCoupon ? "Ticket Claimed!" : "Payment Successful!",

@@ -202,7 +202,7 @@ export default function CompleteProfileForm({ userId, initialEmail, initialFullN
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label htmlFor="fullName">
                 Full Name <span className="text-red-500">*</span>
@@ -241,7 +241,7 @@ export default function CompleteProfileForm({ userId, initialEmail, initialFullN
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" value={initialEmail} disabled className="bg-muted" />
@@ -276,7 +276,7 @@ export default function CompleteProfileForm({ userId, initialEmail, initialFullN
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label htmlFor="dateOfBirth">
                 Date of Birth <span className="text-red-500">*</span>
@@ -355,7 +355,7 @@ export default function CompleteProfileForm({ userId, initialEmail, initialFullN
             <div className="text-xs text-muted-foreground">{bio.length}/500</div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label htmlFor="locationCity">
                 City <span className="text-red-500">*</span>

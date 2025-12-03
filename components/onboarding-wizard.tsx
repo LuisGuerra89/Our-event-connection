@@ -93,13 +93,13 @@ export default function OnboardingWizard({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               physical: {
-                hairLength: updatedData.phase3.hairLength,
-                hairColor: updatedData.phase3.hairColor,
-                eyeColor: updatedData.phase3.eyeColor,
-                bodyType: updatedData.phase3.bodyType,
-                complexion: updatedData.phase3.complexion,
-                race: updatedData.phase3.race,
-                height: updatedData.phase3.height,
+                hairLength: updatedData.phase3.hairLength || null,
+                hairColor: updatedData.phase3.hairColor || null,
+                eyeColor: updatedData.phase3.eyeColor || null,
+                bodyType: updatedData.phase3.bodyType || null,
+                complexion: updatedData.phase3.complexion || null,
+                race: updatedData.phase3.race || null,
+                height: updatedData.phase3.height ? Number(updatedData.phase3.height) : null,
               },
             }),
           });
@@ -121,10 +121,10 @@ export default function OnboardingWizard({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               lifestyle: {
-                religion: updatedData.phase4.religion,
-                workoutFrequency: updatedData.phase4.workoutFrequency,
-                alcoholConsumptionFrequency: updatedData.phase4.alcoholConsumption,
-                nightclubBarFrequency: updatedData.phase4.nightclubFrequency,
+                religion: updatedData.phase4.religion || null,
+                workoutFrequency: updatedData.phase4.workoutFrequency || null,
+                alcoholConsumptionFrequency: updatedData.phase4.alcoholConsumption || null,
+                nightclubBarFrequency: updatedData.phase4.nightclubFrequency || null,
                 likesOutdoors: updatedData.phase4.likesOutdoors,
               },
             }),

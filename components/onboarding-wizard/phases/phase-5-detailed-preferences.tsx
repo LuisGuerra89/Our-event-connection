@@ -59,14 +59,14 @@ function PreferenceSetting({
 }) {
   return (
     <Card className="mb-4 p-4">
-      <div className="grid grid-cols-12 gap-4 items-end">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:items-end">
         {/* Label */}
-        <div className="col-span-3">
+        <div className="md:col-span-3">
           <FormLabel className="text-base font-semibold">{label}</FormLabel>
         </div>
 
         {/* Importance Level */}
-        <div className="col-span-3">
+        <div className="md:col-span-3">
           <FormLabel className="text-sm">How important?</FormLabel>
           <Select
             defaultValue="open_to_all"
@@ -98,7 +98,7 @@ function PreferenceSetting({
         </div>
 
         {/* Preferences */}
-        <div className="col-span-6">
+        <div className="md:col-span-6">
           <FormLabel className="text-sm">What you're looking for</FormLabel>
           <Select
             onValueChange={(val) =>
@@ -233,13 +233,14 @@ export default function Phase5DetailedPreferences({
             </div>
 
             {/* Buttons */}
-            <div className="flex gap-4 pt-6">
+            <div className="flex flex-col sm:flex-row gap-4 pt-6">
               {onSkip && (
                 <Button
                   type="button"
                   variant="outline"
                   onClick={onSkip}
                   disabled={isLoading}
+                  className="w-full sm:w-auto"
                 >
                   Skip preferences
                 </Button>
@@ -247,7 +248,7 @@ export default function Phase5DetailedPreferences({
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1"
+                className="w-full sm:flex-1"
               >
                 {isLoading ? "Completing..." : "Complete Profile"}
               </Button>

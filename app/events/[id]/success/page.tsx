@@ -4,9 +4,10 @@ import { PublicPageLayout } from "@/components/public-page-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Calendar, MapPin, Download, Mail } from "lucide-react"
+import { CheckCircle, Calendar, MapPin, Mail } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
+import { TicketPDFDownload } from "@/components/ticket-pdf-download"
 
 export default async function EventSuccessPage({ 
   params 
@@ -49,9 +50,21 @@ export default async function EventSuccessPage({
   // Get user profile for email
   const { data: profile } = await supabase
     .from("profiles")
-    .select("email, full_name")
+    .select("email, full_name, first_name, last_name")
     .eq("id", user.id)
     .single()
+
+  // Get latest payment transaction ID
+  const { data: payment } = await supabase
+    .from("payments")
+    .select("transaction_id")
+    .eq("event_id", event.id)
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single()
+
+  const transactionId = payment?.transaction_id || "N/A"
 
   return (
     <PublicPageLayout>
@@ -131,10 +144,16 @@ export default async function EventSuccessPage({
 
             {/* Actions */}
             <div className="border-t pt-6 space-y-3">
-              <Button className="w-full" size="lg" variant="outline">
-                <Download className="w-4 h-4 mr-2" />
-                Download Ticket (PDF)
-              </Button>
+              <TicketPDFDownload
+                eventId={event.id}
+                userId={user.id}
+                eventTitle={event.title}
+                eventDate={format(new Date(event.start_date), "PPPP")}
+                eventTime={`${format(new Date(event.start_date), "p")} - ${format(new Date(event.end_date), "p")}`}
+                eventLocation={`${event.location_name}, ${event.location_city}`}
+                userName={profile?.first_name ? `${profile.first_name} ${profile.last_name || ""}`.trim() : profile?.full_name || "Guest"}
+                transactionId={transactionId}
+              />
               
               <div className="grid grid-cols-2 gap-3">
                 <Button asChild variant="outline">

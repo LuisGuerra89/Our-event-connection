@@ -64,11 +64,40 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       )
     }
 
+    // Validate display_order
+    const order = display_order ?? 0
+    if (typeof order !== "number" || order < 0) {
+      return NextResponse.json(
+        { error: "Display order must be a non-negative number" },
+        { status: 400 }
+      )
+    }
+
+    // Check if display_order already exists (but not for the current category)
+    const { data: existingCategory, error: checkError } = await supabase
+      .from("event_categories")
+      .select("id")
+      .eq("display_order", order)
+      .neq("id", id)
+      .maybeSingle()
+
+    if (checkError) {
+      console.error("Check order error:", checkError)
+      return NextResponse.json({ error: checkError.message }, { status: 500 })
+    }
+
+    if (existingCategory) {
+      return NextResponse.json(
+        { error: "This display order is already in use. Please choose a different number." },
+        { status: 400 }
+      )
+    }
+
     const updateData: Record<string, any> = {
       name,
       slug,
       description,
-      display_order: display_order ?? 0,
+      display_order: order,
       is_featured: is_featured ?? false,
       status: status ?? "active",
       updated_at: new Date().toISOString(),

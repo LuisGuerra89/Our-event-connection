@@ -79,23 +79,26 @@ RETURNS TRIGGER AS $$
 DECLARE
   referrer_count INTEGER;
 BEGIN
+  -- Get the current referral count AFTER it has been incremented
   SELECT referral_count INTO referrer_count
   FROM profiles 
   WHERE id = NEW.referrer_id;
   
-  -- Notification: New Referral
-  INSERT INTO notifications (user_id, type, title, message, read, created_at)
-  VALUES (
-    NEW.referrer_id,
-    'referral',
-    'New Referral!',
-    'Someone joined using your referral code!',
-    false,
-    NOW()
-  );
+  -- Notification: New Referral (only if not a milestone)
+  IF (referrer_count IS NULL OR referrer_count % 25 != 0) THEN
+    INSERT INTO notifications (user_id, type, title, message, read, created_at)
+    VALUES (
+      NEW.referrer_id,
+      'referral',
+      'New Referral!',
+      'Someone joined using your referral code!',
+      false,
+      NOW()
+    );
+  END IF;
   
-  -- Notification: Milestone
-  IF referrer_count % 25 = 0 THEN
+  -- Notification: Milestone (only when exactly at 25, 50, 75, 100, etc.)
+  IF referrer_count IS NOT NULL AND referrer_count > 0 AND referrer_count % 25 = 0 THEN
     INSERT INTO notifications (user_id, type, title, message, read, created_at)
     VALUES (
       NEW.referrer_id,
@@ -103,6 +106,13 @@ BEGIN
       'Referral Milestone Reached!',
       format('Congratulations! You''ve reached %s referrals and earned a free event!', referrer_count),
       false,
+      NOW()
+    );
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
       NOW()
     );
   END IF;

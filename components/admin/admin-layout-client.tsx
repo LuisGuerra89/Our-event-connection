@@ -46,7 +46,7 @@ export function AdminLayoutClient({ userRole, userName, userEmail, userImage, us
             isCollapsed ? "lg:ml-16" : "lg:ml-64"
           )}
         >
-          <div className="px-4 sm:px-6 lg:px-8">
+          <div className="pt-8 sm:pt-12 px-4 sm:px-6 lg:px-8">
             {children}
           </div>
         </main>
