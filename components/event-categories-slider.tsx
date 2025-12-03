@@ -69,7 +69,7 @@ export function EventCategoriesSlider({ categories }: EventCategoriesSliderProps
       <div
         ref={scrollContainerRef}
         onScroll={checkScrollability}
-        className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+        className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4 mx-auto justify-center"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {categories.map((category) => (
