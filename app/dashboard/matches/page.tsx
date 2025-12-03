@@ -18,24 +18,39 @@ export default async function MatchesPage() {
     .eq("id", data.user.id)
     .single()
 
-  // Fetch all users with their attributes (excluding current user and excluding admins/moderators)
-  const { data: users } = await supabase
-    .from("profiles")
+  // Fetch matches for the current user
+  const { data: matches } = await supabase
+    .from("matches")
     .select(`
-      *,
-      user_attributes (*)
+      id,
+      matched_user_id,
+      profiles!matches_matched_user_id_fkey (
+        id,
+        display_name,
+        bio,
+        location_city,
+        location_state,
+        gender,
+        profile_image_url,
+        user_attributes (*)
+      )
     `)
-    .eq("role", "user")
-    .neq("id", data.user.id)
+    .eq("user_id", data.user.id)
 
   // Fetch current user's preferences
   const { data: myPreferences } = await supabase
     .from("user_preferences")
     .select("*")
     .eq("user_id", data.user.id)
-    .single()
+    .maybeSingle()
 
   const isProfileComplete = userProfile?.questionnaire_completed === true
+
+  // Transform matches data to match the expected format
+  const matchedUsers = matches?.map((match: any) => ({
+    ...match.profiles,
+    matchId: match.id
+  })) || []
 
   return (
     <div className="min-h-full">
@@ -50,7 +65,7 @@ export default async function MatchesPage() {
         {!isProfileComplete && (
           <IncompleteProfileBanner userId={data.user.id} />
         )}
-        <MatchList users={users || []} preferences={myPreferences} />
+        <MatchList users={matchedUsers} preferences={myPreferences} />
       </main>
     </div>
   )

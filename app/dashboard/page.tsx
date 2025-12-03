@@ -31,16 +31,19 @@ export default async function DashboardPage() {
   const [
     { count: matchesCount },
     { count: conversationsCount },
-    { data: events }
+    { count: myEventsCount },
+    { data: upcomingEvents }
   ] = await Promise.all([
     supabase.from("matches").select("*", { count: 'exact', head: true }).eq("user_id", data.user.id),
     supabase.from("chat_conversations").select("*", { count: 'exact', head: true }).or(`user1_id.eq.${data.user.id},user2_id.eq.${data.user.id}`),
+    supabase.from("event_registrations").select("*", { count: 'exact', head: true }).eq("user_id", data.user.id).eq("status", "confirmed"),
     supabase
       .from("events")
       .select("*")
       .in("status", ["upcoming", "ongoing"])
       .gte("end_date", new Date().toISOString())
       .order("start_date", { ascending: true })
+      .limit(6)
   ])
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
@@ -97,12 +100,12 @@ export default async function DashboardPage() {
         <Link href="/dashboard/events">
           <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
+              <CardTitle className="text-sm font-medium">My Events</CardTitle>
               <Calendar className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{events?.length || 0}</div>
-              <p className="text-xs text-muted-foreground">Events available to join</p>
+              <div className="text-2xl font-bold">{myEventsCount || 0}</div>
+              <p className="text-xs text-muted-foreground">Events you're registered for</p>
             </CardContent>
           </Card>
         </Link>
@@ -112,11 +115,11 @@ export default async function DashboardPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">Discover Events</h2>
-          <Link href="/dashboard/events" className="text-sm text-primary hover:underline">
+          <Link href="/events" className="text-sm text-primary hover:underline">
             View all events
           </Link>
         </div>
-        <EventList events={events || []} userId={data.user.id} />
+        <EventList events={upcomingEvents || []} userId={data.user.id} />
       </div>
     </div>
   )
