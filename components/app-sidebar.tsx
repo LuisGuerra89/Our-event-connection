@@ -27,6 +27,7 @@ import {
   KeyRound,
   UserCog,
   Gift,
+  Bell,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
@@ -71,6 +72,11 @@ const userNavItems = [
     title: "My Matches",
     href: "/dashboard/matches",
     icon: Heart,
+  },
+  {
+    title: "Notifications",
+    href: "/dashboard/notifications",
+    icon: Bell,
   },
   {
     title: "Profile",
