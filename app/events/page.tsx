@@ -9,7 +9,7 @@ import { PublicPageLayout } from "@/components/public-page-layout"
 export default async function EventsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; status?: string; q?: string; location?: string; date?: string; page?: string }>
+  searchParams: Promise<{ category?: string; status?: string; q?: string; location?: string; date?: string; page?: string; international?: string }>
 }) {
   const supabase = await createClient()
   const params = await searchParams
@@ -76,6 +76,13 @@ export default async function EventsPage({
       .lte("start_date", endOfDay.toISOString())
   }
 
+  // Filter by international events (not USA)
+  if (params.international === "true") {
+    query = query
+      .not("location_country", "ilike", "USA")
+      .not("location_country", "ilike", "United States")
+  }
+
   const { data: events, count, error: eventsError } = await query
   // Calculate pagination info
   const totalPages = Math.ceil((count || 0) / itemsPerPage)
@@ -88,6 +95,7 @@ export default async function EventsPage({
     if (params.q) searchParams.append("q", params.q)
     if (params.location) searchParams.append("location", params.location)
     if (params.date) searchParams.append("date", params.date)
+    if (params.international) searchParams.append("international", params.international)
     searchParams.append("page", String(pageNum))
     return `/events?${searchParams.toString()}`
   }
