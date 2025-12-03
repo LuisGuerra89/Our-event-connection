@@ -18,6 +18,9 @@ import { UpcomingEventsPagination } from "@/components/upcoming-events-paginatio
 export default async function HomePage() {
   const supabase = await createServerClient()
 
+  // Get authenticated user
+  const { data: { user } } = await supabase.auth.getUser()
+
   const [{ data: categories }, { data: allCategories }, { data: events }, { data: affiliates }] = await Promise.all([
     supabase.from("event_categories").select("*").eq("is_featured", true).eq("status", "active").order("display_order").limit(4),
     supabase.from("event_categories").select("*").eq("is_featured", true).eq("status", "active").order("display_order"),
@@ -194,16 +197,18 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* CTA Section */}
-        <section className="py-20 bg-primary text-primary-foreground">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Find Your Match?</h2>
-            <p className="text-xl mb-8 opacity-90">Join thousands of singles attending our events</p>
-            <Button size="lg" variant="secondary" asChild>
-              <Link href="/auth/sign-up">Create Free Account</Link>
-            </Button>
-          </div>
-        </section>
+        {/* CTA Section - Only show if not authenticated */}
+        {!user && (
+          <section className="py-20 bg-primary text-primary-foreground">
+            <div className="container mx-auto px-4 text-center">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Find Your Match?</h2>
+              <p className="text-xl mb-8 opacity-90">Join thousands of singles attending our events</p>
+              <Button size="lg" variant="secondary" asChild>
+                <Link href="/auth/sign-up">Create Free Account</Link>
+              </Button>
+            </div>
+          </section>
+        )}
       </main>
 
       {/* Footer */}

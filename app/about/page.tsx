@@ -8,6 +8,9 @@ import Link from "next/link"
 export default async function AboutPage() {
   const supabase = await createServerClient()
 
+  // Get authenticated user
+  const { data: { user } } = await supabase.auth.getUser()
+
   const { data: content } = await supabase
     .from("cms_content")
     .select("*")
@@ -175,25 +178,27 @@ export default async function AboutPage() {
         </section>
       )}
 
-      {/* CTA Section */}
-      <section className="py-16 md:py-20 bg-gradient-to-b from-transparent to-primary/5">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Connect?</h2>
-            <p className="text-base text-muted-foreground mb-8 leading-relaxed">
-              Join our community and discover meaningful connections through shared experiences
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild className="bg-primary hover:bg-primary/90">
-                <Link href="/events">Explore Events</Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/auth/signup">Get Started</Link>
-              </Button>
+      {/* CTA Section - Only show if not authenticated */}
+      {!user && (
+        <section className="py-16 md:py-20 bg-gradient-to-b from-transparent to-primary/5">
+          <div className="container mx-auto px-4">
+            <div className="max-w-2xl mx-auto text-center">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Connect?</h2>
+              <p className="text-base text-muted-foreground mb-8 leading-relaxed">
+                Join our community and discover meaningful connections through shared experiences
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" asChild className="bg-primary hover:bg-primary/90">
+                  <Link href="/events">Explore Events</Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <Link href="/auth/signup">Get Started</Link>
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </PublicPageLayout>
   )
 }
