@@ -150,10 +150,16 @@ export default function SignUpPage() {
     setError(null)
 
     try {
+      // Construct callback URL with referral code if present
+      let callbackUrl = `${window.location.origin}/auth/callback`
+      if (referralCode) {
+        callbackUrl += `?ref=${encodeURIComponent(referralCode)}`
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: callbackUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
