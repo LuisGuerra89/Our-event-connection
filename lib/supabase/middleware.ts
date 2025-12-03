@@ -43,7 +43,10 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/privacy") ||
     request.nextUrl.pathname.startsWith("/terms") ||
     request.nextUrl.pathname.startsWith("/faq") ||
-    request.nextUrl.pathname.startsWith("/pricing")
+    request.nextUrl.pathname.startsWith("/pricing") ||
+    request.nextUrl.pathname.startsWith("/sitemap") ||
+    request.nextUrl.pathname.startsWith("/accessibility") ||
+    request.nextUrl.pathname.startsWith("/cookies")
 
   // Redirect to login if not authenticated and trying to access protected routes
   if (!user && !isAuthRoute && !isHomePage && !isPublicRoute && !isApiRoute) {
