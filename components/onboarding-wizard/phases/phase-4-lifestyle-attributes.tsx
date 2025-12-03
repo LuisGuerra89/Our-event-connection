@@ -28,10 +28,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const phase4Schema = z.object({
-  religion: z.string().optional(),
-  workoutFrequency: z.string().optional(),
-  alcoholConsumption: z.string().optional(),
-  nightclubFrequency: z.string().optional(),
+  religion: z.string().nullable().optional(),
+  workoutFrequency: z.string().nullable().optional(),
+  alcoholConsumption: z.string().nullable().optional(),
+  nightclubFrequency: z.string().nullable().optional(),
   likesOutdoors: z.boolean().optional(),
 });
 
@@ -51,10 +51,10 @@ export default function Phase4LifestyleAttributes({
   const form = useForm<Phase4FormData>({
     resolver: zodResolver(phase4Schema),
     defaultValues: {
-      religion: "not_specified",
-      workoutFrequency: "not_specified",
-      alcoholConsumption: "not_specified",
-      nightclubFrequency: "not_specified",
+      religion: "",
+      workoutFrequency: "",
+      alcoholConsumption: "",
+      nightclubFrequency: "",
       likesOutdoors: false,
     },
   });
@@ -70,7 +70,7 @@ export default function Phase4LifestyleAttributes({
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onNext)} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {/* Religion */}
               <FormField
                 control={form.control}
@@ -78,14 +78,13 @@ export default function Phase4LifestyleAttributes({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Religion</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || "not_specified"}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select..." />
+                          <SelectValue placeholder="Select religion..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="not_specified">Not specified</SelectItem>
                         <SelectItem value="agnostic">Agnostic</SelectItem>
                         <SelectItem value="atheist">Atheist</SelectItem>
                         <SelectItem value="buddhist">Buddhist</SelectItem>
@@ -109,14 +108,13 @@ export default function Phase4LifestyleAttributes({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>How often do you work out?</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || "not_specified"}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select..." />
+                          <SelectValue placeholder="Select frequency..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="not_specified">Not specified</SelectItem>
                         <SelectItem value="never">Never</SelectItem>
                         <SelectItem value="rarely">Rarely</SelectItem>
                         <SelectItem value="sometimes">Sometimes</SelectItem>
@@ -136,14 +134,13 @@ export default function Phase4LifestyleAttributes({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Alcohol consumption</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || "not_specified"}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select..." />
+                          <SelectValue placeholder="Select frequency..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="not_specified">Not specified</SelectItem>
                         <SelectItem value="never">Never</SelectItem>
                         <SelectItem value="rarely">Rarely</SelectItem>
                         <SelectItem value="sometimes">Sometimes</SelectItem>
@@ -163,14 +160,13 @@ export default function Phase4LifestyleAttributes({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Nightclub / Bar visits</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || "not_specified"}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select..." />
+                          <SelectValue placeholder="Select frequency..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="not_specified">Not specified</SelectItem>
                         <SelectItem value="never">Never</SelectItem>
                         <SelectItem value="rarely">Rarely</SelectItem>
                         <SelectItem value="sometimes">Sometimes</SelectItem>

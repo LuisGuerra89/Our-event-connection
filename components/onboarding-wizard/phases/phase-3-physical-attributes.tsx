@@ -26,13 +26,13 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 const phase3Schema = z.object({
-  hairLength: z.string().optional(),
-  hairColor: z.string().optional(),
-  eyeColor: z.string().optional(),
-  bodyType: z.string().optional(),
-  complexion: z.string().optional(),
-  race: z.string().optional(),
-  height: z.number().optional(),
+  hairLength: z.string().nullable().optional(),
+  hairColor: z.string().nullable().optional(),
+  eyeColor: z.string().nullable().optional(),
+  bodyType: z.string().nullable().optional(),
+  complexion: z.string().nullable().optional(),
+  race: z.string().nullable().optional(),
+  height: z.string().nullable().optional(),
 });
 
 type Phase3FormData = z.infer<typeof phase3Schema>;
@@ -51,13 +51,13 @@ export default function Phase3PhysicalAttributes({
   const form = useForm<Phase3FormData>({
     resolver: zodResolver(phase3Schema),
     defaultValues: {
-      hairLength: "not_specified",
-      hairColor: "not_specified",
-      eyeColor: "not_specified",
-      bodyType: "not_specified",
-      complexion: "not_specified",
-      race: "not_specified",
-      height: undefined,
+      hairLength: "",
+      hairColor: "",
+      eyeColor: "",
+      bodyType: "",
+      complexion: "",
+      race: "",
+      height: "",
     },
   });
 
@@ -72,7 +72,7 @@ export default function Phase3PhysicalAttributes({
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onNext)} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {/* Hair Length */}
               <FormField
                 control={form.control}
@@ -80,14 +80,13 @@ export default function Phase3PhysicalAttributes({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Hair Length</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || "not_specified"}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select..." />
+                          <SelectValue placeholder="Select hair length..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="not_specified">Not specified</SelectItem>
                         <SelectItem value="very_short">Very Short</SelectItem>
                         <SelectItem value="short">Short</SelectItem>
                         <SelectItem value="shoulder_length">Shoulder Length</SelectItem>
@@ -106,14 +105,13 @@ export default function Phase3PhysicalAttributes({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Hair Color</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || "not_specified"}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select..." />
+                          <SelectValue placeholder="Select hair color..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="not_specified">Not specified</SelectItem>
                         <SelectItem value="black">Black</SelectItem>
                         <SelectItem value="dark_brown">Dark Brown</SelectItem>
                         <SelectItem value="light_brown">Light Brown</SelectItem>
@@ -135,14 +133,13 @@ export default function Phase3PhysicalAttributes({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Eye Color</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || "not_specified"}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select..." />
+                          <SelectValue placeholder="Select eye color..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="not_specified">Not specified</SelectItem>
                         <SelectItem value="blue">Blue</SelectItem>
                         <SelectItem value="green">Green</SelectItem>
                         <SelectItem value="brown">Brown</SelectItem>
@@ -163,14 +160,13 @@ export default function Phase3PhysicalAttributes({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Body Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || "not_specified"}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select..." />
+                          <SelectValue placeholder="Select body type..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="not_specified">Not specified</SelectItem>
                         <SelectItem value="slim">Slim</SelectItem>
                         <SelectItem value="athletic">Athletic</SelectItem>
                         <SelectItem value="average">Average</SelectItem>
@@ -191,14 +187,13 @@ export default function Phase3PhysicalAttributes({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Complexion</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || "not_specified"}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select..." />
+                          <SelectValue placeholder="Select complexion..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="not_specified">Not specified</SelectItem>
                         <SelectItem value="fair">Very Fair / Fair</SelectItem>
                         <SelectItem value="medium">Light / Medium</SelectItem>
                         <SelectItem value="olive">Olive</SelectItem>
@@ -218,14 +213,13 @@ export default function Phase3PhysicalAttributes({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Race/Ethnicity</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || "not_specified"}>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select..." />
+                          <SelectValue placeholder="Select race/ethnicity..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="not_specified">Not specified</SelectItem>
                         <SelectItem value="white">White</SelectItem>
                         <SelectItem value="black_african_american">Black / African American</SelectItem>
                         <SelectItem value="hispanic_latino">Hispanic / Latino</SelectItem>
@@ -254,7 +248,7 @@ export default function Phase3PhysicalAttributes({
                         type="number"
                         placeholder="170"
                         value={field.value || ""}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                        onChange={(e) => field.onChange(e.target.value)}
                         className="w-full px-3 py-2 border rounded-md"
                       />
                     </FormControl>

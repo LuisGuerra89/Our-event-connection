@@ -244,7 +244,7 @@ export default function EditAffiliateClient({ affiliate: initialAffiliate, affil
 
           {/* Action Buttons */}
           {affiliate.approval_status === "pending" && (
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Button
                 onClick={approveAffiliate}
                 disabled={isApproving || isRejecting}

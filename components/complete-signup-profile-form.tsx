@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import AddressAutocompleteWithLocation from "@/components/address-autocomplete-with-location"
 
 // Format utilities
 const formatPhoneNumber = (value: string): string => {
@@ -252,6 +253,7 @@ export function CompleteSignupProfileForm({ userId, onComplete }: CompleteSignup
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [selectedCountry, setSelectedCountry] = useState("")
+  const [countriesData, setCountriesData] = useState<any[]>([])
 
   const form = useForm<CompleteProfileFormData>({
     resolver: zodResolver(completeProfileSchema),
@@ -584,11 +586,20 @@ export function CompleteSignupProfileForm({ userId, onComplete }: CompleteSignup
                         <FormItem>
                           <FormLabel>Address 1 *</FormLabel>
                           <FormControl>
-                            <Input
+                            <AddressAutocompleteWithLocation
+                              label=""
                               placeholder="Street address"
-                              maxLength={100}
-                              value={field.value}
-                              onChange={field.onChange}
+                              onAddressSelect={(data) => {
+                                field.onChange(data.address)
+                                form.setValue("country", data.country || form.getValues("country"))
+                                form.setValue("state", data.state || form.getValues("state"))
+                                form.setValue("city", data.city || form.getValues("city"))
+                                setSelectedCountry(data.country || selectedCountry)
+                              }}
+                              countries={countriesData}
+                              states={[]}
+                              cities={[]}
+                              initialAddress={field.value}
                             />
                           </FormControl>
                           <FormMessage />
@@ -628,28 +639,22 @@ export function CompleteSignupProfileForm({ userId, onComplete }: CompleteSignup
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Country *</FormLabel>
-                            <Select
-                              onValueChange={(value) => {
-                                field.onChange(value)
-                                setSelectedCountry(value)
-                                form.setValue("state", "")
-                              }}
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select country" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {countries.map((country) => (
-                                  <SelectItem key={country} value={country}>
-                                    {country}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <FormControl>
+                              <Input
+                                placeholder="Country name"
+                                maxLength={50}
+                                value={field.value}
+                                onChange={(e) => {
+                                  const value = e.target.value
+                                  field.onChange(value)
+                                  setSelectedCountry(value)
+                                }}
+                              />
+                            </FormControl>
                             <FormMessage />
+                            <div className="text-xs text-muted-foreground">
+                              {field.value.length}/50
+                            </div>
                           </FormItem>
                         )}
                       />
@@ -660,26 +665,21 @@ export function CompleteSignupProfileForm({ userId, onComplete }: CompleteSignup
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>State/Province *</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              disabled={!selectedCountry}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select state" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {selectedCountry &&
-                                  states[selectedCountry]?.map((state) => (
-                                    <SelectItem key={state} value={state}>
-                                      {state}
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
+                            <FormControl>
+                              <Input
+                                placeholder="State or province name"
+                                maxLength={50}
+                                value={field.value}
+                                onChange={(e) => {
+                                  const value = e.target.value
+                                  field.onChange(value)
+                                }}
+                              />
+                            </FormControl>
                             <FormMessage />
+                            <div className="text-xs text-muted-foreground">
+                              {field.value.length}/50
+                            </div>
                           </FormItem>
                         )}
                       />
@@ -698,7 +698,7 @@ export function CompleteSignupProfileForm({ userId, onComplete }: CompleteSignup
                                 maxLength={50}
                                 value={field.value}
                                 onChange={(e) => {
-                                  const value = e.target.value.replace(/[^a-zA-Z\s-]/g, "")
+                                  const value = e.target.value
                                   field.onChange(value)
                                 }}
                               />

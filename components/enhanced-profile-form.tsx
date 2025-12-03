@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import AddressAutocompleteWithLocation from "@/components/address-autocomplete-with-location"
 
 export function EnhancedProfileForm({ profile, countries, enums }: any) {
   const router = useRouter()
@@ -246,12 +247,22 @@ export function EnhancedProfileForm({ profile, countries, enums }: any) {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2 space-y-2">
-            <Label htmlFor="address_1">Address Line 1*</Label>
-            <Input
-              id="address_1"
-              value={formData.address_1}
-              onChange={(e) => setFormData({ ...formData, address_1: e.target.value })}
-              required
+            <AddressAutocompleteWithLocation
+              label="Address Line 1*"
+              placeholder="Enter your street address"
+              onAddressSelect={(data) => {
+                setFormData({
+                  ...formData,
+                  address_1: data.address,
+                  country_id: data.countryId || formData.country_id,
+                  state_id: data.stateId || "",
+                  city_id: data.cityId || "",
+                })
+              }}
+              countries={countries}
+              states={[]}
+              cities={[]}
+              initialAddress={formData.address_1}
             />
           </div>
 

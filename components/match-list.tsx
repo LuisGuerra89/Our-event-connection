@@ -81,32 +81,54 @@ export function MatchList({ users, preferences }: MatchListProps) {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {matchedUsers.map((user) => (
-        <Card key={user.id} className="hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-12 w-12">
-                  {user.profile_image_url ? (
-                    <AvatarImage src={user.profile_image_url} alt={user.display_name} />
-                  ) : (
+        <Card key={user.id} className="hover:shadow-lg transition-shadow overflow-hidden flex flex-col">
+          {/* Profile Image Header */}
+          {user.profile_image_url ? (
+            <div className="relative h-48 w-full bg-muted overflow-hidden">
+              <img
+                src={user.profile_image_url}
+                alt={user.display_name}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="absolute top-3 right-3">
+                <Badge variant={user.matchScore >= 70 ? "default" : "secondary"}>
+                  <Heart className="h-3 w-3 mr-1" />
+                  {user.matchScore}%
+                </Badge>
+              </div>
+              <div className="absolute bottom-3 left-3 right-3">
+                <CardTitle className="text-white text-xl">{user.display_name}</CardTitle>
+                {user.gender && (
+                  <CardDescription className="text-white/80 capitalize">
+                    {user.gender}
+                  </CardDescription>
+                )}
+              </div>
+            </div>
+          ) : (
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12">
                     <AvatarFallback className="bg-primary/10">
                       <User className="h-6 w-6 text-primary" />
                     </AvatarFallback>
-                  )}
-                </Avatar>
-                <div>
-                  <CardTitle className="text-xl">{user.display_name}</CardTitle>
-                  {user.gender && <CardDescription className="capitalize">{user.gender}</CardDescription>}
+                  </Avatar>
+                  <div>
+                    <CardTitle className="text-xl">{user.display_name}</CardTitle>
+                    {user.gender && <CardDescription className="capitalize">{user.gender}</CardDescription>}
+                  </div>
                 </div>
+                <Badge variant={user.matchScore >= 70 ? "default" : "secondary"}>
+                  <Heart className="h-3 w-3 mr-1" />
+                  {user.matchScore}%
+                </Badge>
               </div>
-              <Badge variant={user.matchScore >= 70 ? "default" : "secondary"}>
-                <Heart className="h-3 w-3 mr-1" />
-                {user.matchScore}%
-              </Badge>
-            </div>
-          </CardHeader>
+            </CardHeader>
+          )}
 
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 flex-1 flex flex-col pt-4">
             {user.bio && <p className="text-sm text-muted-foreground line-clamp-2">{user.bio}</p>}
 
             {(user.location_city || user.location_state) && (
@@ -141,7 +163,7 @@ export function MatchList({ users, preferences }: MatchListProps) {
             )}
 
             <Button 
-              className="w-full bg-transparent" 
+              className="w-full bg-transparent mt-auto" 
               variant="outline"
               onClick={() => handleViewProfile(user.id)}
               disabled={viewingProfile === user.id}

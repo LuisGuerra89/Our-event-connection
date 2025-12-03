@@ -67,7 +67,7 @@ export function PreferencesForm({ userId, existingPreferences }: PreferencesForm
       <RadioGroup
         value={preferences[field]}
         onValueChange={(value) => setPreferences({ ...preferences, [field]: value as ImportanceLevel })}
-        className="flex gap-4"
+        className="flex flex-wrap gap-4 sm:gap-6"
       >
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="important" id={`${field}-important`} />

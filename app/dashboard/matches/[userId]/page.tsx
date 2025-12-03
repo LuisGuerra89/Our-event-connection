@@ -40,7 +40,6 @@ export default async function UserProfilePage({
       user_attributes (*)
     `)
     .eq("id", userId)
-    .eq("role", "user")
     .single()
 
   if (userError || !user) {
@@ -77,21 +76,23 @@ export default async function UserProfilePage({
                 <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
                   <Avatar className="h-32 w-32 border-4 border-background shadow-lg">
                     {user.profile_image_url ? (
-                      <AvatarImage src={user.profile_image_url} alt={user.display_name} />
+                      <AvatarImage src={user.profile_image_url} alt={user.display_name || "User"} />
                     ) : (
                       <AvatarFallback className="bg-primary/20 text-2xl">
                         {user.display_name
-                          .split(" ")
-                          .map((n: string) => n[0])
-                          .join("")
-                          .toUpperCase()}
+                          ? user.display_name
+                              .split(" ")
+                              .map((n: string) => n[0])
+                              .join("")
+                              .toUpperCase()
+                          : "U"}
                       </AvatarFallback>
                     )}
                   </Avatar>
 
                   <div className="flex-1">
                     <div className="flex flex-col gap-2 mb-6">
-                      <CardTitle className="text-4xl">{user.display_name}</CardTitle>
+                      <CardTitle className="text-4xl">{user.display_name || "User Profile"}</CardTitle>
                       {user.gender && (
                         <CardDescription className="text-lg capitalize">
                           {user.gender}

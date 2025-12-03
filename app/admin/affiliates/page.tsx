@@ -21,13 +21,13 @@ export default async function AffiliatesPage() {
   const { data: affiliates } = await supabase.from("affiliates").select("*").order("created_at", { ascending: false })
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Partners Management</h1>
-          <p className="text-muted-foreground">Review and manage business partner applications</p>
+    <div className="container mx-auto p-4 md:p-8 max-w-7xl">
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl md:text-3xl font-bold">Partners Management</h1>
+          <p className="text-muted-foreground text-sm md:text-base">Review and manage business partner applications</p>
         </div>
-        <Button asChild>
+        <Button asChild className="w-full md:w-auto">
           <Link href="/admin/affiliates/create">
             <Plus className="h-4 w-4 mr-2" />
             Add Partner
