@@ -8,9 +8,9 @@ export function Footer() {
   return (
     <footer className="border-t bg-muted/30">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
-          {/* Brand Section */}
-          <div className="lg:col-span-2">
+        <div className="grid gap-8 grid-cols-2 md:grid-cols-2 lg:grid-cols-5">
+          {/* Brand Section - Full width on mobile, 2 cols on tablet */}
+          <div className="col-span-2 md:col-span-1 lg:col-span-2">
             <Logo />
             <p className="text-sm text-muted-foreground mt-4 max-w-md">
               Find your perfect match at amazing events. Join thousands of singles attending our curated social events
@@ -69,8 +69,8 @@ export function Footer() {
 
           {/* Company Links */}
           <div>
-            <h4 className="font-semibold mb-4">Company</h4>
-            <ul className="space-y-3 text-sm">
+            <h4 className="font-semibold mb-4 text-sm md:text-base">Company</h4>
+            <ul className="space-y-3 text-xs md:text-sm">
               <li>
                 <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">
                   About Us
@@ -96,8 +96,8 @@ export function Footer() {
 
           {/* Events Links */}
           <div>
-            <h4 className="font-semibold mb-4">Events</h4>
-            <ul className="space-y-3 text-sm">
+            <h4 className="font-semibold mb-4 text-sm md:text-base">Events</h4>
+            <ul className="space-y-3 text-xs md:text-sm">
               <li>
                 <Link href="/events" className="text-muted-foreground hover:text-foreground transition-colors">
                   All Events
@@ -132,9 +132,9 @@ export function Footer() {
           </div>
 
           {/* Legal Links */}
-          <div>
-            <h4 className="font-semibold mb-4">Legal & Support</h4>
-            <ul className="space-y-3 text-sm">
+          <div className="col-span-2 md:col-span-1 lg:col-span-1">
+            <h4 className="font-semibold mb-4 text-sm md:text-base">Legal & Support</h4>
+            <ul className="space-y-3 text-xs md:text-sm">
               <li>
                 <Link href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
                   Privacy Policy
@@ -165,11 +165,11 @@ export function Footer() {
 
         {/* Bottom Section */}
         <div className="mt-12 pt-8 border-t">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-muted-foreground text-center md:text-left">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+            <p className="text-xs md:text-sm text-muted-foreground">
               &copy; {currentYear} Our Love Connection. All rights reserved.
             </p>
-            <div className="flex gap-6 text-sm">
+            <div className="flex gap-4 md:gap-6 text-xs md:text-sm flex-wrap justify-center md:justify-end">
               <Link href="/sitemap" className="text-muted-foreground hover:text-foreground transition-colors">
                 Sitemap
               </Link>
