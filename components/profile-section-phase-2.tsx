@@ -9,6 +9,14 @@ interface ProfileSectionPhase2Props {
 }
 
 const relationshipTypeMap: Record<string, string> = {
+  monogamous: "Monogamous Relationship",
+  open_relationship: "Open Relationship",
+  polyamorous: "Polyamorous",
+  casual_dating: "Casual Dating",
+  serious_long_term: "Serious Long-term Relationship",
+  friendship_first: "Friendship First",
+  not_sure: "Not Sure Yet",
+  // Legacy values for backward compatibility
   dating: "Looking to Date",
   relationship: "Looking for Relationship",
   casual: "Casual Connection",

@@ -97,6 +97,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get current user's profile for location data
+    const { data: currentUserProfile, error: currentProfileError } = await supabase
+      .from("profiles")
+      .select("location_city, location_state, location_country")
+      .eq("id", user.id)
+      .single();
+
+    if (currentProfileError) {
+      console.warn("Could not fetch current user profile for location filtering");
+    }
+
+    const maxTravelDistance = userPreferences.max_travel_distance_miles || 50;
+
     // Get all potential matches (other users)
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
@@ -107,6 +120,9 @@ export async function POST(request: NextRequest) {
         full_name,
         date_of_birth,
         gender,
+        location_city,
+        location_state,
+        location_country,
         user_attributes(*)
       `
       )
@@ -122,8 +138,52 @@ export async function POST(request: NextRequest) {
 
     const matches: Match[] = [];
 
+    // Helper function to check if location is within travel distance
+    // Simple implementation: check if same state (for now)
+    // TODO: Implement proper distance calculation with geocoding
+    const isWithinTravelDistance = (profileLocation: any): boolean => {
+      // If no current user location, allow all matches
+      if (!currentUserProfile?.location_state) {
+        return true;
+      }
+
+      // If no profile location, skip (can't determine distance)
+      if (!profileLocation?.location_state) {
+        return false;
+      }
+
+      // If max distance is 1000+, allow any location (anywhere)
+      if (maxTravelDistance >= 1000) {
+        return true;
+      }
+
+      // For distances < 1000 miles, require same state for now
+      // TODO: Implement actual distance calculation using coordinates
+      const sameState = currentUserProfile.location_state === profileLocation.location_state;
+      
+      // If same state, check city if available and distance is small
+      if (sameState) {
+        // If very short distance (< 50 miles), might want same city
+        if (maxTravelDistance < 50 && currentUserProfile.location_city && profileLocation.location_city) {
+          return currentUserProfile.location_city === profileLocation.location_city;
+        }
+        return true; // Same state is acceptable for 50+ miles
+      }
+
+      return false; // Different state and < 1000 miles
+    };
+
     // Calculate match score for each potential match
     for (const profile of profiles) {
+      // Filter by travel distance first
+      if (!isWithinTravelDistance({
+        location_city: (profile as any).location_city,
+        location_state: (profile as any).location_state,
+        location_country: (profile as any).location_country,
+      })) {
+        continue; // Skip this user, too far away
+      }
+
       // Get attributes for this user
       const userAttrs = (profile as any).user_attributes;
       if (!userAttrs) continue;

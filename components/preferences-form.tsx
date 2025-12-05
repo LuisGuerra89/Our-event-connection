@@ -10,6 +10,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface PreferencesFormProps {
   userId: string
@@ -31,6 +39,7 @@ export function PreferencesForm({ userId, existingPreferences }: PreferencesForm
     sports_hobbies_importance: (existingPreferences?.sports_hobbies_importance || "open_to_all") as ImportanceLevel,
     food_importance: (existingPreferences?.food_importance || "open_to_all") as ImportanceLevel,
   })
+  const [maxTravelDistance, setMaxTravelDistance] = useState<number>(existingPreferences?.max_travel_distance_miles || 50)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -43,13 +52,18 @@ export function PreferencesForm({ userId, existingPreferences }: PreferencesForm
     try {
       const supabase = createClient()
 
+      const dataToSave = {
+        ...preferences,
+        max_travel_distance_miles: maxTravelDistance,
+      }
+
       if (existingPreferences) {
-        const { error: updateError } = await supabase.from("user_preferences").update(preferences).eq("user_id", userId)
+        const { error: updateError } = await supabase.from("user_preferences").update(dataToSave).eq("user_id", userId)
         if (updateError) throw updateError
       } else {
         const { error: insertError } = await supabase
           .from("user_preferences")
-          .insert({ ...preferences, user_id: userId })
+          .insert({ ...dataToSave, user_id: userId })
         if (insertError) throw insertError
       }
 
@@ -138,6 +152,45 @@ export function PreferencesForm({ userId, existingPreferences }: PreferencesForm
                 <PreferenceItem label="Sports & Hobbies" field="sports_hobbies_importance" />
                 <Separator />
                 <PreferenceItem label="Food Preferences" field="food_importance" />
+              </div>
+            </div>
+
+            <Separator className="my-8" />
+
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Location & Distance</h3>
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <Label className="text-base font-medium">
+                    How far are you willing to travel to meet your match?
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Select the maximum distance you're comfortable traveling for a date.
+                  </p>
+                  <Select
+                    value={maxTravelDistance.toString()}
+                    onValueChange={(value) => setMaxTravelDistance(parseInt(value))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select maximum distance" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10 miles</SelectItem>
+                      <SelectItem value="25">25 miles</SelectItem>
+                      <SelectItem value="50">50 miles</SelectItem>
+                      <SelectItem value="75">75 miles</SelectItem>
+                      <SelectItem value="100">100 miles</SelectItem>
+                      <SelectItem value="150">150 miles</SelectItem>
+                      <SelectItem value="200">200 miles</SelectItem>
+                      <SelectItem value="300">300 miles</SelectItem>
+                      <SelectItem value="500">500 miles</SelectItem>
+                      <SelectItem value="1000">1000+ miles (anywhere)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Current selection: <span className="font-semibold">{maxTravelDistance} miles</span>
+                  </p>
+                </div>
               </div>
             </div>
           </div>
