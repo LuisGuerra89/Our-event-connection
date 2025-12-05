@@ -58,9 +58,11 @@ export default async function HomePage() {
                 connections, real events, real chemistry.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-                <Button size="lg" asChild>
-                  <Link href="/auth/sign-up">Start Your Journey</Link>
-                </Button>
+                {!user && (
+                  <Button size="lg" asChild>
+                    <Link href="/auth/sign-up">Start Your Journey</Link>
+                  </Button>
+                )}
                 <Button size="lg" variant="outline" asChild>
                   <Link href="/events">Browse Events</Link>
                 </Button>
