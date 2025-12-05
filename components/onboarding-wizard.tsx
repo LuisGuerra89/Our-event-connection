@@ -7,6 +7,9 @@
  * Phase 3: Physical attributes
  * Phase 4: Lifestyle attributes
  * Phase 5: Detailed preferences
+ * Phase 6: Detailed physical attributes (NEW)
+ * Phase 7: Personal & professional info (NEW)
+ * Phase 8: Detailed matching preferences (NEW)
  */
 
 "use client";
@@ -18,11 +21,14 @@ import Phase2EssentialPreferences from "./onboarding-wizard/phases/phase-2-essen
 import Phase3PhysicalAttributes from "./onboarding-wizard/phases/phase-3-physical-attributes";
 import Phase4LifestyleAttributes from "./onboarding-wizard/phases/phase-4-lifestyle-attributes";
 import Phase5DetailedPreferences from "./onboarding-wizard/phases/phase-5-detailed-preferences";
+import Phase6DetailedPhysical from "./onboarding-wizard/phases/phase-6-detailed-physical";
+import Phase7PersonalInfo from "./onboarding-wizard/phases/phase-7-personal-info";
+import Phase8DetailedPreferences from "./onboarding-wizard/phases/phase-8-detailed-preferences";
 import MatchingSearchView from "./onboarding-wizard/phases/matching-search-view";
 
 
 
-type Phase = 2 | 3 | 4 | 5 | "searching" | "complete";
+type Phase = 2 | 3 | 4 | 5 | 6 | 7 | 8 | "searching" | "complete";
 
 interface OnboardingWizardProps {
   userId: string;
@@ -56,6 +62,9 @@ export default function OnboardingWizard({
         if (currentPhase === 2) updatedData.phase2 = phaseData;
         if (currentPhase === 3) updatedData.phase3 = phaseData;
         if (currentPhase === 4) updatedData.phase4 = phaseData;
+        if (currentPhase === 5) updatedData.phase5 = phaseData;
+        if (currentPhase === 6) updatedData.phase6 = phaseData;
+        if (currentPhase === 7) updatedData.phase7 = phaseData;
 
         setFormData(updatedData);
 
@@ -140,6 +149,95 @@ export default function OnboardingWizard({
           });
         }
 
+        if (nextPhase === 6 && updatedData.phase5) {
+          // Save phase 5 preferences
+          const response = await fetch("/api/user/preferences", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              general: updatedData.phase5,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to save preferences");
+          }
+
+          toast({
+            title: "Preferences saved",
+            description: "Moving to detailed physical...",
+          });
+        }
+
+        if (nextPhase === 7 && updatedData.phase6) {
+          // Save Phase 6 - Detailed Physical Attributes
+          const response = await fetch("/api/user/attributes", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              physical: {
+                forehead: updatedData.phase6.forehead || null,
+                cheekbones: updatedData.phase6.cheekbones || null,
+                nose: updatedData.phase6.nose || null,
+                lips: updatedData.phase6.lips || null,
+                handSize: updatedData.phase6.handSize || null,
+                buttocks: updatedData.phase6.buttocks || null,
+                legs: updatedData.phase6.legs || null,
+                shoeSize: updatedData.phase6.shoeSize || null,
+                breastSize: updatedData.phase6.breastSize || null,
+                penisSize: updatedData.phase6.penisSize || null,
+                hasTattoos: updatedData.phase6.hasTattoos || null,
+              },
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to save detailed physical attributes");
+          }
+
+          toast({
+            title: "Detailed physical saved",
+            description: "Moving to personal info...",
+          });
+        }
+
+        if (nextPhase === 8 && updatedData.phase7) {
+          // Save Phase 7 - Personal & Professional Info
+          const response = await fetch("/api/user/attributes", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              personal: {
+                maritalStatus: updatedData.phase7.maritalStatus || null,
+                hasKids: updatedData.phase7.hasKids || false,
+                kidsBoys: updatedData.phase7.kidsBoys || null,
+                kidsGirls: updatedData.phase7.kidsGirls || null,
+                occupation: updatedData.phase7.occupation || null,
+                ownsBusiness: updatedData.phase7.ownsBusiness || false,
+                businessType: updatedData.phase7.businessType || null,
+                housingStatus: updatedData.phase7.housingStatus || null,
+                lookingForRoommate: updatedData.phase7.lookingForRoommate || false,
+                relationshipTypeSeeking: updatedData.phase7.relationshipTypeSeeking || null,
+                favoriteColor: updatedData.phase7.favoriteColor || null,
+                dressCodePreference: updatedData.phase7.dressCodePreference || null,
+                makeupSpendingFrequency: updatedData.phase7.makeupSpendingFrequency || null,
+                likesMassage: updatedData.phase7.likesMassage || false,
+                nailsDoneFrequency: updatedData.phase7.nailsDoneFrequency || null,
+                facialFrequency: updatedData.phase7.facialFrequency || null,
+              },
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to save personal information");
+          }
+
+          toast({
+            title: "Personal info saved",
+            description: "Moving to detailed preferences...",
+          });
+        }
+
         setCurrentPhase(nextPhase);
       } catch (error) {
         console.error("Error saving phase:", error);
@@ -156,26 +254,26 @@ export default function OnboardingWizard({
   );
 
   // Handle completion
-  const handleComplete = useCallback(async (phase5Data?: any) => {
+  const handleComplete = useCallback(async (phase8Data?: any) => {
     try {
       setIsLoading(true);
 
-      // Save phase 5 preferences if provided
-      if (phase5Data) {
+      // Save phase 8 detailed preferences if provided
+      if (phase8Data) {
         const response = await fetch("/api/user/preferences", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            general: phase5Data,
+            detailed: phase8Data,
           }),
         });
 
         if (!response.ok) {
-          throw new Error("Failed to save preferences");
+          throw new Error("Failed to save detailed preferences");
         }
 
         toast({
-          title: "Preferences saved",
+          title: "All preferences saved",
           description: "Marking questionnaire complete...",
         });
       }
@@ -212,7 +310,7 @@ export default function OnboardingWizard({
       // No need to manually redirect or set complete state
     } catch (error) {
       console.error("Error completing questionnaire:", error);
-      setCurrentPhase(5); // Back to phase 5 on error
+      setCurrentPhase(8); // Back to phase 8 on error
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to complete",
@@ -263,22 +361,25 @@ export default function OnboardingWizard({
     <div className="w-full max-w-4xl mx-auto p-6">
       {/* Progress Indicator */}
       <div className="mb-8">
-        <div className="flex justify-between mb-4">
+        <div className="flex justify-between mb-4 overflow-x-auto">
           {[
             { phase: 2, label: "Preferences" },
             { phase: 3, label: "Physical" },
             { phase: 4, label: "Lifestyle" },
             { phase: 5, label: "Detailed" },
+            { phase: 6, label: "Extended Physical" },
+            { phase: 7, label: "Personal Info" },
+            { phase: 8, label: "Match Prefs" },
           ].map(({ phase, label }) => (
             <div
               key={phase}
-              className={`flex-1 text-center pb-2 ${
+              className={`flex-1 text-center pb-2 px-2 whitespace-nowrap ${
                 typeof currentPhase === "number" && currentPhase >= phase
                   ? "text-primary border-b-2 border-primary"
                   : "text-muted-foreground"
               }`}
             >
-              <div className="text-sm font-medium">{label}</div>
+              <div className="text-xs md:text-sm font-medium">{label}</div>
             </div>
           ))}
         </div>
@@ -312,7 +413,31 @@ export default function OnboardingWizard({
 
         {currentPhase === 5 && (
           <Phase5DetailedPreferences
-            onComplete={handleComplete}
+            onComplete={(data: any) => handleNextPhase(data, 6)}
+            isLoading={isLoading}
+            onSkip={handleSkip}
+          />
+        )}
+
+        {currentPhase === 6 && (
+          <Phase6DetailedPhysical
+            onNext={(data: any) => handleNextPhase(data, 7)}
+            isLoading={isLoading}
+            onSkip={handleSkip}
+          />
+        )}
+
+        {currentPhase === 7 && (
+          <Phase7PersonalInfo
+            onNext={(data: any) => handleNextPhase(data, 8)}
+            isLoading={isLoading}
+            onSkip={handleSkip}
+          />
+        )}
+
+        {currentPhase === 8 && (
+          <Phase8DetailedPreferences
+            onNext={handleComplete}
             isLoading={isLoading}
             onSkip={handleSkip}
           />

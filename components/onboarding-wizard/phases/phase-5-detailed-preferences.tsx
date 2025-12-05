@@ -5,7 +5,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -21,13 +21,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
+import { Badge } from "@/components/ui/badge";
+import { X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -37,88 +33,96 @@ const phase5Schema = z.record(z.any()).optional();
 type Phase5FormData = Record<string, any>;
 
 interface Phase5Props {
-  onComplete: () => void;
+  onComplete: (data?: Phase5FormData) => void;
   isLoading?: boolean;
   onSkip?: () => void;
 }
 
+const importanceOptions = [
+  { value: "open_to_all", label: "OPEN TO ALL", weight: "0x" },
+  { value: "not_important", label: "Not Important", weight: "1x" },
+  { value: "somewhat_important", label: "Somewhat Important", weight: "2x" },
+  { value: "important", label: "Important", weight: "3x" },
+  { value: "very_important", label: "Very Important", weight: "5x" },
+];
+
 /**
  * Mini Component: Preference Setting
- * User can set: importance level + what they want
+ * User can set: importance level + what they want (with badges)
  */
 function PreferenceSetting({
   label,
   attributeName,
   form,
   options,
+  allowMultiple = true,
 }: {
   label: string;
   attributeName: string;
   form: any;
   options: { value: string; label: string }[];
+  allowMultiple?: boolean;
 }) {
-  return (
-    <Card className="mb-4 p-4">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:items-end">
-        {/* Label */}
-        <div className="md:col-span-3">
-          <FormLabel className="text-base font-semibold">{label}</FormLabel>
-        </div>
+  const importanceValue = form.watch(`${attributeName}Importance`) || "open_to_all";
+  const selectedValues = form.watch(`${attributeName}Preference`) || [];
+  const isOpenToAll = importanceValue === "open_to_all";
 
-        {/* Importance Level */}
-        <div className="md:col-span-3">
-          <FormLabel className="text-sm">How important?</FormLabel>
-          <Select
-            defaultValue="open_to_all"
-            onValueChange={(val) =>
-              form.setValue(`${attributeName}Importance`, val)
-            }
+  const handleValueToggle = (value: string) => {
+    if (!allowMultiple) {
+      form.setValue(`${attributeName}Preference`, [value]);
+    } else {
+      if (selectedValues.includes(value)) {
+        form.setValue(`${attributeName}Preference`, selectedValues.filter((v: string) => v !== value));
+      } else {
+        form.setValue(`${attributeName}Preference`, [...selectedValues, value]);
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-3 rounded-lg border p-3 sm:p-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+        <div className="flex-1">
+          <h4 className="text-sm font-medium">{label}</h4>
+        </div>
+        <div className="w-full sm:w-[180px]">
+          <Select 
+            value={importanceValue}
+            onValueChange={(val) => form.setValue(`${attributeName}Importance`, val)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="h-9 text-xs sm:text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="open_to_all">
-                🔓 Open to all
-              </SelectItem>
-              <SelectItem value="not_important">
-                Not important
-              </SelectItem>
-              <SelectItem value="somewhat_important">
-                Somewhat important
-              </SelectItem>
-              <SelectItem value="important">
-                Important
-              </SelectItem>
-              <SelectItem value="very_important">
-                ⭐ Very important
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Preferences */}
-        <div className="md:col-span-6">
-          <FormLabel className="text-sm">What you're looking for</FormLabel>
-          <Select
-            onValueChange={(val) =>
-              form.setValue(`${attributeName}Preference`, [val])
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select..." />
-            </SelectTrigger>
-            <SelectContent>
-              {options.map((opt) => (
+              {importanceOptions.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {opt.label} <span className="text-xs text-muted-foreground">({opt.weight})</span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
       </div>
-    </Card>
+
+      {!isOpenToAll && (
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-2">
+          {options.map((option) => {
+            const isSelected = selectedValues.includes(option.value);
+            return (
+              <Badge
+                key={option.value}
+                variant={isSelected ? "default" : "outline"}
+                className="cursor-pointer text-xs"
+                onClick={() => handleValueToggle(option.value)}
+              >
+                {option.label}
+                {isSelected && <X className="ml-1 h-3 w-3" />}
+              </Badge>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -131,8 +135,15 @@ export default function Phase5DetailedPreferences({
     resolver: zodResolver(phase5Schema),
     defaultValues: {
       hairColorImportance: "open_to_all",
+      hairColorPreference: [],
       bodyTypeImportance: "open_to_all",
+      bodyTypePreference: [],
       religionImportance: "open_to_all",
+      religionPreference: [],
+      workoutImportance: "open_to_all",
+      workoutPreference: [],
+      alcoholImportance: "open_to_all",
+      alcoholPreference: [],
     },
   });
 
@@ -142,13 +153,13 @@ export default function Phase5DetailedPreferences({
         <CardTitle>Fine-tune Your Preferences</CardTitle>
         <CardDescription>
           For each attribute, select how important it is to you and what you're looking for.
-          Select "🔓 Open to all" if you're flexible.
+          Select "OPEN TO ALL" if you're flexible - this will show you more potential matches!
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onComplete)} className="space-y-6">
-            <div className="space-y-4">
+          <form onSubmit={form.handleSubmit(onComplete)} className="space-y-4">
+            <div className="space-y-3">
               {/* Hair Color */}
               <PreferenceSetting
                 label="Hair Color"
@@ -226,14 +237,14 @@ export default function Phase5DetailedPreferences({
             </div>
 
             {/* Info Box */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 my-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
               <p className="text-sm text-blue-900">
-                💡 <strong>Pro Tip:</strong> Setting preferences to "🔓 Open to all" will increase your match pool significantly. You can always adjust later!
+                💡 <strong>Pro Tip:</strong> Setting preferences to "OPEN TO ALL" will show you more matches. Click on the badges to select multiple options when you specify preferences!
               </p>
             </div>
 
             {/* Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-6">
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
               {onSkip && (
                 <Button
                   type="button"
@@ -250,7 +261,7 @@ export default function Phase5DetailedPreferences({
                 disabled={isLoading}
                 className="w-full sm:flex-1"
               >
-                {isLoading ? "Completing..." : "Complete Profile"}
+                {isLoading ? "Saving..." : "Continue"}
               </Button>
             </div>
           </form>
