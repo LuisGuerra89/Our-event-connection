@@ -37,22 +37,56 @@ export async function POST(request: NextRequest) {
 
         console.log("[DELETE ACCOUNT] Starting account deletion for user:", user.id)
 
+        // Get service role client early for operations that need to bypass RLS
+        const serviceClient = getServiceClient()
+
         // Step 0: Delete all related data from tables before deleting the user
         // This avoids foreign key constraint issues
         try {
             console.log("[DELETE ACCOUNT] Deleting related user data...")
             
+            // First, handle the self-referential foreign key in profiles
+            // Set referred_by to NULL for any users who were referred by this user
+            // Use service client to bypass RLS policies
+            try {
+                const { data: referredUsers, error: checkError } = await serviceClient
+                    .from("profiles")
+                    .select("id, full_name")
+                    .eq("referred_by", user.id)
+
+                if (checkError) {
+                    console.log("[DELETE ACCOUNT] Error checking referred users:", checkError.message)
+                } else if (referredUsers && referredUsers.length > 0) {
+                    console.log(`[DELETE ACCOUNT] Found ${referredUsers.length} users referred by this account`)
+                    
+                    const { error: updateReferralError } = await serviceClient
+                        .from("profiles")
+                        .update({ referred_by: null })
+                        .eq("referred_by", user.id)
+
+                    if (updateReferralError) {
+                        console.log("[DELETE ACCOUNT] Error updating referrals:", updateReferralError.message)
+                    } else {
+                        console.log("[DELETE ACCOUNT] Successfully updated referred_by to NULL for all referred users")
+                    }
+                } else {
+                    console.log("[DELETE ACCOUNT] No users were referred by this account")
+                }
+            } catch (referralError) {
+                console.log("[DELETE ACCOUNT] Exception handling referrals:", referralError)
+            }
+            
             // Delete in order of foreign key dependencies
-            const tables = [
+            // Note: profiles table uses 'id' as primary key, not 'user_id'
+            const tablesWithUserId = [
                 "matches",
                 "user_preferences",
                 "user_attributes",
                 "event_attendees",
                 "user_subscriptions",
-                "profiles",
             ]
 
-            for (const table of tables) {
+            for (const table of tablesWithUserId) {
                 try {
                     const { error } = await supabase
                         .from(table)
@@ -68,6 +102,20 @@ export async function POST(request: NextRequest) {
                 } catch (tableError) {
                     console.log(`[DELETE ACCOUNT] Table ${table} may not have user_id or may not exist`)
                 }
+            }
+
+            // Handle matches table separately for matched_user_id
+            try {
+                const { error: matchesError } = await supabase
+                    .from("matches")
+                    .delete()
+                    .eq("matched_user_id", user.id)
+
+                if (!matchesError) {
+                    console.log("[DELETE ACCOUNT] Deleted matches where user was matched_user_id")
+                }
+            } catch (matchError) {
+                console.log("[DELETE ACCOUNT] Error deleting matched_user_id records:", matchError)
             }
         } catch (dataDeleteError) {
             console.error("[DELETE ACCOUNT] Error deleting related data:", dataDeleteError)
@@ -121,8 +169,6 @@ export async function POST(request: NextRequest) {
         // Step 3: Delete user from auth.users using service role client
         // This will trigger CASCADE DELETE for all related data via foreign key constraints
         console.log("[DELETE ACCOUNT] Deleting user from auth.users")
-
-        const serviceClient = getServiceClient()
         
         try {
             const { data, error: deleteError } = await serviceClient.auth.admin.deleteUser(user.id)
@@ -137,7 +183,8 @@ export async function POST(request: NextRequest) {
                 // If we get an auth error, try one more approach: manually delete from public.profiles
                 console.log("[DELETE ACCOUNT] Attempting fallback: deleting from public.profiles...")
                 
-                const { error: profileError } = await supabase
+                // Use service client for profile deletion
+                const { error: profileError } = await serviceClient
                     .from("profiles")
                     .delete()
                     .eq("id", user.id)
@@ -147,7 +194,7 @@ export async function POST(request: NextRequest) {
                     return NextResponse.json(
                         { 
                             error: "Failed to delete account", 
-                            details: `Could not delete user: ${deleteError.message}` 
+                            details: `Could not delete user: ${deleteError.message}. Profile deletion error: ${profileError.message}` 
                         },
                         { status: 500 }
                     )
