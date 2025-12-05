@@ -5,7 +5,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -55,17 +55,26 @@ interface Phase7Props {
   onNext: (data: Phase7FormData) => void;
   isLoading?: boolean;
   onSkip?: () => void;
+  defaultValues?: Partial<Phase7FormData>;
 }
 
 export default function Phase7PersonalInfo({
   onNext,
   isLoading = false,
   onSkip,
+  defaultValues,
 }: Phase7Props) {
   const form = useForm<Phase7FormData>({
     resolver: zodResolver(phase7Schema),
-    defaultValues: {},
+    defaultValues: defaultValues || {},
   });
+
+  // Reset form when defaultValues change
+  useEffect(() => {
+    if (defaultValues) {
+      form.reset(defaultValues);
+    }
+  }, [defaultValues, form]);
 
   const hasKids = form.watch("hasKids");
   const ownsBusiness = form.watch("ownsBusiness");

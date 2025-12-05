@@ -5,7 +5,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -98,6 +98,7 @@ interface Phase8Props {
   onNext: (data: Phase8FormData) => void;
   isLoading?: boolean;
   onSkip?: () => void;
+  defaultValues?: Partial<Phase8FormData>;
 }
 
 const importanceOptions = [
@@ -278,10 +279,11 @@ export default function Phase8DetailedPreferences({
   onNext,
   isLoading = false,
   onSkip,
+  defaultValues,
 }: Phase8Props) {
   const form = useForm<Phase8FormData>({
     resolver: zodResolver(phase8Schema),
-    defaultValues: {
+    defaultValues: defaultValues || {
       foreheadImportance: "open_to_all",
       foreheadPreference: [],
       noseImportance: "open_to_all",
@@ -321,6 +323,13 @@ export default function Phase8DetailedPreferences({
       relationshipTypePreference: [],
     },
   });
+
+  // Reset form when defaultValues change
+  useEffect(() => {
+    if (defaultValues) {
+      form.reset(defaultValues);
+    }
+  }, [defaultValues, form]);
 
   return (
     <Card>

@@ -5,7 +5,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -48,17 +48,26 @@ interface Phase6Props {
   onNext: (data: Phase6FormData) => void;
   isLoading?: boolean;
   onSkip?: () => void;
+  defaultValues?: Partial<Phase6FormData>;
 }
 
 export default function Phase6DetailedPhysical({
   onNext,
   isLoading = false,
   onSkip,
+  defaultValues,
 }: Phase6Props) {
   const form = useForm<Phase6FormData>({
     resolver: zodResolver(phase6Schema),
-    defaultValues: {},
+    defaultValues: defaultValues || {},
   });
+
+  // Reset form when defaultValues change
+  useEffect(() => {
+    if (defaultValues) {
+      form.reset(defaultValues);
+    }
+  }, [defaultValues, form]);
 
   return (
     <Card>

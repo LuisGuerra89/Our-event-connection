@@ -67,7 +67,9 @@ export async function POST(request: NextRequest) {
 
     const body: CalculateMatchesRequest = await request.json();
     const limit = body.limit || 50;
-    const minScore = body.minScore || 30;
+    // CHANGED: For incomplete profiles, be more permissive with minScore
+    // minScore of 30 is too high for users with minimal preferences
+    let minScore = body.minScore || 30;
 
     // Get current user's preferences
     const { data: userPreferences, error: prefError } = await supabase
@@ -81,6 +83,40 @@ export async function POST(request: NextRequest) {
         { error: "User preferences not found. Please complete profile." },
         { status: 400 }
       );
+    }
+
+    // Check how complete the user's profile is
+    // Count non-null importance values to determine profile completion
+    const importanceFields = [
+      "hair_color_importance",
+      "hair_length_importance",
+      "eye_color_importance",
+      "body_type_importance",
+      "complexion_importance",
+      "race_importance",
+      "tattoo_importance",
+      "height_importance",
+      "religion_importance",
+      "workout_importance",
+      "alcohol_importance",
+      "nightclub_importance",
+      "marital_status_importance",
+      "kids_importance",
+      "age_importance",
+    ] as const;
+
+    const filledPreferencesCount = importanceFields.filter(
+      (field) => userPreferences[field as keyof typeof userPreferences] && 
+                 userPreferences[field as keyof typeof userPreferences] !== "open_to_all"
+    ).length;
+
+    // If profile is very incomplete (less than 2 non-open preferences), be lenient
+    if (filledPreferencesCount <= 2) {
+      minScore = 0; // Show all matches for incomplete profiles
+      console.log(`Profile very incomplete (${filledPreferencesCount} preferences). Using minScore = 0`);
+    } else if (filledPreferencesCount <= 5) {
+      minScore = Math.min(minScore, 20); // More lenient for somewhat complete profiles
+      console.log(`Profile somewhat incomplete (${filledPreferencesCount} preferences). Using minScore = ${minScore}`);
     }
 
     // Get current user's attributes
@@ -138,18 +174,25 @@ export async function POST(request: NextRequest) {
 
     const matches: Match[] = [];
 
+    console.log(`=== MATCH CALCULATION FOR USER ${user.id} ===`);
+    console.log(`Profile completion: ${filledPreferencesCount} non-open preferences`);
+    console.log(`Using minScore: ${minScore}`);
+    console.log(`Total potential matches to evaluate: ${profiles.length}`);
+    console.log(`Max travel distance: ${maxTravelDistance} miles`);
+
     // Helper function to check if location is within travel distance
     // Simple implementation: check if same state (for now)
     // TODO: Implement proper distance calculation with geocoding
     const isWithinTravelDistance = (profileLocation: any): boolean => {
-      // If no current user location, allow all matches
+      // If no current user location, allow all matches (user might not have set location)
       if (!currentUserProfile?.location_state) {
+        console.log("No current user location - allowing all matches");
         return true;
       }
 
-      // If no profile location, skip (can't determine distance)
+      // If no profile location, allow it (don't exclude - data might be incomplete)
       if (!profileLocation?.location_state) {
-        return false;
+        return true;
       }
 
       // If max distance is 1000+, allow any location (anywhere)

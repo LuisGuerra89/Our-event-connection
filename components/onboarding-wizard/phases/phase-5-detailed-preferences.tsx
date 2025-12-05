@@ -5,7 +5,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -36,6 +36,7 @@ interface Phase5Props {
   onComplete: (data?: Phase5FormData) => void;
   isLoading?: boolean;
   onSkip?: () => void;
+  defaultValues?: Partial<Phase5FormData>;
 }
 
 const importanceOptions = [
@@ -130,10 +131,11 @@ export default function Phase5DetailedPreferences({
   onComplete,
   isLoading = false,
   onSkip,
+  defaultValues,
 }: Phase5Props) {
   const form = useForm<Phase5FormData>({
     resolver: zodResolver(phase5Schema),
-    defaultValues: {
+    defaultValues: defaultValues || {
       hairColorImportance: "open_to_all",
       hairColorPreference: [],
       bodyTypeImportance: "open_to_all",
@@ -146,6 +148,14 @@ export default function Phase5DetailedPreferences({
       alcoholPreference: [],
     },
   });
+
+  // Reset form when defaultValues change
+  useEffect(() => {
+    if (defaultValues) {
+      console.log("Phase 5 - Resetting form with defaultValues:", defaultValues);
+      form.reset(defaultValues);
+    }
+  }, [defaultValues, form]);
 
   return (
     <Card>

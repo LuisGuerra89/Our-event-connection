@@ -5,7 +5,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -49,24 +49,45 @@ interface Phase2Props {
   onNext: (data: Phase2FormData) => void;
   isLoading?: boolean;
   onSkip?: () => void;
+  defaultValues?: Partial<Phase2FormData>;
 }
 
 export default function Phase2EssentialPreferences({
   onNext,
   isLoading = false,
   onSkip,
+  defaultValues,
 }: Phase2Props) {
-  const [ageRange, setAgeRange] = useState([25, 40]);
+  const [ageRange, setAgeRange] = useState([
+    defaultValues?.ageRangeMin || 25,
+    defaultValues?.ageRangeMax || 40
+  ]);
 
   const form = useForm<Phase2FormData>({
     resolver: zodResolver(phase2Schema),
     defaultValues: {
-      relationshipType: "serious_long_term",
-      ageRangeMin: 25,
-      ageRangeMax: 40,
-      distancePreference: 50,
+      relationshipType: defaultValues?.relationshipType || "serious_long_term",
+      ageRangeMin: defaultValues?.ageRangeMin || 25,
+      ageRangeMax: defaultValues?.ageRangeMax || 40,
+      distancePreference: defaultValues?.distancePreference || 50,
     },
   });
+
+  // Reset form when defaultValues change
+  useEffect(() => {
+    if (defaultValues) {
+      form.reset({
+        relationshipType: defaultValues.relationshipType || "serious_long_term",
+        ageRangeMin: defaultValues.ageRangeMin || 25,
+        ageRangeMax: defaultValues.ageRangeMax || 40,
+        distancePreference: defaultValues.distancePreference || 50,
+      });
+      setAgeRange([
+        defaultValues.ageRangeMin || 25,
+        defaultValues.ageRangeMax || 40
+      ]);
+    }
+  }, [defaultValues, form]);
 
   const handleAgeChange = (values: number[]) => {
     setAgeRange(values);

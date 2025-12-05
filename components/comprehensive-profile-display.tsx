@@ -178,6 +178,18 @@ export function ComprehensiveProfileDisplay({ attributes, preferences }: Props) 
     return "Not specified";
   };
 
+  // Check if user has any specified preferences (not all open_to_all)
+  const hasSpecificPreferences = (): boolean => {
+    if (!preferences) return false;
+    
+    // Check all importance fields
+    const importanceFields = Object.keys(preferences).filter(key => key.endsWith('_importance'));
+    return importanceFields.some(field => {
+      const value = preferences[field as keyof UserPreferences];
+      return value && value !== "open_to_all";
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* MY ATTRIBUTES - What I Am */}
@@ -475,14 +487,35 @@ export function ComprehensiveProfileDisplay({ attributes, preferences }: Props) 
             <CardDescription>My preferences and what matters to me in a match</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Show message if all preferences are open_to_all */}
+            {!hasSpecificPreferences() && (
+              <div className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+                <div className="flex items-start gap-3">
+                  <div className="text-3xl">🌟</div>
+                  <div>
+                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                      You're Open to Everyone!
+                    </h4>
+                    <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                      You currently have all your preferences set to "Open to All", which means you'll see the maximum number of potential matches. This is great for exploring all possibilities!
+                    </p>
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      💡 <strong>Tip:</strong> Want to be more specific? Update your preferences in the questionnaire to focus on what matters most to you. You can always change them later!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* General Preferences */}
-            <div>
-              <h3 className="flex items-center gap-2 text-sm font-semibold mb-3">
-                <Search className="h-4 w-4" />
-                General Preferences
-              </h3>
-              <div className="space-y-3">
-                {preferences.age_importance && preferences.age_importance !== "open_to_all" && (
+            {hasSpecificPreferences() && (
+              <div>
+                <h3 className="flex items-center gap-2 text-sm font-semibold mb-3">
+                  <Search className="h-4 w-4" />
+                  General Preferences
+                </h3>
+                <div className="space-y-3">
+                  {preferences.age_importance && preferences.age_importance !== "open_to_all" && (
                   <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                     <div>
                       <p className="text-sm font-medium">Age Range</p>
@@ -508,67 +541,79 @@ export function ComprehensiveProfileDisplay({ attributes, preferences }: Props) 
                     </Badge>
                   </div>
                 )}
+
+                  {(!preferences.age_importance || preferences.age_importance === "open_to_all") && 
+                   (!preferences.relationship_type_importance || preferences.relationship_type_importance === "open_to_all") && (
+                    <p className="text-sm text-muted-foreground italic">No specific general preferences set</p>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Physical Preferences */}
-            <Separator />
-            <div>
-              <h3 className="flex items-center gap-2 text-sm font-semibold mb-3">
-                <Eye className="h-4 w-4" />
-                Physical Preferences
-              </h3>
-              <div className="space-y-3">
-                {preferences.hair_color_importance && preferences.hair_color_importance !== "open_to_all" && (
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium">Hair Color</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatList(preferences.hair_color_preference)}
-                      </p>
-                    </div>
-                    <Badge className={importanceColors[preferences.hair_color_importance]}>
-                      {importanceLabels[preferences.hair_color_importance]}
-                    </Badge>
+            {hasSpecificPreferences() && (
+              <>
+                <Separator />
+                <div>
+                  <h3 className="flex items-center gap-2 text-sm font-semibold mb-3">
+                    <Eye className="h-4 w-4" />
+                    Physical Preferences
+                  </h3>
+                  <div className="space-y-3">
+                    {preferences.hair_color_importance && preferences.hair_color_importance !== "open_to_all" && (
+                      <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                        <div>
+                          <p className="text-sm font-medium">Hair Color</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatList(preferences.hair_color_preference)}
+                          </p>
+                        </div>
+                        <Badge className={importanceColors[preferences.hair_color_importance]}>
+                          {importanceLabels[preferences.hair_color_importance]}
+                        </Badge>
+                      </div>
+                    )}
+                    {preferences.body_type_importance && preferences.body_type_importance !== "open_to_all" && (
+                      <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                        <div>
+                          <p className="text-sm font-medium">Body Type</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatList(preferences.body_type_preference)}
+                          </p>
+                        </div>
+                        <Badge className={importanceColors[preferences.body_type_importance]}>
+                          {importanceLabels[preferences.body_type_importance]}
+                        </Badge>
+                      </div>
+                    )}
+                    {preferences.height_importance && preferences.height_importance !== "open_to_all" && (
+                      <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                        <div>
+                          <p className="text-sm font-medium">Height</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatRange(preferences.height_min, preferences.height_max, " cm")}
+                          </p>
+                        </div>
+                        <Badge className={importanceColors[preferences.height_importance]}>
+                          {importanceLabels[preferences.height_importance]}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
-                )}
-                {preferences.body_type_importance && preferences.body_type_importance !== "open_to_all" && (
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium">Body Type</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatList(preferences.body_type_preference)}
-                      </p>
-                    </div>
-                    <Badge className={importanceColors[preferences.body_type_importance]}>
-                      {importanceLabels[preferences.body_type_importance]}
-                    </Badge>
-                  </div>
-                )}
-                {preferences.height_importance && preferences.height_importance !== "open_to_all" && (
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium">Height</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatRange(preferences.height_min, preferences.height_max, " cm")}
-                      </p>
-                    </div>
-                    <Badge className={importanceColors[preferences.height_importance]}>
-                      {importanceLabels[preferences.height_importance]}
-                    </Badge>
-                  </div>
-                )}
-              </div>
-            </div>
+                </div>
+              </>
+            )}
 
             {/* Lifestyle Preferences */}
-            <Separator />
-            <div>
-              <h3 className="flex items-center gap-2 text-sm font-semibold mb-3">
-                <Heart className="h-4 w-4" />
-                Lifestyle Preferences
-              </h3>
-              <div className="space-y-3">
+            {hasSpecificPreferences() && (
+              <>
+                <Separator />
+                <div>
+                  <h3 className="flex items-center gap-2 text-sm font-semibold mb-3">
+                    <Heart className="h-4 w-4" />
+                    Lifestyle Preferences
+                  </h3>
+                  <div className="space-y-3">
                 {preferences.religion_importance && preferences.religion_importance !== "open_to_all" && (
                   <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                     <div>
@@ -608,21 +653,23 @@ export function ComprehensiveProfileDisplay({ attributes, preferences }: Props) 
                     </Badge>
                   </div>
                 )}
-                {preferences.kids_importance && preferences.kids_importance !== "open_to_all" && (
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium">Kids</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatList(preferences.kids_preference)}
-                      </p>
-                    </div>
-                    <Badge className={importanceColors[preferences.kids_importance]}>
-                      {importanceLabels[preferences.kids_importance]}
-                    </Badge>
+                    {preferences.kids_importance && preferences.kids_importance !== "open_to_all" && (
+                      <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                        <div>
+                          <p className="text-sm font-medium">Kids</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatList(preferences.kids_preference)}
+                          </p>
+                        </div>
+                        <Badge className={importanceColors[preferences.kids_importance]}>
+                          {importanceLabels[preferences.kids_importance]}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       )}

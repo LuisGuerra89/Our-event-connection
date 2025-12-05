@@ -14,7 +14,7 @@
 
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import Phase2EssentialPreferences from "./onboarding-wizard/phases/phase-2-essential-preferences";
@@ -49,7 +49,161 @@ export default function OnboardingWizard({
   
   const [currentPhase, setCurrentPhase] = useState<Phase>(2);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [formData, setFormData] = useState<FormData>({});
+
+  // Load existing user data on mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        setIsLoadingData(true);
+
+        // Fetch user attributes
+        const attrsResponse = await fetch("/api/user/attributes");
+        const attrsData = await attrsResponse.json();
+
+        // Fetch user preferences
+        const prefsResponse = await fetch("/api/user/preferences");
+        const prefsData = await prefsResponse.json();
+
+        console.log("Loaded attributes:", attrsData);
+        console.log("Loaded preferences:", prefsData);
+
+        if (attrsData.data) {
+          const attrs = attrsData.data;
+          
+          console.log("Mapping attrs to form data:", attrs);
+          
+          // Map attributes to phase data (DB uses snake_case)
+          const loadedData: FormData = {
+            phase2: {
+              relationshipType: attrs.relationship_type_seeking || attrs.relationship_type || "",
+              ageRangeMin: prefsData.data?.age_min || 18,
+              ageRangeMax: prefsData.data?.age_max || 99,
+            },
+            phase3: {
+              hairLength: attrs.hair_length || "",
+              hairColor: attrs.hair_color || "",
+              eyeColor: attrs.eye_color || "",
+              bodyType: attrs.body_type || "",
+              complexion: attrs.complexion || "",
+              race: attrs.race || "",
+              height: attrs.height?.toString() || "",
+            },
+            phase4: {
+              religion: attrs.religion || "",
+              workoutFrequency: attrs.workout_frequency || "",
+              alcoholConsumption: attrs.alcohol_consumption_frequency || "",
+              nightclubFrequency: attrs.nightclub_bar_frequency || "",
+              likesOutdoors: attrs.likes_outdoors || false,
+            },
+            phase6: {
+              forehead: attrs.forehead_type || attrs.forehead || "",
+              cheekbones: attrs.cheekbones || "",
+              nose: attrs.nose || "",
+              lips: attrs.lips || "",
+              handSize: attrs.hand_size || "",
+              buttocks: attrs.buttocks || "",
+              legs: attrs.legs || "",
+              shoeSize: attrs.shoe_size || null,
+              breastSize: attrs.breast_size || "",
+              penisSize: attrs.penis_size || "",
+              hasTattoos: attrs.has_tattoos || attrs.tattoo_status || "",
+            },
+            phase7: {
+              maritalStatus: attrs.marital_status || "",
+              hasKids: attrs.has_kids || false,
+              kidsBoys: attrs.kids_boys || null,
+              kidsGirls: attrs.kids_girls || null,
+              occupation: attrs.occupation || "",
+              ownsBusiness: attrs.owns_business_flag || false,
+              businessType: attrs.business_type || "",
+              housingStatus: attrs.housing_status || "",
+              lookingForRoommate: attrs.looking_for_roommate || false,
+              relationshipTypeSeeking: attrs.relationship_type_seeking || attrs.relationship_type || "",
+              favoriteColor: attrs.favorite_color || "",
+              dressCodePreference: attrs.dress_code_preference || "",
+              makeupSpendingFrequency: attrs.makeup_spending_frequency || "",
+              likesMassage: attrs.likes_massage || false,
+              nailsDoneFrequency: attrs.nails_done_frequency || "",
+              facialFrequency: attrs.facial_frequency || "",
+            },
+          };
+
+          // Map preferences to phase5 and phase8
+          if (prefsData.data) {
+            const prefs = prefsData.data;
+            
+            console.log("Mapping prefs to form data:", prefs);
+            
+            loadedData.phase5 = {
+              hairColorImportance: prefs.hair_color_importance || "open_to_all",
+              hairColorPreference: prefs.hair_color_preference || [],
+              bodyTypeImportance: prefs.body_type_importance || "open_to_all",
+              bodyTypePreference: prefs.body_type_preference || [],
+              religionImportance: prefs.religion_importance || "open_to_all",
+              religionPreference: prefs.religion_preference || [],
+              workoutImportance: prefs.workout_importance || "open_to_all",
+              workoutPreference: prefs.workout_frequency_preference || [],
+              alcoholImportance: prefs.alcohol_importance || "open_to_all",
+              alcoholPreference: prefs.alcohol_preference || [],
+            };
+
+            loadedData.phase8 = {
+              foreheadImportance: prefs.forehead_importance || "open_to_all",
+              foreheadPreference: prefs.forehead_preference || [],
+              noseImportance: prefs.nose_importance || "open_to_all",
+              nosePreference: prefs.nose_preference || [],
+              cheekbonesImportance: prefs.cheekbones_importance || "open_to_all",
+              cheekbonesPreference: prefs.cheekbones_preference || [],
+              lipsImportance: prefs.lips_importance || "open_to_all",
+              lipsPreference: prefs.lips_preference || [],
+              handSizeImportance: prefs.hand_size_importance || "open_to_all",
+              handSizePreference: prefs.hand_size_preference || [],
+              buttocksImportance: prefs.buttocks_importance || "open_to_all",
+              buttocksPreference: prefs.buttocks_preference || [],
+              legsImportance: prefs.legs_importance || "open_to_all",
+              legsPreference: prefs.legs_preference || [],
+              shoeSizeImportance: prefs.shoe_size_importance || "open_to_all",
+              shoeSizeMin: prefs.shoe_size_min || null,
+              shoeSizeMax: prefs.shoe_size_max || null,
+              breastSizeImportance: prefs.breast_size_importance || "open_to_all",
+              breastSizePreference: prefs.breast_size_preference || [],
+              penisSizeImportance: prefs.penis_size_importance || "open_to_all",
+              penisSizePreference: prefs.penis_size_preference || [],
+              tattooImportance: prefs.tattoo_importance || "open_to_all",
+              tattooPreference: prefs.tattoo_preference || [],
+              maritalStatusImportance: prefs.marital_status_importance || "open_to_all",
+              maritalStatusPreference: prefs.marital_status_preference || [],
+              kidsImportance: prefs.kids_importance || "open_to_all",
+              kidsPreference: prefs.kids_preference || [],
+              housingStatusImportance: prefs.housing_status_importance || "open_to_all",
+              housingStatusPreference: prefs.housing_status_preference || [],
+              makeupSpendingImportance: prefs.makeup_spending_importance || "open_to_all",
+              makeupSpendingPreference: prefs.makeup_spending_preference || [],
+              massageImportance: prefs.massage_importance || "open_to_all",
+              nailsFrequencyImportance: prefs.nails_frequency_importance || "open_to_all",
+              nailsFrequencyPreference: prefs.nails_frequency_preference || [],
+              facialFrequencyImportance: prefs.facial_frequency_importance || "open_to_all",
+              facialFrequencyPreference: prefs.facial_frequency_preference || [],
+              relationshipTypeImportance: prefs.relationship_type_importance || "open_to_all",
+              relationshipTypePreference: prefs.relationship_type_preference || [],
+            };
+          }
+
+          console.log("Final loaded data:", loadedData);
+          setFormData(loadedData);
+        }
+      } catch (error) {
+        console.error("Error loading user data:", error);
+        // Don't show error toast, just continue with empty form
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    loadUserData();
+  }, [userId]);
 
   // Save phase data and move to next phase
   const handleNextPhase = useCallback(
@@ -150,13 +304,32 @@ export default function OnboardingWizard({
         }
 
         if (nextPhase === 6 && updatedData.phase5) {
-          // Save phase 5 preferences
+          // Save phase 5 preferences - map to physical and lifestyle
+          console.log("Saving Phase 5 data:", updatedData.phase5);
+          
+          const payload = {
+            physical: {
+              hairColorImportance: updatedData.phase5.hairColorImportance,
+              hairColorPreference: updatedData.phase5.hairColorPreference,
+              bodyTypeImportance: updatedData.phase5.bodyTypeImportance,
+              bodyTypePreference: updatedData.phase5.bodyTypePreference,
+            },
+            lifestyle: {
+              religionImportance: updatedData.phase5.religionImportance,
+              religionPreference: updatedData.phase5.religionPreference,
+              workoutImportance: updatedData.phase5.workoutImportance,
+              workoutPreference: updatedData.phase5.workoutPreference,
+              alcoholImportance: updatedData.phase5.alcoholImportance,
+              alcoholPreference: updatedData.phase5.alcoholPreference,
+            },
+          };
+          
+          console.log("API Payload:", payload);
+          
           const response = await fetch("/api/user/preferences", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              general: updatedData.phase5,
-            }),
+            body: JSON.stringify(payload),
           });
 
           if (!response.ok) {
@@ -341,11 +514,20 @@ export default function OnboardingWizard({
 
       toast({
         title: "Questionnaire Skipped",
-        description: "You can complete it later to get better matches!",
+        description: "Searching for matches with your current info...",
       });
 
-      // Redirect to dashboard/matches
-      router.push("/dashboard/matches");
+      // Move to searching state to show matching animation
+      setCurrentPhase("searching");
+
+      // Trigger match calculation based on what user has filled so far
+      await fetch("/api/matches/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: 50, minScore: 30 }),
+      }).catch((err) => console.error("Match calculation error (non-blocking):", err));
+
+      // MatchingSearchView will handle the redirect after animation completes
     } catch (error) {
       console.error("Error skipping questionnaire:", error);
       toast({
@@ -355,7 +537,32 @@ export default function OnboardingWizard({
       });
       setIsLoading(false);
     }
-  }, [toast, router]);
+  }, [toast]);
+
+  // Show loading state while fetching data
+  if (isLoadingData) {
+    return (
+      <div className="w-full max-w-4xl mx-auto p-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+            <p className="mt-4 text-sm text-muted-foreground">Loading your profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show full-screen matching search view
+  if (currentPhase === "searching") {
+    return (
+      <MatchingSearchView
+        onComplete={() => router.push("/dashboard/matches")}
+        autoComplete={true}
+        completionTime={5000}
+      />
+    );
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6">
@@ -392,6 +599,7 @@ export default function OnboardingWizard({
             onNext={(data: any) => handleNextPhase(data, 3)}
             isLoading={isLoading}
             onSkip={handleSkip}
+            defaultValues={formData.phase2}
           />
         )}
 
@@ -400,6 +608,7 @@ export default function OnboardingWizard({
             onNext={(data: any) => handleNextPhase(data, 4)}
             isLoading={isLoading}
             onSkip={handleSkip}
+            defaultValues={formData.phase3}
           />
         )}
 
@@ -408,6 +617,7 @@ export default function OnboardingWizard({
             onNext={(data: any) => handleNextPhase(data, 5)}
             isLoading={isLoading}
             onSkip={handleSkip}
+            defaultValues={formData.phase4}
           />
         )}
 
@@ -416,6 +626,7 @@ export default function OnboardingWizard({
             onComplete={(data: any) => handleNextPhase(data, 6)}
             isLoading={isLoading}
             onSkip={handleSkip}
+            defaultValues={formData.phase5}
           />
         )}
 
@@ -424,6 +635,7 @@ export default function OnboardingWizard({
             onNext={(data: any) => handleNextPhase(data, 7)}
             isLoading={isLoading}
             onSkip={handleSkip}
+            defaultValues={formData.phase6}
           />
         )}
 
@@ -432,6 +644,7 @@ export default function OnboardingWizard({
             onNext={(data: any) => handleNextPhase(data, 8)}
             isLoading={isLoading}
             onSkip={handleSkip}
+            defaultValues={formData.phase7}
           />
         )}
 
@@ -440,14 +653,7 @@ export default function OnboardingWizard({
             onNext={handleComplete}
             isLoading={isLoading}
             onSkip={handleSkip}
-          />
-        )}
-
-        {currentPhase === "searching" && (
-          <MatchingSearchView
-            onComplete={() => router.push("/dashboard/matches")}
-            autoComplete={true}
-            completionTime={5000}
+            defaultValues={formData.phase8}
           />
         )}
       </div>
