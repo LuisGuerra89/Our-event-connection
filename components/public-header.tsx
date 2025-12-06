@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server"
 import { UserMenu } from "@/components/user-menu"
 import { NotificationBell } from "@/components/notification-bell"
 import { ChatButton } from "@/components/chat-button"
+import { PublicHeaderNav } from "@/components/public-header-nav"
 
 export async function PublicHeader() {
   const supabase = await createClient()
@@ -31,32 +32,7 @@ export async function PublicHeader() {
         <Logo />
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
-          <Link href="/events" className="text-sm font-medium hover:text-primary transition-colors">
-            Events
-          </Link>
-          <Link href="/matchmaking" className="text-sm font-medium hover:text-primary transition-colors">
-            Matchmaking
-          </Link>
-          <Link href="/membership" className="text-sm font-medium hover:text-primary transition-colors">
-            Membership
-          </Link>
-          <Link href="/affiliates" className="text-sm font-medium hover:text-primary transition-colors">
-            Affiliates
-          </Link>
-          <Link href="/pricing" className="text-sm font-medium hover:text-primary transition-colors">
-            Pricing
-          </Link>
-          <Link href="/about" className="text-sm font-medium hover:text-primary transition-colors">
-            About Us
-          </Link>
-          <Link href="/how-it-works" className="text-sm font-medium hover:text-primary transition-colors">
-            How It Works
-          </Link>
-          <Link href="/contact" className="text-sm font-medium hover:text-primary transition-colors">
-            Contact Us
-          </Link>
-        </nav>
+        <PublicHeaderNav />
 
         {/* Auth Section */}
         <div className="flex items-center gap-2 md:gap-4 ml-auto">
