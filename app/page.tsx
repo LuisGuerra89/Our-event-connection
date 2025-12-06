@@ -9,11 +9,10 @@ import { FeaturedEventsCarousel } from "@/components/featured-events-carousel"
 import { EventSearchBar } from "@/components/event-search-bar"
 import { EventCategoriesSlider } from "@/components/event-categories-slider"
 import { EventsNearYou } from "@/components/events-near-you"
-import { InternationalEvents } from "@/components/international-events"
 import { AffiliatesSlider } from "@/components/affiliates-slider"
 import { DomesticEventsSection } from "@/components/domestic-events-section"
-import { InternationalEventsSection } from "@/components/international-events-section"
 import { UpcomingEventsPagination } from "@/components/upcoming-events-pagination"
+import { MatchmakingHomeSection } from "@/components/matchmaking-home-section"
 
 export default async function HomePage() {
   const supabase = await createServerClient()
@@ -141,8 +140,8 @@ export default async function HomePage() {
         {/* Events by Locations - Domestic Events */}
         <DomesticEventsSection />
 
-        {/* Events by Locations - International Events */}
-        <InternationalEventsSection />
+        {/* Matchmaking Section */}
+        <MatchmakingHomeSection />
 
         {/* Features */}
         <section className="py-16 bg-muted/30">

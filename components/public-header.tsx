@@ -35,6 +35,9 @@ export async function PublicHeader() {
           <Link href="/events" className="text-sm font-medium hover:text-primary transition-colors">
             Events
           </Link>
+          <Link href="/matchmaking" className="text-sm font-medium hover:text-primary transition-colors">
+            Matchmaking
+          </Link>
           <Link href="/membership" className="text-sm font-medium hover:text-primary transition-colors">
             Membership
           </Link>
