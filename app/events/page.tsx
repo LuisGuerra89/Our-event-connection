@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import { redirect } from "next/navigation"
+import Script from "next/script"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar, MapPin, Users, Heart, Shield } from "lucide-react"
 import Link from "next/link"
 import { PublicPageLayout } from "@/components/public-page-layout"
+import { eventSchema } from "@/components/schema-org"
 
 export const metadata: Metadata = {
   title: 'Social Events for Singles | Our Love Connection',
@@ -129,8 +131,36 @@ export default async function EventsPage({
     return `/events?${searchParams.toString()}`
   }
 
+  // Build Event Schema for each event (for collection/list view)
+  const eventSchemas = events?.map((event) =>
+    eventSchema({
+      name: event.title,
+      description: event.description,
+      startDate: event.start_date,
+      endDate: event.end_date,
+      location: {
+        name: event.location_name || `${event.location_city}, ${event.location_state}`,
+        address: `${event.location_city}, ${event.location_state}`,
+      },
+      image: event.image_url || 'https://ourloveconnection.com/og-image.png',
+      url: `https://ourloveconnection.com/events/${event.id}`,
+    })
+  ) || []
+
   return (
     <PublicPageLayout>
+        {/* Event Schema for all events on this page */}
+        {eventSchemas.map((schema, index) => (
+          <Script
+            key={`event-schema-${index}`}
+            id={`event-schema-${index}`}
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(schema),
+            }}
+          />
+        ))}
+        
         {/* Hero Section */}
         <section className="bg-gradient-to-b from-primary/5 to-background py-12">
           <div className="container mx-auto px-4">
