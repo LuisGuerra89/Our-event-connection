@@ -1,15 +1,12 @@
 import { MetadataRoute } from 'next'
 
-export default function feed(): MetadataRoute.MetadataRoute['feed'] {
+export default function robots(): MetadataRoute.Robots {
   return {
-    channel: [
-      {
-        title: 'Our Love Connection - Dating Events',
-        description: 'Meet meaningful connections through carefully curated social events',
-        link: 'https://ourloveconnection.com',
-        language: 'en',
-        copyright: 'Our Love Connection',
-      },
-    ],
+    rules: {
+      userAgent: '*',
+      allow: '/',
+      disallow: ['/admin/', '/api/', '/debug-*', '/_next/', '/private/'],
+    },
+    sitemap: ['https://ourloveconnection.com/sitemap.xml', 'https://ourloveconnection.com/sitemap-0.xml'],
   }
 }
