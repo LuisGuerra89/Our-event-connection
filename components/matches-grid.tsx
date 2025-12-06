@@ -15,6 +15,8 @@ import { useRouter } from "next/navigation"
 interface MatchUser {
   id: string
   display_name: string
+  first_name?: string
+  last_name?: string
   profile_image_url: string | null
   location_city: string | null
   location_state: string | null
@@ -36,6 +38,17 @@ export function MatchesGrid({ matches, currentUserId }: MatchesGridProps) {
   const [pendingChatUser, setPendingChatUser] = useState<{ userId: string; userName: string; userImage: string } | null>(null)
   const router = useRouter()
   const supabase = createClient()
+
+  // Helper function to get display name
+  const getDisplayName = (match: MatchUser) => {
+    if (match.first_name && match.last_name) {
+      return `${match.first_name} ${match.last_name}`
+    }
+    if (match.first_name) {
+      return match.first_name
+    }
+    return match.display_name || "Unknown"
+  }
 
   const checkSubscriptionAndOpenChat = async (userId: string, userName: string, userImage: string) => {
     if (!currentUserId) return
@@ -84,7 +97,7 @@ export function MatchesGrid({ matches, currentUserId }: MatchesGridProps) {
               <div className="relative h-48 w-full bg-muted overflow-hidden">
                 <img
                   src={match.profile_image_url}
-                  alt={match.display_name}
+                  alt={getDisplayName(match)}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -93,7 +106,7 @@ export function MatchesGrid({ matches, currentUserId }: MatchesGridProps) {
                   {match.matchScore}% Match
                 </Badge>
                 <div className="absolute bottom-3 left-3 right-3">
-                  <CardTitle className="text-white text-xl mb-1">{match.display_name}</CardTitle>
+                  <CardTitle className="text-white text-xl mb-1">{getDisplayName(match)}</CardTitle>
                   {match.gender && (
                     <CardDescription className="text-white/80 capitalize text-sm">
                       {match.gender}
@@ -106,7 +119,7 @@ export function MatchesGrid({ matches, currentUserId }: MatchesGridProps) {
                 <div className="relative">
                   <Avatar className="h-32 w-32 mx-auto mb-4 ring-4 ring-pink-200 dark:ring-pink-800 group-hover:ring-pink-400 transition-all">
                     <AvatarFallback className="text-2xl bg-gradient-to-br from-pink-400 to-purple-600 text-white">
-                      {match.display_name?.[0]?.toUpperCase()}
+                      {getDisplayName(match)?.[0]?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <Badge className="absolute top-0 right-0 bg-gradient-to-r from-pink-500 to-purple-600">
@@ -114,7 +127,7 @@ export function MatchesGrid({ matches, currentUserId }: MatchesGridProps) {
                     {match.matchScore}% Match
                   </Badge>
                 </div>
-                <CardTitle className="text-center text-xl">{match.display_name}</CardTitle>
+                <CardTitle className="text-center text-xl">{getDisplayName(match)}</CardTitle>
                 {match.gender && (
                   <CardDescription className="text-center capitalize">
                     {match.gender}

@@ -10,6 +10,8 @@ import { PaginatedMatchesGrid } from "@/components/paginated-matches-grid"
 interface MatchUser {
   id: string
   display_name: string
+  first_name?: string
+  last_name?: string
   profile_image_url: string | null
   location_city: string | null
   location_state: string | null
@@ -49,6 +51,8 @@ export default async function MatchmakingPage() {
           profiles!matches_matched_user_id_fkey (
             id,
             display_name,
+            first_name,
+            last_name,
             bio,
             location_city,
             location_state,

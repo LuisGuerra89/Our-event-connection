@@ -42,6 +42,8 @@ export default async function MatchesPage() {
       profiles!matches_matched_user_id_fkey (
         id,
         display_name,
+        first_name,
+        last_name,
         bio,
         location_city,
         location_state,
