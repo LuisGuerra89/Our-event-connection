@@ -224,8 +224,10 @@ export async function MatchmakingHomeSection() {
             <p className="text-muted-foreground mb-8">
               We're working on finding compatible matches for you. Check back soon or attend events to meet people!
             </p>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/events">Browse Events</Link>
+            <Button size="lg" className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700" asChild>
+              <Link href="/dashboard/profile">
+                Update Your Profile
+              </Link>
             </Button>
           </div>
         </div>
