@@ -3,11 +3,19 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, Users, Loader2, Map } from "lucide-react"
+import { Calendar, MapPin, Users, Loader2, Map, AlertCircle, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import { EventMap } from "@/components/event-map"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from "@/lib/supabase/client"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 
 interface Event {
   id: string
@@ -43,9 +51,19 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [noNearbyEvents, setNoNearbyEvents] = useState(false)
   const [userLocationName, setUserLocationName] = useState<string | null>(null)
+  const [showLocationModal, setShowLocationModal] = useState(true)
+
+  // Initialize modal visibility from localStorage
+  useEffect(() => {
+    const locationPreference = localStorage.getItem('locationModalDismissed')
+    if (locationPreference === 'true') {
+      setShowLocationModal(false)
+    }
+  }, [])
 
   // Fetch user profile info
   useEffect(() => {
+    // Fetch user profile info only
     async function fetchUserProfile() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -78,8 +96,8 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
     fetchUserProfile()
   }, [])
 
-  useEffect(() => {
-    // Request user's location
+  // Function to request location (called on button click)
+  const requestUserLocation = () => {
     if ("geolocation" in navigator) {
       setLoading(true)
       navigator.geolocation.getCurrentPosition(
@@ -127,13 +145,17 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
           }
         },
         (error) => {
-          console.error("Geolocation error:", error)
+          // Silently handle geolocation errors (user may have denied permission)
+          // Only log if it's not a permission denied error
+          if (error.code !== 1) {
+            console.error("Geolocation error:", error)
+          }
           setLocationError("Unable to detect your location")
           setLoading(false)
         }
       )
     }
-  }, [])
+  }
 
   if (loading) {
     return (
@@ -170,6 +192,69 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
 
   return (
     <div>
+      {/* Location Permission Modal */}
+      <Dialog open={showLocationModal && !userLocation && !locationError} onOpenChange={setShowLocationModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-blue-600" />
+              Find Events Near You
+            </DialogTitle>
+            <DialogDescription>
+              Allow access to your location so we can show you events happening near you. We only use this information to find relevant events.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="flex items-start gap-3 text-sm">
+              <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <span>See events happening in your area</span>
+            </div>
+            <div className="flex items-start gap-3 text-sm">
+              <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <span>Discover nearby singles events</span>
+            </div>
+            <div className="flex items-start gap-3 text-sm">
+              <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <span>Get personalized recommendations</span>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowLocationModal(false)
+                setLocationError("User declined location access")
+                localStorage.setItem('locationModalDismissed', 'true')
+              }}
+            >
+              Skip
+            </Button>
+            <Button 
+              onClick={() => {
+                setShowLocationModal(false)
+                localStorage.setItem('locationModalDismissed', 'true')
+                requestUserLocation()
+              }}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Detecting...
+                </>
+              ) : (
+                <>
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Use My Location
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       {userLocation && !locationError && (
         <p className="text-sm text-muted-foreground mb-6 text-center">
           Showing events near {userLocationName || "your location"}
@@ -177,7 +262,7 @@ export function EventsNearYou({ fallbackEvents }: EventsNearYouProps) {
       )}
       {locationError && (
         <p className="text-sm text-muted-foreground mb-6 text-center">
-          Showing popular events (location access denied)
+          Showing popular events
         </p>
       )}
 
