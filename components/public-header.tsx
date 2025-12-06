@@ -6,6 +6,7 @@ import { UserMenu } from "@/components/user-menu"
 import { NotificationBell } from "@/components/notification-bell"
 import { ChatButton } from "@/components/chat-button"
 import { PublicHeaderNav } from "@/components/public-header-nav"
+import { MobileMenu } from "@/components/mobile-menu"
 
 export async function PublicHeader() {
   const supabase = await createClient()
@@ -29,6 +30,9 @@ export async function PublicHeader() {
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-2 md:gap-4">
+        {/* Mobile Menu */}
+        <MobileMenu isAuthenticated={!!user} />
+        
         <Logo />
 
         {/* Desktop Navigation */}
@@ -50,7 +54,7 @@ export async function PublicHeader() {
               <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
                 <Link href="/auth/login">Sign In</Link>
               </Button>
-              <Button size="sm" asChild>
+              <Button size="sm" asChild className="hidden sm:flex">
                 <Link href="/auth/sign-up">Get Started</Link>
               </Button>
             </>

@@ -116,28 +116,28 @@ export default async function MatchmakingPage() {
 
       <main>
         {/* Hero Section */}
-        <section className="relative bg-gradient-to-br from-pink-100 via-purple-100 to-rose-100 dark:from-pink-950/40 dark:via-purple-950/40 dark:to-rose-950/40 py-20">
+        <section className="relative bg-gradient-to-br from-pink-100 via-purple-100 to-rose-100 dark:from-pink-950/40 dark:via-purple-950/40 dark:to-rose-950/40 py-12 md:py-20">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-4xl mx-auto">
-              <div className="inline-flex items-center gap-3 mb-6">
-                <Sparkles className="h-10 w-10 text-pink-500" />
-                <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-rose-600 bg-clip-text text-transparent">
+              <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 mb-6">
+                <Sparkles className="hidden md:block h-8 w-8 md:h-10 md:w-10 text-pink-500 flex-shrink-0" />
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-rose-600 bg-clip-text text-transparent">
                   Smart Matchmaking
                 </h1>
-                <Sparkles className="h-10 w-10 text-pink-500" />
+                <Sparkles className="hidden md:block h-8 w-8 md:h-10 md:w-10 text-pink-500 flex-shrink-0" />
               </div>
-              <p className="text-xl md:text-2xl text-muted-foreground mb-8 text-pretty">
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground mb-6 md:mb-8 text-pretty px-4">
                 Find your perfect match using our advanced compatibility algorithm. Real connections, real chemistry, real love.
               </p>
               {!user && (
                 <Button 
                   size="lg" 
-                  className="bg-gradient-to-r from-pink-500 via-purple-600 to-rose-600 hover:from-pink-600 hover:via-purple-700 hover:to-rose-700 text-lg px-8"
+                  className="bg-gradient-to-r from-pink-500 via-purple-600 to-rose-600 hover:from-pink-600 hover:via-purple-700 hover:to-rose-700 text-base md:text-lg px-6 md:px-8"
                   asChild
                 >
                   <Link href="/auth/sign-up">
                     Start Your Love Story
-                    <Heart className="ml-2 h-5 w-5" />
+                    <Heart className="ml-2 h-4 w-4 md:h-5 md:w-5" />
                   </Link>
                 </Button>
               )}
@@ -147,11 +147,11 @@ export default async function MatchmakingPage() {
 
         {/* Matches Section - Only for authenticated users with complete profile */}
         {user && isProfileComplete && matches.length > 0 && (
-          <section className="py-16 bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 dark:from-pink-950/20 dark:via-purple-950/20 dark:to-rose-950/20">
+          <section className="py-12 md:py-16 bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 dark:from-pink-950/20 dark:via-purple-950/20 dark:to-rose-950/20">
             <div className="container mx-auto px-4">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">Your Matches</h2>
-                <p className="text-xl text-muted-foreground">
+              <div className="text-center mb-8 md:mb-12">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">Your Matches</h2>
+                <p className="text-base sm:text-lg md:text-xl text-muted-foreground px-4">
                   People who best match your preferences
                 </p>
               </div>
@@ -162,16 +162,16 @@ export default async function MatchmakingPage() {
         )}
 
         {/* How It Works Section */}
-        <section className="py-16 bg-background">
+        <section className="py-12 md:py-16 bg-background">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">How Our Matchmaking Works</h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <div className="text-center mb-8 md:mb-12">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">How Our Matchmaking Works</h2>
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
                 Our intelligent algorithm analyzes multiple factors to find your perfect match
               </p>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
+            <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
               <Card className="border-pink-200 dark:border-pink-900 hover:shadow-xl transition-all">
                 <CardHeader>
                   <div className="h-16 w-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center mb-4 mx-auto">
@@ -224,16 +224,16 @@ export default async function MatchmakingPage() {
         </section>
 
         {/* Features Section */}
-        <section className="py-16 bg-background">
+        <section className="py-12 md:py-16 bg-background">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Our Matchmaking is Different</h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <div className="text-center mb-8 md:mb-12">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">Why Our Matchmaking is Different</h2>
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
                 Advanced technology meets human touch for meaningful connections
               </p>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+            <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
               <Card className="border-pink-200 dark:border-pink-900">
                 <CardHeader>
                   <Star className="h-12 w-12 text-pink-500 mb-4" />
@@ -299,20 +299,20 @@ export default async function MatchmakingPage() {
 
         {/* CTA Section */}
         {!user && (
-          <section className="py-20 bg-gradient-to-r from-pink-600 via-purple-600 to-rose-600 text-white">
+          <section className="py-12 md:py-20 bg-gradient-to-r from-pink-600 via-purple-600 to-rose-600 text-white">
             <div className="container mx-auto px-4 text-center">
-              <h2 className="text-3xl md:text-5xl font-bold mb-6">Ready to Find Your Perfect Match?</h2>
-              <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 px-4">Ready to Find Your Perfect Match?</h2>
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 opacity-90 max-w-3xl mx-auto px-4">
                 Join thousands of singles who found love through our intelligent matchmaking system
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" variant="secondary" className="text-lg px-8" asChild>
+              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center px-4">
+                <Button size="lg" variant="secondary" className="text-base md:text-lg px-6 md:px-8" asChild>
                   <Link href="/auth/sign-up">
                     Create Free Account
-                    <ArrowRight className="ml-2 h-5 w-5" />
+                    <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" className="text-lg px-8 bg-transparent border-white text-white hover:bg-white/20" asChild>
+                <Button size="lg" variant="outline" className="text-base md:text-lg px-6 md:px-8 bg-transparent border-white text-white hover:bg-white/20" asChild>
                   <Link href="/how-it-works">
                     Learn More
                   </Link>
@@ -324,17 +324,17 @@ export default async function MatchmakingPage() {
 
         {/* Complete Profile CTA - for authenticated users without complete profile */}
         {user && !isProfileComplete && (
-          <section className="py-20 bg-gradient-to-r from-pink-600 via-purple-600 to-rose-600 text-white">
+          <section className="py-12 md:py-20 bg-gradient-to-r from-pink-600 via-purple-600 to-rose-600 text-white">
             <div className="container mx-auto px-4 text-center">
-              <Sparkles className="h-20 w-20 mx-auto mb-6" />
-              <h2 className="text-3xl md:text-5xl font-bold mb-6">Complete Your Profile to Get Matched</h2>
-              <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto">
+              <Sparkles className="h-14 w-14 md:h-20 md:w-20 mx-auto mb-4 md:mb-6" />
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 px-4">Complete Your Profile to Get Matched</h2>
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 opacity-90 max-w-3xl mx-auto px-4">
                 Fill out your profile and preferences to start receiving personalized matches
               </p>
-              <Button size="lg" variant="secondary" className="text-lg px-8" asChild>
+              <Button size="lg" variant="secondary" className="text-base md:text-lg px-6 md:px-8" asChild>
                 <Link href="/dashboard/profile">
                   Complete Your Profile Now
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
                 </Link>
               </Button>
             </div>

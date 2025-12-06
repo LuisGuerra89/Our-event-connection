@@ -54,6 +54,9 @@ export function ProfileModal({ userId, open, onOpenChange, onMessageClick }: Pro
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+        <DialogHeader className="sr-only">
+          <DialogTitle>User Profile</DialogTitle>
+        </DialogHeader>
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
