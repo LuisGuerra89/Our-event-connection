@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { createServerClient } from "@/lib/supabase/server"
 import { MatchList } from "@/components/match-list"
 import { IncompleteProfileBanner } from "@/components/incomplete-profile-banner"
+import { MatchesPageContent } from "@/components/dashboard/matches-page-content"
 
 export default async function MatchesPage() {
   const supabase = await createServerClient()
@@ -65,7 +66,11 @@ export default async function MatchesPage() {
         {!isProfileComplete && (
           <IncompleteProfileBanner userId={data.user.id} />
         )}
-        <MatchList users={matchedUsers} preferences={myPreferences} />
+        <MatchesPageContent 
+          initialMatches={matchedUsers} 
+          preferences={myPreferences}
+          userId={data.user.id}
+        />
       </main>
     </div>
   )

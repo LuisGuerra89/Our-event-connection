@@ -175,6 +175,7 @@ export function PreferencesForm({ userId, existingPreferences }: PreferencesForm
                       <SelectValue placeholder="Select maximum distance" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="0">Anywhere (no distance limit)</SelectItem>
                       <SelectItem value="10">10 miles</SelectItem>
                       <SelectItem value="25">25 miles</SelectItem>
                       <SelectItem value="50">50 miles</SelectItem>

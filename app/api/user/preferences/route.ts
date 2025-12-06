@@ -27,6 +27,9 @@ const fieldNameMapping: Record<string, string> = {
   workoutPreference: 'workout_frequency_preference',
   workoutImportance: 'workout_importance',
   
+  // Distance preference
+  maxTravelDistanceMiles: 'max_travel_distance_miles',
+  
   // Otros campos que no siguen convención
   foodPreference: 'food_preference',
 };

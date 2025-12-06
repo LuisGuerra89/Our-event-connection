@@ -80,6 +80,7 @@ export default function OnboardingWizard({
               relationshipType: attrs.relationship_type_seeking || attrs.relationship_type || "",
               ageRangeMin: prefsData.data?.age_min || 18,
               ageRangeMax: prefsData.data?.age_max || 99,
+              distancePreference: prefsData.data?.max_travel_distance_miles || 50,
             },
             phase3: {
               hairLength: attrs.hair_length || "",
@@ -235,6 +236,7 @@ export default function OnboardingWizard({
                 ageImportance: "important",
                 ageMin: updatedData.phase2.ageRangeMin,
                 ageMax: updatedData.phase2.ageRangeMax,
+                maxTravelDistanceMiles: updatedData.phase2.distancePreference ?? 50, // Use ?? to allow 0
               },
             }),
           });
@@ -566,7 +568,7 @@ export default function OnboardingWizard({
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6">
-      {/* Progress Indicator */}
+      {/* Progress Indicator - Clickable to navigate */}
       <div className="mb-8">
         <div className="flex justify-between mb-4 overflow-x-auto">
           {[
@@ -580,11 +582,18 @@ export default function OnboardingWizard({
           ].map(({ phase, label }) => (
             <div
               key={phase}
-              className={`flex-1 text-center pb-2 px-2 whitespace-nowrap ${
+              onClick={() => {
+                // Allow clicking on completed phases or current phase
+                if (typeof currentPhase === "number" && phase <= currentPhase) {
+                  setCurrentPhase(phase as Phase);
+                }
+              }}
+              className={`flex-1 text-center pb-2 px-2 whitespace-nowrap cursor-pointer transition-colors ${
                 typeof currentPhase === "number" && currentPhase >= phase
-                  ? "text-primary border-b-2 border-primary"
-                  : "text-muted-foreground"
+                  ? "text-primary border-b-2 border-primary hover:opacity-80"
+                  : "text-muted-foreground opacity-50 cursor-not-allowed"
               }`}
+              title={typeof currentPhase === "number" && phase <= currentPhase ? `Go to ${label}` : `Complete previous steps`}
             >
               <div className="text-xs md:text-sm font-medium">{label}</div>
             </div>

@@ -2,6 +2,7 @@ import type React from "react"
 import { redirect } from "next/navigation"
 import { createServerClient } from "@/lib/supabase/server"
 import { AdminLayoutClient } from "@/components/admin/admin-layout-client"
+import RecalculateMatchesOnMount from "@/components/dashboard/recalculate-matches-on-mount"
 
 export default async function AppLayout({
   children,
@@ -23,6 +24,9 @@ export default async function AppLayout({
 
   return (
     <div className="flex flex-col h-screen">
+      {/* Recalculate matches whenever user enters dashboard */}
+      <RecalculateMatchesOnMount />
+      
       <div className="flex-1 overflow-hidden">
         <AdminLayoutClient
           userRole={(profile?.roles as { role_name: string } | null)?.role_name}

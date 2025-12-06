@@ -147,6 +147,7 @@ export async function POST(request: NextRequest) {
     const maxTravelDistance = userPreferences.max_travel_distance_miles || 50;
 
     // Get all potential matches (other users)
+    // CHANGED: Fetch profiles and attributes separately to ensure data integrity
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
       .select(
@@ -158,26 +159,57 @@ export async function POST(request: NextRequest) {
         gender,
         location_city,
         location_state,
-        location_country,
-        user_attributes(*)
+        location_country
       `
       )
       .neq("id", user.id)
       .limit(500); // Get enough to filter
 
     if (profilesError || !profiles) {
+      console.error("Error fetching profiles:", profilesError);
       return NextResponse.json(
         { error: "Failed to fetch potential matches" },
         { status: 500 }
       );
     }
 
+    console.log(`Fetched ${profiles.length} potential profiles`);
+
+    // Get attributes for all profiles
+    const { data: allAttributes, error: allAttributesError } = await supabase
+      .from("user_attributes")
+      .select("*");
+
+    if (allAttributesError) {
+      console.error("Error fetching attributes:", allAttributesError);
+    }
+
+    // Create a map of user_id -> attributes for quick lookup
+    const attributesMap = new Map();
+    if (allAttributes) {
+      allAttributes.forEach((attr: any) => {
+        attributesMap.set(attr.user_id, attr);
+      });
+    }
+
+    console.log(`Fetched attributes for ${attributesMap.size} users`);
+
+    // Merge attributes into profiles
+    const profilesWithData = profiles
+      .map((profile: any) => ({
+        ...profile,
+        user_attributes: attributesMap.get(profile.id),
+      }))
+      .filter((p: any) => p.user_attributes); // Only keep profiles with attributes
+
+    console.log(`Profiles with attributes ready for matching: ${profilesWithData.length}`);
+
     const matches: Match[] = [];
 
     console.log(`=== MATCH CALCULATION FOR USER ${user.id} ===`);
     console.log(`Profile completion: ${filledPreferencesCount} non-open preferences`);
     console.log(`Using minScore: ${minScore}`);
-    console.log(`Total potential matches to evaluate: ${profiles.length}`);
+    console.log(`Total potential matches to evaluate: ${profilesWithData.length}`);
     console.log(`Max travel distance: ${maxTravelDistance} miles`);
 
     // Helper function to check if location is within travel distance
@@ -192,44 +224,59 @@ export async function POST(request: NextRequest) {
 
       // If no profile location, allow it (don't exclude - data might be incomplete)
       if (!profileLocation?.location_state) {
+        console.log("Profile has no location - allowing");
         return true;
       }
 
-      // If max distance is 1000+, allow any location (anywhere)
-      if (maxTravelDistance >= 1000) {
+      // If max distance is 0 or very high (500+), allow any location (anywhere in USA)
+      if (maxTravelDistance === 0 || maxTravelDistance >= 500) {
+        console.log(`Max distance ${maxTravelDistance} - allowing all locations`);
         return true;
       }
 
-      // For distances < 1000 miles, require same state for now
-      // TODO: Implement actual distance calculation using coordinates
+      // For small distances (< 500 miles), allow same country at minimum
+      // Don't strictly enforce state boundaries
       const sameState = currentUserProfile.location_state === profileLocation.location_state;
       
-      // If same state, check city if available and distance is small
       if (sameState) {
-        // If very short distance (< 50 miles), might want same city
-        if (maxTravelDistance < 50 && currentUserProfile.location_city && profileLocation.location_city) {
-          return currentUserProfile.location_city === profileLocation.location_city;
-        }
-        return true; // Same state is acceptable for 50+ miles
+        return true; // Same state is always acceptable
       }
 
-      return false; // Different state and < 1000 miles
+      // Different state: only filter if distance is VERY small (< 25 miles) and same city required
+      if (maxTravelDistance < 25 && currentUserProfile.location_city && profileLocation.location_city) {
+        const sameCityMatch = currentUserProfile.location_city.toLowerCase() === profileLocation.location_city.toLowerCase();
+        if (!sameCityMatch) {
+          console.log(`Different city and < 25 miles - skipping`);
+          return false;
+        }
+      }
+
+      // Otherwise allow it
+      return true;
     };
 
     // Calculate match score for each potential match
-    for (const profile of profiles) {
-      // Filter by travel distance first
-      if (!isWithinTravelDistance({
+    let skippedByDistance = 0;
+    let skippedByNoAttributes = 0;
+    
+    console.log(`Current user location: ${currentUserProfile?.location_city}, ${currentUserProfile?.location_state}`);
+    
+    for (const profile of profilesWithData) {
+      const profileLocation = {
         location_city: (profile as any).location_city,
         location_state: (profile as any).location_state,
         location_country: (profile as any).location_country,
-      })) {
+      };
+      
+      // Filter by travel distance first
+      if (!isWithinTravelDistance(profileLocation)) {
+        skippedByDistance++;
+        console.log(`Skipping ${profile.full_name} (${profileLocation.location_city}, ${profileLocation.location_state}) - too far`);
         continue; // Skip this user, too far away
       }
 
-      // Get attributes for this user
+      // Get attributes for this user (guaranteed to exist due to filter above)
       const userAttrs = (profile as any).user_attributes;
-      if (!userAttrs) continue;
 
       try {
         const matchDetail = calculateMatchScore(
@@ -333,6 +380,8 @@ export async function POST(request: NextRequest) {
               ? new Date().getFullYear() - new Date((profile as any).date_of_birth).getFullYear()
               : undefined,
           });
+        } else {
+          console.log(`Skipping match ${profile.id}: score ${matchDetail.percentageMatch}% < minScore ${minScore}%`);
         }
       } catch (error) {
         console.error(`Error calculating match for user ${profile.id}:`, error);
@@ -346,31 +395,113 @@ export async function POST(request: NextRequest) {
     // Take top N matches
     const topMatches = matches.slice(0, limit);
 
-    // Store in database (upsert)
+    console.log(`=== MATCH RESULTS ===`);
+    console.log(`Total matches found: ${matches.length}`);
+    console.log(`Skipped by distance: ${skippedByDistance}`);
+    console.log(`Skipped by no attributes: ${skippedByNoAttributes}`);
+    console.log(`Top matches returned: ${topMatches.length}`);
+    if (topMatches.length === 0) {
+      console.warn(`WARNING: No matches found! Check preferenes and attributes.`);
+    }
+
+    // Store in database using a simple reliable approach
     const matchRecords = topMatches.map((match) => ({
       user_id: user.id,
       matched_user_id: match.matchedUserId,
       match_score: match.percentageMatch,
     }));
 
-    // Delete old matches for this user first
-    await supabase
-      .from("matches")
-      .delete()
-      .eq("user_id", user.id);
-
-    // Insert new matches
     if (matchRecords.length > 0) {
-      const { error: insertError } = await supabase
-        .from("matches")
-        .insert(matchRecords);
+      try {
+        console.log(`Processing ${matchRecords.length} matches for storage...`);
+        
+        // Strategy: Update or insert each match individually to avoid batch conflicts
+        let successCount = 0;
+        let failCount = 0;
 
-      if (insertError) {
-        console.error("Error storing matches:", insertError);
-        return NextResponse.json(
-          { error: "Failed to store match results" },
-          { status: 500 }
-        );
+        for (const record of matchRecords) {
+          try {
+            // Try to upsert by trying update first, then insert if it fails
+            const { data: existing } = await supabase
+              .from("matches")
+              .select("id")
+              .eq("user_id", record.user_id)
+              .eq("matched_user_id", record.matched_user_id)
+              .maybeSingle();
+
+            if (existing) {
+              // Update existing
+              const updateData: any = { match_score: record.match_score };
+              // Only add updated_at if the column exists (after migration)
+              // The column will be added via migration 098_add_updated_at_to_matches.sql
+              const { error: updateError } = await supabase
+                .from("matches")
+                .update(updateData)
+                .eq("id", existing.id);
+
+              if (updateError) {
+                console.error(`Failed to update match ${record.matched_user_id}:`, updateError);
+                failCount++;
+              } else {
+                successCount++;
+              }
+            } else {
+              // Insert new
+              const { error: insertError } = await supabase
+                .from("matches")
+                .insert(record);
+
+              if (insertError) {
+                console.error(`Failed to insert match ${record.matched_user_id}:`, insertError);
+                failCount++;
+              } else {
+                successCount++;
+              }
+            }
+          } catch (err) {
+            console.error(`Exception processing match ${record.matched_user_id}:`, err);
+            failCount++;
+          }
+        }
+
+        console.log(`Match storage complete: ${successCount} succeeded, ${failCount} failed`);
+        
+        // Also clean up any old matches that weren't in the top results
+        if (matchRecords.length > 0) {
+          try {
+            // Fetch all old matches first
+            const { data: allMatches } = await supabase
+              .from("matches")
+              .select("id, matched_user_id")
+              .eq("user_id", user.id);
+
+            if (allMatches && allMatches.length > 0) {
+              const matchedUserIds = matchRecords.map(m => m.matched_user_id);
+              const toDelete = allMatches.filter(
+                m => !matchedUserIds.includes(m.matched_user_id)
+              );
+
+              if (toDelete.length > 0) {
+                const deleteIds = toDelete.map(m => m.id);
+                const { error: cleanupError } = await supabase
+                  .from("matches")
+                  .delete()
+                  .in("id", deleteIds);
+
+                if (cleanupError) {
+                  console.log("Cleanup note:", cleanupError);
+                } else {
+                  console.log(`Cleaned up ${toDelete.length} old matches`);
+                }
+              }
+            }
+          } catch (cleanupErr) {
+            console.log("Cleanup error (non-critical):", cleanupErr);
+          }
+        }
+      } catch (storageError) {
+        console.error("Exception during match storage:", storageError);
+        console.warn("Matches were calculated but storage had issues. Returning results anyway.");
       }
     }
 
