@@ -1,0 +1,41 @@
+"use client"
+
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
+
+const navItems = [
+  { href: "/events", label: "Events" },
+  { href: "/matchmaking", label: "Matchmaking" },
+  { href: "/membership", label: "Membership" },
+  { href: "/affiliates", label: "Affiliates" },
+  { href: "/about", label: "About Us" },
+  { href: "/contact", label: "Contact Us" },
+]
+
+export function PublicHeaderNav() {
+  const pathname = usePathname()
+
+  return (
+    <nav className="hidden md:flex items-center gap-6">
+      {navItems.map((item) => {
+        const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`)
+        
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              "text-sm font-medium transition-colors relative",
+              isActive 
+                ? "text-primary font-semibold after:absolute after:bottom-[-8px] after:left-0 after:right-0 after:h-0.5 after:bg-primary" 
+                : "text-muted-foreground hover:text-primary"
+            )}
+          >
+            {item.label}
+          </Link>
+        )
+      })}
+    </nav>
+  )
+}

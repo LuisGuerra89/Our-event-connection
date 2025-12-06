@@ -3,13 +3,117 @@
  * POST/PUT /api/user/attributes
  *
  * Handles saving the detailed user attributes (what the user HAS)
- * with proper validation, error handling, and RLS enforcement
+ * Accepts flexible format from onboarding wizard phases
+ * Automatically converts camelCase to snake_case
  */
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { DetailedUserAttributesDTO } from "@/lib/types/detailed-profile";
+
+/**
+ * Convert camelCase keys to snake_case for database
+ */
+function toSnakeCase(str: string): string {
+  return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+}
+
+/**
+ * Field name mapping for special cases
+ */
+const fieldNameMapping: Record<string, string> = {
+  // Phase 6 - Physical attributes
+  forehead: 'forehead_type',
+  cheekbones: 'cheekbones',
+  nose: 'nose',
+  lips: 'lips',
+  handSize: 'hand_size',
+  buttocks: 'buttocks',
+  legs: 'legs',
+  shoeSize: 'shoe_size',
+  breastSize: 'breast_size',
+  penisSize: 'penis_size',
+  hasTattoos: 'tattoo_status',
+  tattooStatus: 'tattoo_status',
+  tattooLocations: 'tattoo_locations',
+  tattooDetails: 'tattoo_details',
+  
+  // Phase 7 - Personal & Professional Info
+  maritalStatus: 'marital_status',
+  hasKids: 'has_kids',
+  kidsBoys: 'kids_boys',
+  kidsGirls: 'kids_girls',
+  ownsBusiness: 'owns_business',
+  businessType: 'business_type',
+  housingStatus: 'housing_status',
+  lookingForRoommate: 'looking_for_roommate',
+  
+  // Phase 8 - Lifestyle & Personal Care Preferences
+  makeupSpendingFrequency: 'makeup_spending_frequency',
+  likesMassage: 'likes_massage',
+  nailsDoneFrequency: 'nails_done_frequency',
+  nailsFrequencyImportance: 'nails_done_frequency',
+  facialFrequency: 'facial_frequency',
+  facialFrequencyImportance: 'facial_frequency',
+  relationshipTypeSeeking: 'relationship_type_seeking',
+  favoriteColor: 'favorite_color',
+  dressCodePreference: 'dress_code_preference',
+  
+  // Other questionnaire fields
+  workoutFrequency: 'workout_frequency',
+  gymType: 'gym_type',
+  sexuallyActiveFrequency: 'sexually_active_frequency',
+  alcoholConsumptionFrequency: 'alcohol_consumption_frequency',
+  nightclubBarFrequency: 'nightclub_bar_frequency',
+  likesOutdoors: 'likes_outdoors',
+  kidsCount: 'kids_count',
+  occupation: 'occupation',
+  business_owner_importance: 'business_owner_importance',
+  wants_business_owner_partner: 'wants_business_owner_partner',
+  homePurchaseDate: 'home_purchase_date',
+  interestedInRemodel: 'interested_in_remodel',
+  interestedInAdu: 'interested_in_adu',
+  interestedInRefinance: 'interested_in_refinance',
+  favoriteFoods: 'favorite_foods',
+  relationshipType: 'relationship_type',
+  eventCategoriesLiked: 'event_categories_liked',
+  questionnaireCompleted: 'questionnaire_completed',
+  questionnaireCompletedAt: 'questionnaire_completed_at',
+  questionnaireSkipped: 'questionnaire_skipped',
+  questionnaireSkippedAt: 'questionnaire_skipped_at',
+  foreheadType: 'forehead_type',
+  hairLength: 'hair_length',
+  hairColor: 'hair_color',
+  eyeColor: 'eye_color',
+  eyeShape: 'eye_shape',
+};
+
+/**
+ * Flatten nested attributes and convert to snake_case
+ * Only includes fields that have non-null values
+ */
+function flattenAttributes(data: any): Record<string, any> {
+  const flat: Record<string, any> = {};
+  
+  // Handle nested structure (physical, personal, professional, etc.)
+  for (const [category, values] of Object.entries(data)) {
+    if (typeof values === 'object' && values !== null && !Array.isArray(values)) {
+      for (const [key, value] of Object.entries(values)) {
+        // Only include if value is not null/undefined
+        if (value !== null && value !== undefined && value !== '') {
+          const mappedKey = fieldNameMapping[key] || toSnakeCase(key);
+          flat[mappedKey] = value;
+        }
+      }
+    } else if (values !== null && values !== undefined && values !== '') {
+      // Direct key-value
+      const snakeKey = fieldNameMapping[category] || toSnakeCase(category);
+      flat[snakeKey] = values;
+    }
+  }
+  
+  return flat;
+}
 
 /**
  * PUT /api/user/attributes
@@ -52,137 +156,49 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Parse and validate request body
+    // Parse request body
     const body = await request.json();
-    const validatedData = DetailedUserAttributesDTO.parse(body);
-
-    // Update profile with questionnaire status
-    if (validatedData.questionnaireCompleted !== undefined || validatedData.questionnaireSkipped !== undefined) {
-      const profileUpdate: any = {};
-      
-      if (validatedData.questionnaireCompleted !== undefined) {
-        profileUpdate.questionnaire_completed = validatedData.questionnaireCompleted;
-        if (validatedData.questionnaireCompleted) {
-          profileUpdate.questionnaire_completed_at = new Date().toISOString();
-        }
-      }
-      
-      if (validatedData.questionnaireSkipped !== undefined) {
-        profileUpdate.questionnaire_skipped = validatedData.questionnaireSkipped;
-        if (validatedData.questionnaireSkipped) {
-          profileUpdate.questionnaire_skipped_at = new Date().toISOString();
-        }
-      }
-      
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update(profileUpdate)
-        .eq("id", user.id);
-
-      if (profileError) {
-        console.error("Profile update error:", profileError);
-        return NextResponse.json(
-          { error: "Failed to update profile status", details: profileError.message },
-          { status: 500 }
-        );
-      }
-    }
-
-    // Flatten the nested attributes for database insert
+    console.log("Received attributes body:", JSON.stringify(body, null, 2));
+    
+    // Flatten and convert to snake_case
+    const flatAttributes = flattenAttributes(body);
+    console.log("Flattened attributes:", JSON.stringify(flatAttributes, null, 2));
+    
+    // Build db payload with user_id and updated_at
     const dbPayload = {
       user_id: user.id,
-      
-      // Physical attributes
-      hair_length: validatedData.physical?.hairLength,
-      hair_color: validatedData.physical?.hairColor,
-      forehead_type: validatedData.physical?.foreheadType,
-      eye_shape: validatedData.physical?.eyeShape,
-      eye_color: validatedData.physical?.eyeColor,
-      nose_type: validatedData.physical?.noseShape,
-      cheekbones: validatedData.physical?.cheekbones,
-      lips_type: validatedData.physical?.lipsType,
-      complexion: validatedData.physical?.complexion,
-      body_type: validatedData.physical?.bodyType,
-      hand_size: validatedData.physical?.handSize,
-      breast_size: validatedData.physical?.breastSize,
-      penis_size: validatedData.physical?.penisSize,
-      butt_size: validatedData.physical?.buttocks,
-      legs_type: validatedData.physical?.legs,
-      shoe_size: validatedData.physical?.shoeSize,
-      race: validatedData.physical?.race,
-      tattoo_status: validatedData.physical?.tattooStatus,
-      tattoo_locations: validatedData.physical?.tattooLocations,
-      tattoo_details: validatedData.physical?.tattooDetails,
-      height: validatedData.physical?.height,
-      
-      // Lifestyle attributes
-      religion: validatedData.lifestyle?.religion,
-      sports_hobbies: validatedData.lifestyle?.hobbies,
-      makeup_spending_frequency: validatedData.lifestyle?.makeupSpendingFrequency,
-      likes_massage: validatedData.lifestyle?.likesMassage,
-      nails_done_frequency: validatedData.lifestyle?.nailsDoneFrequency,
-      facial_frequency: validatedData.lifestyle?.facialFrequency,
-      workout_frequency: validatedData.lifestyle?.workoutFrequency,
-      gym_type: validatedData.lifestyle?.gymType,
-      sexually_active_frequency: validatedData.lifestyle?.sexuallyActiveFrequency,
-      alcohol_consumption_frequency: validatedData.lifestyle?.alcoholConsumptionFrequency,
-      nightclub_bar_frequency: validatedData.lifestyle?.nightclubBarFrequency,
-      likes_outdoors: validatedData.lifestyle?.likesOutdoors,
-      favorite_color: validatedData.lifestyle?.favoriteColor,
-      favorite_foods: validatedData.lifestyle?.favoriteFoods,
-      dress_code_preference: validatedData.lifestyle?.dressCodePreference,
-      
-      // Demographics
-      marital_status: validatedData.demographics?.maritalStatus,
-      kids_count: validatedData.demographics?.kidsCount,
-      kids_boys: validatedData.demographics?.kidsBoys,
-      kids_girls: validatedData.demographics?.kidsGirls,
-      occupation: validatedData.demographics?.occupation,
-      owns_business: validatedData.demographics?.ownsBusinessFlag,
-      business_type: validatedData.demographics?.businessType,
-      
-      // Housing
-      housing_status: validatedData.housing?.housingStatus,
-      home_purchase_date: validatedData.housing?.homePurchaseDate,
-      interested_in_remodel: validatedData.housing?.interestedInRemodel,
-      interested_in_adu: validatedData.housing?.interestedInAdu,
-      interested_in_refinance: validatedData.housing?.interestedInRefinance,
-      
-      // Preferences
-      relationship_type: validatedData.relationshipType,
-      event_categories_liked: validatedData.eventCategoriesLiked,
-      questionnaire_completed: validatedData.questionnaireCompleted,
-      questionnaire_completed_at: validatedData.questionnaireCompletedAt,
+      ...flatAttributes,
       updated_at: new Date().toISOString(),
     };
+    
+    console.log("DB Payload:", JSON.stringify(dbPayload, null, 2));
 
-    // Upsert user attributes
+    // Upsert user attributes (update if exists, insert if not)
     const { data, error } = await supabase
       .from("user_attributes")
-      .upsert(dbPayload, { onConflict: "user_id" })
+      .upsert(dbPayload, { 
+        onConflict: "user_id",
+        ignoreDuplicates: false // Always update
+      })
       .select()
       .single();
 
     if (error) {
-      console.error("Supabase error:", error);
+      console.error("Supabase error:", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
       return NextResponse.json(
-        { error: "Failed to save attributes", details: error.message },
+        { 
+          error: "Failed to save attributes", 
+          details: error.message,
+          code: error.code,
+          hint: error.hint
+        },
         { status: 500 }
       );
-    }
-
-    // If questionnaire is completed, recalculate matches
-    if (validatedData.questionnaireCompleted) {
-      try {
-        await fetch(`${request.nextUrl.origin}/api/matches/calculate`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ limit: 50, minScore: 30 }),
-        });
-      } catch (matchError) {
-        console.error("Error recalculating matches:", matchError);
-        // Don't fail the request if match calculation fails
-      }
     }
 
     return NextResponse.json(

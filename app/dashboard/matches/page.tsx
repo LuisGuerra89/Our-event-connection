@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { createServerClient } from "@/lib/supabase/server"
 import { MatchList } from "@/components/match-list"
 import { IncompleteProfileBanner } from "@/components/incomplete-profile-banner"
+import { MatchesPageContent } from "@/components/dashboard/matches-page-content"
 
 export default async function MatchesPage() {
   const supabase = await createServerClient()
@@ -18,12 +19,13 @@ export default async function MatchesPage() {
     .eq("id", data.user.id)
     .single()
 
-  // Fetch matches for the current user
+  // Fetch matches for the current user (including match_score calculated and stored in DB)
   const { data: matches } = await supabase
     .from("matches")
     .select(`
       id,
       matched_user_id,
+      match_score,
       profiles!matches_matched_user_id_fkey (
         id,
         display_name,
@@ -32,6 +34,7 @@ export default async function MatchesPage() {
         location_state,
         gender,
         profile_image_url,
+        role_id,
         user_attributes (*)
       )
     `)
@@ -46,11 +49,21 @@ export default async function MatchesPage() {
 
   const isProfileComplete = userProfile?.questionnaire_completed === true
 
-  // Transform matches data to match the expected format
-  const matchedUsers = matches?.map((match: any) => ({
-    ...match.profiles,
-    matchId: match.id
-  })) || []
+  // Known admin/moderator role IDs to exclude
+  const adminRoleId = "28136400-463b-437d-9a95-835e830e5067"; // Moderator/editor role
+  
+  // Filter out admin/moderator users by role_id and preserve match_score from DB
+  const matchedUsers = matches
+    ?.filter((match: any) => {
+      if (!match.profiles) return false;
+      // Exclude if role_id matches known admin/moderator roles
+      return match.profiles.role_id !== adminRoleId;
+    })
+    .map((match: any) => ({
+      ...match.profiles,
+      matchId: match.id,
+      matchScore: match.match_score || 75 // Use stored match_score from DB
+    })) || []
 
   return (
     <div className="min-h-full">
@@ -65,7 +78,11 @@ export default async function MatchesPage() {
         {!isProfileComplete && (
           <IncompleteProfileBanner userId={data.user.id} />
         )}
-        <MatchList users={matchedUsers} preferences={myPreferences} />
+        <MatchesPageContent 
+          initialMatches={matchedUsers} 
+          preferences={myPreferences}
+          userId={data.user.id}
+        />
       </main>
     </div>
   )

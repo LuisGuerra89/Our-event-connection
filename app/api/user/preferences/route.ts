@@ -4,12 +4,59 @@
  *
  * Handles saving the detailed user preferences (what the user SEEKS)
  * with proper handling of "OPEN_TO_ALL" preference importance
+ * 
+ * Accepts flexible format from onboarding wizard phases
  */
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { DetailedUserPreferencesDTO } from "@/lib/types/detailed-profile";
+
+/**
+ * Convert camelCase keys to snake_case for database
+ */
+function toSnakeCase(str: string): string {
+  return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+}
+
+/**
+ * Mapeo de campos especiales que no siguen la convención estándar
+ */
+const fieldNameMapping: Record<string, string> = {
+  // Phase 5 mappings
+  workoutPreference: 'workout_frequency_preference',
+  workoutImportance: 'workout_importance',
+  
+  // Distance preference
+  maxTravelDistanceMiles: 'max_travel_distance_miles',
+  
+  // Otros campos que no siguen convención
+  foodPreference: 'food_preference',
+};
+
+/**
+ * Flatten nested preference object and convert keys to snake_case
+ */
+function flattenPreferences(data: any): Record<string, any> {
+  const flat: Record<string, any> = {};
+  
+  // Handle nested structure (physical, lifestyle, demographics, general)
+  for (const [category, values] of Object.entries(data)) {
+    if (typeof values === 'object' && values !== null && !Array.isArray(values)) {
+      for (const [key, value] of Object.entries(values)) {
+        // Check if there's a custom mapping for this field
+        const mappedKey = fieldNameMapping[key] || toSnakeCase(key);
+        flat[mappedKey] = value;
+      }
+    } else {
+      // Direct key-value
+      const snakeKey = fieldNameMapping[category] || toSnakeCase(category);
+      flat[snakeKey] = values;
+    }
+  }
+  
+  return flat;
+}
 
 /**
  * PUT /api/user/preferences
@@ -52,128 +99,64 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Parse and validate request body
+    // Parse request body
     const body = await request.json();
-    const validatedData = DetailedUserPreferencesDTO.parse(body);
+    console.log("Received preferences body:", JSON.stringify(body, null, 2));
 
-    // Flatten the nested preferences for database insert
+    // Flatten and convert to snake_case
+    const flatPreferences = flattenPreferences(body);
+    console.log("Flattened preferences:", JSON.stringify(flatPreferences, null, 2));
+    
+    // Build db payload with user_id and updated_at
     const dbPayload = {
       user_id: user.id,
-      
-      // Physical preferences
-      hair_color_importance: validatedData.physical?.hairColorImportance,
-      hair_color_preference: validatedData.physical?.hairColorPreference,
-      
-      hair_length_importance: validatedData.physical?.hairLengthImportance,
-      hair_length_preference: validatedData.physical?.hairLengthPreference,
-      
-      eye_color_importance: validatedData.physical?.eyeColorImportance,
-      eye_color_preference: validatedData.physical?.eyeColorPreference,
-      
-      body_type_importance: validatedData.physical?.bodyTypeImportance,
-      body_type_preference: validatedData.physical?.bodyTypePreference,
-      
-      complexion_importance: validatedData.physical?.complexionImportance,
-      complexion_preference: validatedData.physical?.complexionPreference,
-      
-      race_importance: validatedData.physical?.raceImportance,
-      race_preference: validatedData.physical?.racePreference,
-      
-      tattoo_importance: validatedData.physical?.tattooImportance,
-      tattoo_preference: validatedData.physical?.tattooPreference,
-      
-      height_importance: validatedData.physical?.heightImportance,
-      height_min: validatedData.physical?.heightMin,
-      height_max: validatedData.physical?.heightMax,
-      
-      breast_size_importance: validatedData.physical?.breastSizeImportance,
-      breast_size_preference: validatedData.physical?.breastSizePreference,
-      
-      penis_size_importance: validatedData.physical?.penisSizeImportance,
-      penis_size_preference: validatedData.physical?.penisSizePreference,
-      
-      // Lifestyle preferences
-      religion_importance: validatedData.lifestyle?.religionImportance,
-      religion_preference: validatedData.lifestyle?.religionPreference,
-      
-      workout_importance: validatedData.lifestyle?.workoutImportance,
-      workout_frequency_preference: validatedData.lifestyle?.workoutFrequencyPreference,
-      gym_type_preference: validatedData.lifestyle?.gymTypePreference,
-      
-      alcohol_importance: validatedData.lifestyle?.alcoholImportance,
-      alcohol_preference: validatedData.lifestyle?.alcoholPreference,
-      
-      nightclub_importance: validatedData.lifestyle?.nightclubImportance,
-      nightclub_preference: validatedData.lifestyle?.nightclubPreference,
-      
-      sexually_active_importance: validatedData.lifestyle?.sexuallyActiveImportance,
-      sexually_active_preference: validatedData.lifestyle?.sexuallyActivePreference,
-      
-      outdoors_importance: validatedData.lifestyle?.outdoorsImportance,
-      outdoors_preference: validatedData.lifestyle?.outdoorsPreference,
-      
-      // Demographics preferences
-      marital_status_importance: validatedData.demographics?.maritalStatusImportance,
-      marital_status_preference: validatedData.demographics?.maritalStatusPreference,
-      
-      kids_importance: validatedData.demographics?.kidsImportance,
-      kids_preference: validatedData.demographics?.kidsPreference,
-      
-      occupation_importance: validatedData.demographics?.occupationImportance,
-      occupation_preference: validatedData.demographics?.occupationPreference,
-      
-      business_owner_importance: validatedData.demographics?.businessOwnerImportance,
-      wants_business_owner_partner: validatedData.demographics?.wantsBusinessOwnerPartner,
-      
-      // General preferences
-      relationship_type_importance: validatedData.general?.relationshipTypeImportance,
-      relationship_type_preference: validatedData.general?.relationshipTypePreference,
-      
-      event_categories_importance: validatedData.general?.eventCategoriesImportance,
-      event_categories_preference: validatedData.general?.eventCategoriesPreference,
-      
-      favorite_color_importance: validatedData.general?.favoriteColorImportance,
-      favorite_color_preference: validatedData.general?.favoriteColorPreference,
-      
-      favorite_food_importance: validatedData.general?.favoriteFoodImportance,
-      food_preference: validatedData.general?.favoriteFoodPreference,
-      
-      dress_code_importance: validatedData.general?.dressCodeImportance,
-      dress_code_preference: validatedData.general?.dressCodePreference,
-      
-      age_importance: validatedData.general?.ageImportance,
-      age_min: validatedData.general?.ageMin,
-      age_max: validatedData.general?.ageMax,
-      
+      ...flatPreferences,
       updated_at: new Date().toISOString(),
     };
+    
+    console.log("DB Payload:", JSON.stringify(dbPayload, null, 2));
 
-    // Upsert user preferences
+    // Upsert user preferences (update if exists, insert if not)
     const { data, error } = await supabase
       .from("user_preferences")
-      .upsert(dbPayload, { onConflict: "user_id" })
+      .upsert(dbPayload, { 
+        onConflict: "user_id",
+        ignoreDuplicates: false // Always update
+      })
       .select()
       .single();
 
     if (error) {
-      console.error("Supabase error:", error);
+      console.error("Supabase error:", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
       return NextResponse.json(
-        { error: "Failed to save preferences", details: error.message },
+        { 
+          error: "Failed to save preferences", 
+          details: error.message,
+          code: error.code,
+          hint: error.hint
+        },
         { status: 500 }
       );
     }
 
     // Recalculate matches after preferences update
-    try {
-      await fetch(`${request.nextUrl.origin}/api/matches/calculate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ limit: 50, minScore: 30 }),
-      });
-    } catch (matchError) {
-      console.error("Error recalculating matches:", matchError);
-      // Don't fail the request if match calculation fails
-    }
+    // TODO: This should be called from the client side after preferences are saved
+    // Server-side fetch doesn't have proper authentication context
+    // try {
+    //   await fetch(`${request.nextUrl.origin}/api/matches/calculate`, {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({ limit: 50, minScore: 30 }),
+    //   });
+    // } catch (matchError) {
+    //   console.error("Error recalculating matches:", matchError);
+    //   // Don't fail the request if match calculation fails
+    // }
 
     return NextResponse.json(
       { success: true, data },

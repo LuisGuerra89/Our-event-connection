@@ -15,7 +15,10 @@ export const metadata: Metadata = {
   applicationName: 'Our Love Connection',
   authors: [{ name: 'Our Love Connection Team' }],
   icons: {
-    icon: '/favicon.svg',
+    icon: [
+      { url: '/favicon.png', sizes: '256x256', type: 'image/png' },
+      { url: '/icon-light-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
     apple: '/apple-icon.png',
   },
   openGraph: {

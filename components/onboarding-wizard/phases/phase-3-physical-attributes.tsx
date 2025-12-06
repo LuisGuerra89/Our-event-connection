@@ -5,7 +5,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -41,16 +41,18 @@ interface Phase3Props {
   onNext: (data: Phase3FormData) => void;
   isLoading?: boolean;
   onSkip?: () => void;
+  defaultValues?: Partial<Phase3FormData>;
 }
 
 export default function Phase3PhysicalAttributes({
   onNext,
   isLoading = false,
   onSkip,
+  defaultValues,
 }: Phase3Props) {
   const form = useForm<Phase3FormData>({
     resolver: zodResolver(phase3Schema),
-    defaultValues: {
+    defaultValues: defaultValues || {
       hairLength: "",
       hairColor: "",
       eyeColor: "",
@@ -60,6 +62,13 @@ export default function Phase3PhysicalAttributes({
       height: "",
     },
   });
+
+  // Reset form when defaultValues change
+  useEffect(() => {
+    if (defaultValues) {
+      form.reset(defaultValues);
+    }
+  }, [defaultValues, form]);
 
   return (
     <Card>

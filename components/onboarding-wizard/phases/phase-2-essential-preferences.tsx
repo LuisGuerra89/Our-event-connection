@@ -5,7 +5,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -40,7 +40,7 @@ const phase2Schema = z.object({
   ]),
   ageRangeMin: z.number().min(18).max(100),
   ageRangeMax: z.number().min(18).max(100),
-  distancePreference: z.number().optional(),
+  distancePreference: z.number().min(0).optional().or(z.literal(0)), // Allow 0 and above
 });
 
 type Phase2FormData = z.infer<typeof phase2Schema>;
@@ -49,24 +49,45 @@ interface Phase2Props {
   onNext: (data: Phase2FormData) => void;
   isLoading?: boolean;
   onSkip?: () => void;
+  defaultValues?: Partial<Phase2FormData>;
 }
 
 export default function Phase2EssentialPreferences({
   onNext,
   isLoading = false,
   onSkip,
+  defaultValues,
 }: Phase2Props) {
-  const [ageRange, setAgeRange] = useState([25, 40]);
+  const [ageRange, setAgeRange] = useState([
+    defaultValues?.ageRangeMin || 25,
+    defaultValues?.ageRangeMax || 40
+  ]);
 
   const form = useForm<Phase2FormData>({
     resolver: zodResolver(phase2Schema),
     defaultValues: {
-      relationshipType: "serious_long_term",
-      ageRangeMin: 25,
-      ageRangeMax: 40,
-      distancePreference: 50,
+      relationshipType: defaultValues?.relationshipType || "serious_long_term",
+      ageRangeMin: defaultValues?.ageRangeMin || 25,
+      ageRangeMax: defaultValues?.ageRangeMax || 40,
+      distancePreference: defaultValues?.distancePreference ?? 50, // Use ?? to allow 0
     },
   });
+
+  // Reset form when defaultValues change
+  useEffect(() => {
+    if (defaultValues) {
+      form.reset({
+        relationshipType: defaultValues.relationshipType || "serious_long_term",
+        ageRangeMin: defaultValues.ageRangeMin || 25,
+        ageRangeMax: defaultValues.ageRangeMax || 40,
+        distancePreference: defaultValues.distancePreference ?? 50, // Use ?? to allow 0
+      });
+      setAgeRange([
+        defaultValues.ageRangeMin || 25,
+        defaultValues.ageRangeMax || 40
+      ]);
+    }
+  }, [defaultValues, form]);
 
   const handleAgeChange = (values: number[]) => {
     setAgeRange(values);
@@ -168,13 +189,19 @@ export default function Phase2EssentialPreferences({
                     <input
                       type="number"
                       placeholder="e.g., 50"
+                      min="0"
+                      step="1"
                       {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      value={field.value === undefined ? "" : field.value}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        field.onChange(val === "" ? undefined : Number(val));
+                      }}
                       className="w-full px-3 py-2 border rounded-md"
                     />
                   </FormControl>
                   <FormDescription>
-                    Leave empty to see everyone
+                    {field.value === 0 ? "0 = See everyone" : "Leave empty or set to 0 to see everyone"}
                   </FormDescription>
                 </FormItem>
               )}

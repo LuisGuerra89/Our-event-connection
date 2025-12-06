@@ -14,6 +14,7 @@ import { PreferenceImportanceEnum } from "@/lib/types/detailed-profile";
 interface UserProfile {
   id: string;
   attributes: {
+    // Existing physical attributes
     hairColor?: string;
     hairLength?: string;
     eyeColor?: string;
@@ -24,7 +25,27 @@ interface UserProfile {
     height?: number;
     breastSize?: string;
     penisSize?: string;
+    
+    // NEW Phase 6: Extended physical attributes
+    forehead?: string;
+    eyeShape?: string;
+    nose?: string;
+    cheekbones?: string;
+    lips?: string;
+    handSize?: string;
+    buttocks?: string;
+    legs?: string;
+    shoeSize?: number;
+    hasTattoos?: string;
+    
+    // Demographics
     dateOfBirth?: Date;
+    maritalStatus?: string;
+    kidsCount?: number;
+    kidsBoys?: number;
+    kidsGirls?: number;
+    
+    // Lifestyle
     religion?: string;
     workoutFrequency?: string;
     gymType?: string;
@@ -32,19 +53,29 @@ interface UserProfile {
     nightclubFrequency?: string;
     sexuallyActiveFrequency?: string;
     likesOutdoors?: boolean;
-    maritalStatus?: string;
-    kidsCount?: number;
+    
+    // NEW Phase 7: Personal & Professional
     occupation?: string;
     ownsBusinessFlag?: boolean;
+    businessType?: string;
     housingStatus?: string;
+    lookingForRoommate?: boolean;
     relationshipType?: string;
+    favoriteColor?: string;
+    dressCodePreference?: string;
+    
+    // NEW Phase 7: Beauty & Wellness
+    makeupSpendingFrequency?: string;
+    likesMassage?: boolean;
+    nailsDoneFrequency?: string;
+    facialFrequency?: string;
   };
 }
 
 interface UserPreference {
   id: string;
   preferences: {
-    // Physical preferences with importance
+    // Physical preferences with importance (existing)
     hairColorImportance?: PreferenceImportanceEnum;
     hairColorPreference?: string[];
     hairLengthImportance?: PreferenceImportanceEnum;
@@ -67,7 +98,28 @@ interface UserPreference {
     penisSizeImportance?: PreferenceImportanceEnum;
     penisSizePreference?: string[];
     
-    // Lifestyle preferences
+    // NEW Phase 8: Extended physical preferences
+    foreheadImportance?: PreferenceImportanceEnum;
+    foreheadPreference?: string[];
+    eyeShapeImportance?: PreferenceImportanceEnum;
+    eyeShapePreference?: string[];
+    noseImportance?: PreferenceImportanceEnum;
+    nosePreference?: string[];
+    cheekbonesImportance?: PreferenceImportanceEnum;
+    cheekbonesPreference?: string[];
+    lipsImportance?: PreferenceImportanceEnum;
+    lipsPreference?: string[];
+    handSizeImportance?: PreferenceImportanceEnum;
+    handSizePreference?: string[];
+    buttocksImportance?: PreferenceImportanceEnum;
+    buttocksPreference?: string[];
+    legsImportance?: PreferenceImportanceEnum;
+    legsPreference?: string[];
+    shoeSizeImportance?: PreferenceImportanceEnum;
+    shoeSizeMin?: number;
+    shoeSizeMax?: number;
+    
+    // Lifestyle preferences (existing)
     religionImportance?: PreferenceImportanceEnum;
     religionPreference?: string[];
     workoutImportance?: PreferenceImportanceEnum;
@@ -82,7 +134,16 @@ interface UserPreference {
     outdoorsImportance?: PreferenceImportanceEnum;
     outdoorsPreference?: string[];
     
-    // Demographics
+    // NEW Phase 8: Beauty & Wellness preferences
+    makeupSpendingImportance?: PreferenceImportanceEnum;
+    makeupSpendingPreference?: string[];
+    massageImportance?: PreferenceImportanceEnum;
+    nailsFrequencyImportance?: PreferenceImportanceEnum;
+    nailsFrequencyPreference?: string[];
+    facialFrequencyImportance?: PreferenceImportanceEnum;
+    facialFrequencyPreference?: string[];
+    
+    // Demographics (existing)
     maritalStatusImportance?: PreferenceImportanceEnum;
     maritalStatusPreference?: string[];
     kidsImportance?: PreferenceImportanceEnum;
@@ -92,9 +153,13 @@ interface UserPreference {
     businessOwnerImportance?: PreferenceImportanceEnum;
     wantsBusinessOwnerPartner?: boolean;
     
-    // General
+    // NEW Phase 8: Housing & Personal preferences
+    housingStatusImportance?: PreferenceImportanceEnum;
+    housingStatusPreference?: string[];
     relationshipTypeImportance?: PreferenceImportanceEnum;
     relationshipTypePreference?: string[];
+    
+    // General
     ageImportance?: PreferenceImportanceEnum;
     ageMin?: number;
     ageMax?: number;
@@ -133,9 +198,21 @@ const MAX_SCORES = {
 
 /**
  * Check if preference is "OPEN TO ALL" (user doesn't care)
+ * UPDATED: Now treats undefined/null/empty as "open_to_all"
+ * This allows incomplete questionnaires to show everyone
  */
 function isOpenToAll(importance?: PreferenceImportanceEnum): boolean {
   return !importance || importance === "open_to_all";
+}
+
+/**
+ * Check if preference values are empty/undefined
+ * Empty preferences = "open to all" for that attribute
+ */
+function isPreferenceEmpty(preferenceValues?: string[] | number[] | boolean): boolean {
+  if (preferenceValues === undefined || preferenceValues === null) return true;
+  if (Array.isArray(preferenceValues) && preferenceValues.length === 0) return true;
+  return false;
 }
 
 /**
@@ -186,6 +263,7 @@ function isValueInRange(value: number | undefined, min?: number, max?: number): 
 
 /**
  * Calculate single attribute match score
+ * UPDATED: Empty preferences are treated as "open to all"
  */
 function calculateAttributeScore(
   userValue: string | number | undefined,
@@ -196,6 +274,11 @@ function calculateAttributeScore(
   // If preference is OPEN_TO_ALL → automatic match, no points deducted
   if (isOpenToAll(preferenceImportance)) {
     return { matches: true, score: 0 }; // No scoring impact
+  }
+
+  // NUEVO: Si preference values está vacío → tratarlo como "open to all"
+  if (isPreferenceEmpty(preferenceValues)) {
+    return { matches: true, score: 0 }; // No filter applied for empty preferences
   }
 
   // No user value provided → treat as no match
@@ -251,6 +334,7 @@ function scorePhysicalAttributes(
   let totalPossibleScore = 0;
 
   const attributes = [
+    // Existing physical attributes
     {
       name: "hairColor",
       value: userAttrs.hairColor,
@@ -314,11 +398,76 @@ function scorePhysicalAttributes(
         : undefined,
       isRange: true,
     },
+    // NEW Phase 6: Extended physical attributes
+    {
+      name: "forehead",
+      value: userAttrs.forehead,
+      importance: userPrefs.foreheadImportance,
+      preferences: userPrefs.foreheadPreference,
+    },
+    {
+      name: "eyeShape",
+      value: userAttrs.eyeShape,
+      importance: userPrefs.eyeShapeImportance,
+      preferences: userPrefs.eyeShapePreference,
+    },
+    {
+      name: "nose",
+      value: userAttrs.nose,
+      importance: userPrefs.noseImportance,
+      preferences: userPrefs.nosePreference,
+    },
+    {
+      name: "cheekbones",
+      value: userAttrs.cheekbones,
+      importance: userPrefs.cheekbonesImportance,
+      preferences: userPrefs.cheekbonesPreference,
+    },
+    {
+      name: "lips",
+      value: userAttrs.lips,
+      importance: userPrefs.lipsImportance,
+      preferences: userPrefs.lipsPreference,
+    },
+    {
+      name: "handSize",
+      value: userAttrs.handSize,
+      importance: userPrefs.handSizeImportance,
+      preferences: userPrefs.handSizePreference,
+    },
+    {
+      name: "buttocks",
+      value: userAttrs.buttocks,
+      importance: userPrefs.buttocksImportance,
+      preferences: userPrefs.buttocksPreference,
+    },
+    {
+      name: "legs",
+      value: userAttrs.legs,
+      importance: userPrefs.legsImportance,
+      preferences: userPrefs.legsPreference,
+    },
+    {
+      name: "shoeSize",
+      value: userAttrs.shoeSize,
+      importance: userPrefs.shoeSizeImportance,
+      preferences: userPrefs.shoeSizeMin && userPrefs.shoeSizeMax 
+        ? [userPrefs.shoeSizeMin, userPrefs.shoeSizeMax] 
+        : undefined,
+      isRange: true,
+    },
+    {
+      name: "hasTattoos",
+      value: userAttrs.hasTattoos,
+      importance: userPrefs.tattooImportance,
+      preferences: userPrefs.tattooPreference,
+    },
   ];
 
   for (const attr of attributes) {
-    if (isOpenToAll(attr.importance)) {
-      // OPEN_TO_ALL: no impact on scoring
+    // Si importance es open_to_all O preferences está vacío → skip (no filtrar)
+    if (isOpenToAll(attr.importance) || isPreferenceEmpty(attr.preferences)) {
+      // OPEN_TO_ALL or EMPTY: no impact on scoring
       continue;
     }
 
@@ -365,6 +514,7 @@ function scoreLifestyleAttributes(
   let totalPossibleScore = 0;
 
   const attributes = [
+    // Existing lifestyle attributes
     {
       name: "religion",
       value: userAttrs.religion,
@@ -407,10 +557,36 @@ function scoreLifestyleAttributes(
       importance: userPrefs.outdoorsImportance,
       preferences: userPrefs.outdoorsPreference,
     },
+    // NEW Phase 7/8: Beauty & Wellness
+    {
+      name: "makeupSpending",
+      value: userAttrs.makeupSpendingFrequency,
+      importance: userPrefs.makeupSpendingImportance,
+      preferences: userPrefs.makeupSpendingPreference,
+    },
+    {
+      name: "likesMassage",
+      value: userAttrs.likesMassage ? "yes" : "no",
+      importance: userPrefs.massageImportance,
+      preferences: ["yes"], // Assuming preference is boolean-like
+    },
+    {
+      name: "nailsFrequency",
+      value: userAttrs.nailsDoneFrequency,
+      importance: userPrefs.nailsFrequencyImportance,
+      preferences: userPrefs.nailsFrequencyPreference,
+    },
+    {
+      name: "facialFrequency",
+      value: userAttrs.facialFrequency,
+      importance: userPrefs.facialFrequencyImportance,
+      preferences: userPrefs.facialFrequencyPreference,
+    },
   ];
 
   for (const attr of attributes) {
-    if (isOpenToAll(attr.importance)) {
+    // Si importance es open_to_all O preferences está vacío → skip (no filtrar)
+    if (isOpenToAll(attr.importance) || isPreferenceEmpty(attr.preferences)) {
       continue;
     }
 
@@ -483,10 +659,24 @@ function scoreDemographics(
       importance: userPrefs.businessOwnerImportance,
       preferences: userPrefs.wantsBusinessOwnerPartner ? ["yes"] : ["no"],
     },
+    // NEW Phase 7/8: Housing & Relationship
+    {
+      name: "housingStatus",
+      value: userAttrs.housingStatus,
+      importance: userPrefs.housingStatusImportance,
+      preferences: userPrefs.housingStatusPreference,
+    },
+    {
+      name: "relationshipType",
+      value: userAttrs.relationshipType,
+      importance: userPrefs.relationshipTypeImportance,
+      preferences: userPrefs.relationshipTypePreference,
+    },
   ];
 
-  // Age matching
-  if (!isOpenToAll(userPrefs.ageImportance)) {
+  // Age matching - verificar que haya valores min/max definidos
+  if (!isOpenToAll(userPrefs.ageImportance) && 
+      (userPrefs.ageMin !== undefined || userPrefs.ageMax !== undefined)) {
     const age = calculateAge(userAttrs.dateOfBirth);
     if (age !== null) {
       const ageInRange = isValueInRange(age, userPrefs.ageMin, userPrefs.ageMax);
@@ -506,7 +696,8 @@ function scoreDemographics(
   }
 
   for (const attr of attributes) {
-    if (isOpenToAll(attr.importance)) {
+    // Si importance es open_to_all O preferences está vacío → skip (no filtrar)
+    if (isOpenToAll(attr.importance) || isPreferenceEmpty(attr.preferences)) {
       continue;
     }
 
@@ -561,7 +752,8 @@ function scoreGeneralPreferences(
   ];
 
   for (const attr of attributes) {
-    if (isOpenToAll(attr.importance)) {
+    // Si importance es open_to_all O preferences está vacío → skip (no filtrar)
+    if (isOpenToAll(attr.importance) || isPreferenceEmpty(attr.preferences)) {
       continue;
     }
 
@@ -652,6 +844,7 @@ export function calculateMatchScore(
   );
 
   // Check if user is "OPEN TO ALL" across all preferences
+  // UPDATED: Ahora incluye verificación de preferences vacías
   const isOpenToAllUser = Object.values(currentUser.preferences).every(
     (pref) =>
       isOpenToAll(pref as PreferenceImportanceEnum) ||
@@ -671,6 +864,8 @@ export function calculateMatchScore(
     demographicsScore.score * CATEGORY_WEIGHTS.demographics +
     generalScore.score * CATEGORY_WEIGHTS.general;
 
+  // CRITICAL: Si maxTotalScore es 0 (usuario no completó nada) → 100% match con TODOS
+  // Esto permite que usuarios incompletos vean a todo el mundo
   const percentageMatch =
     maxTotalScore > 0 ? (totalRawScore / maxTotalScore) * 100 : 100;
 

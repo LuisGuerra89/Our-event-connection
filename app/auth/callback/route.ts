@@ -78,6 +78,15 @@ export async function GET(request: Request) {
           return NextResponse.redirect(new URL("/onboarding/waiver", request.url))
         }
 
+        // NEW: Trigger match calculation in the background (fire and forget)
+        // This ensures fresh matches every time user logs in
+        console.log("[v0] Triggering match calculation for user:", user.id)
+        fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/matches/calculate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ limit: 50, minScore: 0 }), // Get all matches on login
+        }).catch(err => console.error("[v0] Error triggering match calculation:", err))
+
         // User has completed everything, go to dashboard
         console.log("[v0] User profile complete, redirecting to /dashboard")
         return NextResponse.redirect(new URL("/dashboard", request.url))

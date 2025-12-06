@@ -75,6 +75,20 @@ export function EditBasicInfo({ profile, attributes }: EditBasicInfoProps) {
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
 
+  const formatPhoneNumber = (value: string) => {
+    // Remove all non-numeric characters
+    const phoneNumber = value.replace(/\D/g, '')
+    
+    // Format as (XXX) XXX-XXXX
+    if (phoneNumber.length <= 3) {
+      return phoneNumber
+    } else if (phoneNumber.length <= 6) {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`
+    } else {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`
+    }
+  }
+
   const form = useForm<EditBasicInfoData>({
     resolver: zodResolver(editBasicInfoSchema),
     defaultValues: {
@@ -228,9 +242,18 @@ export function EditBasicInfo({ profile, attributes }: EditBasicInfoProps) {
                 name="contactNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contact Number</FormLabel>
+                    <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input 
+                        {...field}
+                        type="tel"
+                        placeholder="(555) 123-4567"
+                        maxLength={14}
+                        onChange={(e) => {
+                          const formatted = formatPhoneNumber(e.target.value)
+                          field.onChange(formatted)
+                        }}
+                      />
                     </FormControl>
                   </FormItem>
                 )}

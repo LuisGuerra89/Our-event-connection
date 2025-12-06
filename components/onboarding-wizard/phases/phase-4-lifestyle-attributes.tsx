@@ -5,7 +5,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -41,16 +41,18 @@ interface Phase4Props {
   onNext: (data: Phase4FormData) => void;
   isLoading?: boolean;
   onSkip?: () => void;
+  defaultValues?: Partial<Phase4FormData>;
 }
 
 export default function Phase4LifestyleAttributes({
   onNext,
   isLoading = false,
   onSkip,
+  defaultValues,
 }: Phase4Props) {
   const form = useForm<Phase4FormData>({
     resolver: zodResolver(phase4Schema),
-    defaultValues: {
+    defaultValues: defaultValues || {
       religion: "",
       workoutFrequency: "",
       alcoholConsumption: "",
@@ -58,6 +60,13 @@ export default function Phase4LifestyleAttributes({
       likesOutdoors: false,
     },
   });
+
+  // Reset form when defaultValues change
+  useEffect(() => {
+    if (defaultValues) {
+      form.reset(defaultValues);
+    }
+  }, [defaultValues, form]);
 
   return (
     <Card>
