@@ -417,6 +417,35 @@ export default async function EventsPage({
                 Showing {offset + 1} to {Math.min(offset + itemsPerPage, count || 0)} of {count || 0} events
               </div>
             )}
+
+            {/* Internal Linking Section */}
+            <div className="mt-16 pt-8 border-t">
+              <h2 className="text-xl font-semibold mb-4">Explore More Ways to Connect</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Find Your Perfect Match</CardTitle>
+                    <CardDescription>Use our smart matchmaking system to discover compatible singles</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button asChild variant="outline" className="w-full">
+                      <Link href="/matchmaking">Try Matchmaking →</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Upgrade Your Experience</CardTitle>
+                    <CardDescription>Get premium access to exclusive events and features</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button asChild variant="outline" className="w-full">
+                      <Link href="/membership">View Membership Plans →</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </>
         )}
           </div>

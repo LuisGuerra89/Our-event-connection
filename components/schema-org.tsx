@@ -25,7 +25,7 @@ export const organizationSchema = {
   description:
     'Meet meaningful connections through carefully curated social events. Our Love Connection brings singles together for unforgettable experiences.',
   sameAs: [
-    'https://www.facebook.com/ourloveconnection',
+    'https://www.facebook.com/oureventconnection/',
     'https://www.instagram.com/ourloveconnection',
     'https://www.twitter.com/ourloveconnection',
   ],

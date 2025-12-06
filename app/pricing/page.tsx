@@ -2,6 +2,10 @@ import type { Metadata } from 'next'
 import { createServerClient } from "@/lib/supabase/server"
 import { PublicPageLayout } from "@/components/public-page-layout"
 import { PricingPlansList } from "@/components/pricing-plans-list"
+import Link from 'next/link'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Heart, Users } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Pricing Plans | Affordable Dating Solutions | Our Love Connection',
@@ -43,6 +47,39 @@ export default async function PricingPage() {
   return (
     <PublicPageLayout>
       <PricingPlansList initialPlans={plans || []} />
+      
+      {/* Internal Linking Section */}
+      <section className="py-12 md:py-16 bg-slate-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Ready to Start Connecting?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <Heart className="h-6 w-6 text-rose-600 mb-2" />
+                <CardTitle>Explore Matchmaking</CardTitle>
+                <CardDescription>Browse compatible matches with our AI-powered system</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/matchmaking">Start Matching →</Link>
+                </Button>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <Users className="h-6 w-6 text-blue-600 mb-2" />
+                <CardTitle>Attend Events</CardTitle>
+                <CardDescription>Meet singles in person at our social events</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/events">Browse Events →</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
     </PublicPageLayout>
   )
 }

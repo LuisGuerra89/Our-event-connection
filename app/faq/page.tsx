@@ -3,6 +3,10 @@ import { createServerClient } from "@/lib/supabase/server"
 import { PublicPageLayout } from "@/components/public-page-layout"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import Script from 'next/script'
+import Link from 'next/link'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Heart, Users, HelpCircle } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'FAQ | Frequently Asked Questions | Our Love Connection',
@@ -100,6 +104,49 @@ export default async function FAQPage() {
             ))}
           </Accordion>
         )}
+
+        {/* Internal Linking Section */}
+        <div className="mt-16 pt-8 border-t">
+          <h2 className="text-2xl font-bold mb-8 text-center">Ready to Get Started?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <Heart className="h-6 w-6 text-rose-600 mb-2" />
+                <CardTitle>Try Matchmaking</CardTitle>
+                <CardDescription>Discover compatible matches</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/matchmaking">Start Matching →</Link>
+                </Button>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <Users className="h-6 w-6 text-blue-600 mb-2" />
+                <CardTitle>Browse Events</CardTitle>
+                <CardDescription>Meet singles in person</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/events">View Events →</Link>
+                </Button>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <HelpCircle className="h-6 w-6 text-purple-600 mb-2" />
+                <CardTitle>Pricing Plans</CardTitle>
+                <CardDescription>See membership options</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/pricing">View Pricing →</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </PublicPageLayout>
   )
