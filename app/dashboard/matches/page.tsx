@@ -77,7 +77,7 @@ export default async function MatchesPage() {
     .map((match: any) => ({
       ...match.profiles,
       matchId: match.id,
-      matchScore: match.match_score || 75 // Use stored match_score from DB
+      matchScore: match.match_score || 50 // Use stored match_score from DB
     })) || []
 
   return (

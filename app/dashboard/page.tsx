@@ -21,7 +21,8 @@ export default async function DashboardPage() {
     .single()
 
   // Redirect admins to /admin
-  if (profile?.roles?.role_name && profile.roles.role_name !== 'user') {
+  const userRole = Array.isArray(profile?.roles) ? profile.roles[0]?.role_name : (profile?.roles as any)?.role_name
+  if (userRole && userRole !== 'user') {
     redirect("/admin")
   }
 
@@ -34,12 +35,15 @@ export default async function DashboardPage() {
 
   // Fetch stats in parallel
   const [
-    { count: matchesCount },
+    { count: totalMatchesCount, data: matchesData },
     { count: conversationsCount },
     { count: myEventsCount },
     { data: upcomingEvents }
   ] = await Promise.all([
-    supabase.from("matches").select("*", { count: 'exact', head: true }).eq("user_id", data.user.id),
+    supabase
+      .from("matches")
+      .select("id, profiles!matches_matched_user_id_fkey(role_id)", { count: 'exact', head: false })
+      .eq("user_id", data.user.id),
     supabase.from("chat_conversations").select("*", { count: 'exact', head: true }).or(`user1_id.eq.${data.user.id},user2_id.eq.${data.user.id}`),
     supabase.from("event_registrations").select("*", { count: 'exact', head: true }).eq("user_id", data.user.id).eq("status", "confirmed"),
     supabase
@@ -50,6 +54,10 @@ export default async function DashboardPage() {
       .order("start_date", { ascending: true })
       .limit(6)
   ])
+
+  // Filter out admin users from matches count
+  const adminRoleId = "28136400-463b-437d-9a95-835e830e5067"
+  const matchesCount = matchesData?.filter((match: any) => match.profiles?.role_id !== adminRoleId).length || 0
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
 
