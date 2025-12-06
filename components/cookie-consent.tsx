@@ -107,7 +107,7 @@ export function CookieConsent() {
                     We use cookies to enhance your browsing experience, analyze site traffic, and personalize content. 
                     By clicking "Accept All", you consent to our use of cookies.{" "}
                     <Link href="/cookies" className="text-primary hover:underline">
-                      Learn more
+                      Read our cookie policy
                     </Link>
                   </p>
                 </div>
