@@ -91,29 +91,27 @@ export async function MatchmakingHomeSection() {
     )
   }
 
-  // Get user's profile to check if complete
-  const { data: profile } = await supabase
-    .from("profiles")
+  // Check if user has preferences
+  const { data: preferences } = await supabase
+    .from("user_preferences")
     .select("*")
-    .eq("id", user.id)
-    .single()
+    .eq("user_id", user.id)
+    .maybeSingle()
 
-  // Check if profile is complete
-  const isProfileComplete = profile?.profile_completion_percentage === 100
-
-  if (!isProfileComplete) {
+  // If no preferences, show message to update profile
+  if (!preferences) {
     return (
       <section className="py-16 bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 dark:from-pink-950/20 dark:via-purple-950/20 dark:to-rose-950/20">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto">
             <Sparkles className="h-16 w-16 text-pink-500 mx-auto mb-6" />
-            <h2 className="text-3xl font-bold mb-4">Complete Your Profile to Get Matches</h2>
+            <h2 className="text-3xl font-bold mb-4">Update Your Profile to Get Matches</h2>
             <p className="text-muted-foreground mb-8">
-              Fill out your profile and preferences to start receiving personalized matches based on compatibility
+              Complete your preferences to start receiving personalized matches based on compatibility
             </p>
             <Button size="lg" className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700" asChild>
               <Link href="/dashboard/profile">
-                Complete Profile
+                Update Profile
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
@@ -123,42 +121,78 @@ export async function MatchmakingHomeSection() {
     )
   }
 
-  // Get top 4 matches for the user
-  const { data: matches } = await supabase
+  // Get top 4 matches for the user using same query as matchmaking page
+  const { data: matchesData } = await supabase
     .from("matches")
     .select(`
       id,
-      user_id,
       matched_user_id,
-      compatibility_score,
-      status,
-      matched_user:profiles!matches_matched_user_id_fkey(
+      profiles!matches_matched_user_id_fkey (
         id,
-        first_name,
-        last_name,
+        display_name,
         profile_image_url,
-        city,
-        state,
-        age,
-        gender
+        location_city,
+        location_state,
+        gender,
+        user_attributes (*)
       )
     `)
     .eq("user_id", user.id)
-    .eq("status", "active")
-    .order("compatibility_score", { ascending: false })
     .limit(4)
 
-  const matchUsers: MatchUser[] = matches?.map((match: any) => ({
-    id: match.matched_user.id,
-    first_name: match.matched_user.first_name,
-    last_name: match.matched_user.last_name,
-    profile_image_url: match.matched_user.profile_image_url,
-    city: match.matched_user.city,
-    state: match.matched_user.state,
-    age: match.matched_user.age,
-    gender: match.matched_user.gender,
-    compatibility_score: match.compatibility_score
+  // Transform and calculate match scores
+  const matchedUsers = matchesData?.map((match: any) => ({
+    ...match.profiles,
+    matchId: match.id
   })) || []
+
+  // Calculate match scores (same logic as matchmaking page)
+  const matchUsers: MatchUser[] = matchedUsers.map((user: any) => {
+    let score = 50 // Default score
+    
+    if (preferences && user.user_attributes) {
+      let calculatedScore = 0
+      let totalImportant = 0
+      const attrs = user.user_attributes
+
+      const checks = [
+        { pref: preferences.hair_color_importance, attr: attrs.hair_color },
+        { pref: preferences.hair_length_importance, attr: attrs.hair_length },
+        { pref: preferences.eye_color_importance, attr: attrs.eye_color },
+        { pref: preferences.body_type_importance, attr: attrs.body_type },
+        { pref: preferences.race_importance, attr: attrs.race },
+        { pref: preferences.religion_importance, attr: attrs.religion },
+      ]
+
+      checks.forEach(({ pref, attr }) => {
+        if (pref === "important" && attr) {
+          totalImportant++
+          calculatedScore++
+        } else if (pref === "open_to_all") {
+          calculatedScore += 0.5
+        }
+      })
+
+      score = totalImportant > 0 ? Math.round((calculatedScore / totalImportant) * 100) : 50
+    }
+
+    // Parse display_name to get first and last name
+    const nameParts = user.display_name?.split(' ') || []
+    const first_name = nameParts[0] || 'Unknown'
+    const last_name = nameParts[nameParts.length - 1] || ''
+
+    return {
+      id: user.id,
+      first_name,
+      last_name,
+      profile_image_url: user.profile_image_url,
+      city: user.location_city,
+      state: user.location_state,
+      age: null, // Not available in this query
+      gender: user.gender,
+      compatibility_score: score
+    }
+  }).sort((a: any, b: any) => (b.compatibility_score || 0) - (a.compatibility_score || 0))
 
   if (matchUsers.length === 0) {
     return (

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Heart, Sparkles, Users, ArrowRight, Star, Zap, Target, Shield, MessageCircle } from "lucide-react"
 import Link from "next/link"
-import { MatchesGrid } from "@/components/matches-grid"
+import { PaginatedMatchesGrid } from "@/components/paginated-matches-grid"
 
 interface MatchUser {
   id: string
@@ -145,6 +145,22 @@ export default async function MatchmakingPage() {
           </div>
         </section>
 
+        {/* Matches Section - Only for authenticated users with complete profile */}
+        {user && isProfileComplete && matches.length > 0 && (
+          <section className="py-16 bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 dark:from-pink-950/20 dark:via-purple-950/20 dark:to-rose-950/20">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">Your Matches</h2>
+                <p className="text-xl text-muted-foreground">
+                  People who best match your preferences
+                </p>
+              </div>
+
+              <PaginatedMatchesGrid matches={matches} currentUserId={user?.id} itemsPerPage={4} />
+            </div>
+          </section>
+        )}
+
         {/* How It Works Section */}
         <section className="py-16 bg-background">
           <div className="container mx-auto px-4">
@@ -206,22 +222,6 @@ export default async function MatchmakingPage() {
             </div>
           </div>
         </section>
-
-        {/* Matches Section - Only for authenticated users with complete profile */}
-        {user && isProfileComplete && matches.length > 0 && (
-          <section className="py-16 bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 dark:from-pink-950/20 dark:via-purple-950/20 dark:to-rose-950/20">
-            <div className="container mx-auto px-4">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">Your Matches</h2>
-                <p className="text-xl text-muted-foreground">
-                  {matches.length} compatible {matches.length === 1 ? 'person' : 'people'} found based on your preferences
-                </p>
-              </div>
-
-              <MatchesGrid matches={matches} currentUserId={user?.id} />
-            </div>
-          </section>
-        )}
 
         {/* Features Section */}
         <section className="py-16 bg-background">
