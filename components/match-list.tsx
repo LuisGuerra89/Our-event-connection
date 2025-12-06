@@ -17,6 +17,7 @@ interface UserWithAttributes {
   gender: string | null
   profile_image_url: string | null
   user_attributes: any
+  matchScore?: number // Optional: pre-calculated match score from server
 }
 
 interface MatchListProps {
@@ -35,6 +36,11 @@ export function MatchList({ users, preferences }: MatchListProps) {
 
   // Calculate match scores
   const matchedUsers = useMemo(() => {
+    // If users already have matchScore from server (pre-calculated), use them as-is
+    if (users.length > 0 && users[0].matchScore !== undefined) {
+      return users
+    }
+
     if (!preferences) return users.map((user) => ({ ...user, matchScore: 50 }))
 
     return users
@@ -101,9 +107,9 @@ export function MatchList({ users, preferences }: MatchListProps) {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute top-3 right-3">
-                <Badge variant={user.matchScore >= 70 ? "default" : "secondary"}>
+                <Badge variant={(user.matchScore ?? 50) >= 70 ? "default" : "secondary"}>
                   <Heart className="h-3 w-3 mr-1" />
-                  {user.matchScore}%
+                  {user.matchScore ?? 50}%
                 </Badge>
               </div>
               <div className="absolute bottom-3 left-3 right-3">
@@ -129,9 +135,9 @@ export function MatchList({ users, preferences }: MatchListProps) {
                     {user.gender && <CardDescription className="capitalize">{user.gender}</CardDescription>}
                   </div>
                 </div>
-                <Badge variant={user.matchScore >= 70 ? "default" : "secondary"}>
+                <Badge variant={(user.matchScore ?? 50) >= 70 ? "default" : "secondary"}>
                   <Heart className="h-3 w-3 mr-1" />
-                  {user.matchScore}%
+                  {user.matchScore ?? 50}%
                 </Badge>
               </div>
             </CardHeader>
