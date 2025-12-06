@@ -12,6 +12,19 @@ export default async function MatchesPage() {
     redirect("/auth/login")
   }
 
+  // Fetch profile with role info
+  const { data: profileWithRole } = await supabase
+    .from("profiles")
+    .select("questionnaire_completed, roles(role_name)")
+    .eq("id", data.user.id)
+    .single()
+
+  // Redirect admins/moderators to /admin
+  const userRole = (profileWithRole?.roles as any)?.role_name
+  if (userRole === 'admin' || userRole === 'moderator') {
+    redirect("/admin")
+  }
+
   // Fetch current user profile to check if questionnaire is complete
   const { data: userProfile } = await supabase
     .from("profiles")
@@ -29,6 +42,8 @@ export default async function MatchesPage() {
       profiles!matches_matched_user_id_fkey (
         id,
         display_name,
+        first_name,
+        last_name,
         bio,
         location_city,
         location_state,
@@ -62,7 +77,7 @@ export default async function MatchesPage() {
     .map((match: any) => ({
       ...match.profiles,
       matchId: match.id,
-      matchScore: match.match_score || 75 // Use stored match_score from DB
+      matchScore: match.match_score || 50 // Use stored match_score from DB
     })) || []
 
   return (

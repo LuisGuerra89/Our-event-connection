@@ -11,6 +11,8 @@ import { useRouter } from "next/navigation"
 interface UserWithAttributes {
   id: string
   display_name: string
+  first_name?: string
+  last_name?: string
   bio: string | null
   location_city: string | null
   location_state: string | null
@@ -28,6 +30,17 @@ interface MatchListProps {
 export function MatchList({ users, preferences }: MatchListProps) {
   const router = useRouter()
   const [viewingProfile, setViewingProfile] = useState<string | null>(null)
+
+  // Helper function to get display name
+  const getDisplayName = (user: UserWithAttributes) => {
+    if (user.first_name && user.last_name) {
+      return `${user.first_name} ${user.last_name}`
+    }
+    if (user.first_name) {
+      return user.first_name
+    }
+    return user.display_name || "Unknown"
+  }
 
   const handleViewProfile = (userId: string) => {
     setViewingProfile(userId)
@@ -102,7 +115,7 @@ export function MatchList({ users, preferences }: MatchListProps) {
             <div className="relative h-48 w-full bg-muted overflow-hidden">
               <img
                 src={user.profile_image_url}
-                alt={user.display_name}
+                alt={getDisplayName(user)}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -113,7 +126,7 @@ export function MatchList({ users, preferences }: MatchListProps) {
                 </Badge>
               </div>
               <div className="absolute bottom-3 left-3 right-3">
-                <CardTitle className="text-white text-xl">{user.display_name}</CardTitle>
+                <CardTitle className="text-white text-xl">{getDisplayName(user)}</CardTitle>
                 {user.gender && (
                   <CardDescription className="text-white/80 capitalize">
                     {user.gender}
@@ -131,7 +144,7 @@ export function MatchList({ users, preferences }: MatchListProps) {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <CardTitle className="text-xl">{user.display_name}</CardTitle>
+                    <CardTitle className="text-xl">{getDisplayName(user)}</CardTitle>
                     {user.gender && <CardDescription className="capitalize">{user.gender}</CardDescription>}
                   </div>
                 </div>

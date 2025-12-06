@@ -4,16 +4,17 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
-const navItems = [
-  { href: "/events", label: "Events" },
-  { href: "/matchmaking", label: "Matchmaking" },
-  { href: "/membership", label: "Membership" },
-  { href: "/affiliates", label: "Affiliates" },
-  { href: "/about", label: "About Us" },
-  { href: "/contact", label: "Contact Us" },
-]
+interface NavItem {
+  href: string
+  label: string
+  pageKey?: string
+}
 
-export function PublicHeaderNav() {
+interface PublicHeaderNavProps {
+  navItems?: NavItem[]
+}
+
+export function PublicHeaderNav({ navItems = [] }: PublicHeaderNavProps) {
   const pathname = usePathname()
 
   return (

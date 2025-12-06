@@ -130,6 +130,8 @@ export async function MatchmakingHomeSection() {
       profiles!matches_matched_user_id_fkey (
         id,
         display_name,
+        first_name,
+        last_name,
         profile_image_url,
         location_city,
         location_state,
@@ -195,10 +197,21 @@ export async function MatchmakingHomeSection() {
         : Math.round((calculatedScore / checks.length) * 100)
     }
 
-    // Parse display_name to get first and last name
-    const nameParts = user.display_name?.split(' ') || []
-    const first_name = nameParts[0] || 'Unknown'
-    const last_name = nameParts[nameParts.length - 1] || ''
+    // Parse display_name to get first and last name, fallback to first_name and last_name fields
+    let first_name = user.first_name || ''
+    let last_name = user.last_name || ''
+    
+    // If first and last name are not available, try to parse display_name
+    if (!first_name && !last_name && user.display_name) {
+      const nameParts = user.display_name.split(' ')
+      first_name = nameParts[0] || 'Unknown'
+      last_name = nameParts[nameParts.length - 1] || ''
+    }
+    
+    // Final fallback
+    if (!first_name) {
+      first_name = user.display_name || 'Unknown'
+    }
 
     return {
       id: user.id,
@@ -224,8 +237,10 @@ export async function MatchmakingHomeSection() {
             <p className="text-muted-foreground mb-8">
               We're working on finding compatible matches for you. Check back soon or attend events to meet people!
             </p>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/events">Browse Events</Link>
+            <Button size="lg" className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700" asChild>
+              <Link href="/dashboard/profile">
+                Update Your Profile
+              </Link>
             </Button>
           </div>
         </div>

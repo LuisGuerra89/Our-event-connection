@@ -8,6 +8,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 interface MatchUser {
   id: string
   display_name: string
+  first_name?: string
+  last_name?: string
   profile_image_url: string | null
   location_city: string | null
   location_state: string | null

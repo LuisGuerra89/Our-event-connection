@@ -1,9 +1,51 @@
 import Link from "next/link"
 import { Logo } from "@/components/logo"
 import { Facebook, Twitter, Instagram, Linkedin, Youtube, Mail } from "lucide-react"
+import { createServerClient } from "@/lib/supabase/server"
 
-export function Footer() {
+interface PageStatus {
+  [key: string]: boolean
+}
+
+export async function Footer() {
   const currentYear = new Date().getFullYear()
+
+  // Fetch page statuses from CMS
+  const supabase = await createServerClient()
+  const { data: pages } = await supabase.from("cms_content").select("page_key, status")
+
+  // Create a map of active pages
+  const activePages: PageStatus = {}
+  if (pages) {
+    pages.forEach((page) => {
+      activePages[page.page_key] = page.status === "active"
+    })
+  }
+
+  // Define footer links with their page keys
+  const footerLinks = {
+    company: [
+      { label: "About Us", href: "/about", pageKey: "about_us" },
+      { label: "How It Works", href: "/how-it-works", pageKey: "how_it_works" },
+      { label: "Pricing", href: "/pricing", pageKey: "pricing" },
+      { label: "Contact Us", href: "/contact", pageKey: "contact_us" },
+    ],
+    events: [
+      { label: "All Events", href: "/events", pageKey: "events" },
+      { label: "Membership", href: "/membership", pageKey: "membership" },
+    ],
+    legal: [
+      { label: "Privacy Policy", href: "/privacy", pageKey: "privacy_policy" },
+      { label: "Terms of Service", href: "/terms", pageKey: "terms_conditions" },
+      { label: "FAQ", href: "/faq", pageKey: "faq" },
+    ],
+  }
+
+  // Helper function to check if page should be displayed
+  const isPageActive = (pageKey?: string) => {
+    if (!pageKey) return true // If no page key, always show
+    return activePages[pageKey] !== false // Default to true if not found
+  }
 
   return (
     <footer className="border-t bg-muted/30">
@@ -71,26 +113,15 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4 text-sm md:text-base">Company</h4>
             <ul className="space-y-3 text-xs md:text-sm">
-              <li>
-                <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
-                  How It Works
-                </Link>
-              </li>
-              <li>
-                <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Contact Us
-                </Link>
-              </li>
+              {footerLinks.company.map((link) =>
+                isPageActive(link.pageKey) ? (
+                  <li key={link.pageKey}>
+                    <Link href={link.href} className="text-muted-foreground hover:text-foreground transition-colors">
+                      {link.label}
+                    </Link>
+                  </li>
+                ) : null
+              )}
             </ul>
           </div>
 
@@ -98,26 +129,15 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4 text-sm md:text-base">Events</h4>
             <ul className="space-y-3 text-xs md:text-sm">
-              <li>
-                <Link href="/events" className="text-muted-foreground hover:text-foreground transition-colors">
-                  All Events
-                </Link>
-              </li>
-              <li>
-                <Link href="/events/this-week" className="text-muted-foreground hover:text-foreground transition-colors">
-                  This Week
-                </Link>
-              </li>
-              <li>
-                <Link href="/events/upcoming" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Upcoming Events
-                </Link>
-              </li>
-              <li>
-                <Link href="/membership" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Membership
-                </Link>
-              </li>
+              {footerLinks.events.map((link) =>
+                isPageActive(link.pageKey) ? (
+                  <li key={link.pageKey}>
+                    <Link href={link.href} className="text-muted-foreground hover:text-foreground transition-colors">
+                      {link.label}
+                    </Link>
+                  </li>
+                ) : null
+              )}
               <li>
                 <Link href="/events?international=true" className="text-muted-foreground hover:text-foreground transition-colors">
                   International Events
@@ -135,21 +155,15 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1 lg:col-span-1">
             <h4 className="font-semibold mb-4 text-sm md:text-base">Legal & Support</h4>
             <ul className="space-y-3 text-xs md:text-sm">
-              <li>
-                <Link href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
-                  FAQ
-                </Link>
-              </li>
+              {footerLinks.legal.map((link) =>
+                isPageActive(link.pageKey) ? (
+                  <li key={link.pageKey}>
+                    <Link href={link.href} className="text-muted-foreground hover:text-foreground transition-colors">
+                      {link.label}
+                    </Link>
+                  </li>
+                ) : null
+              )}
               <li>
                 <a 
                   href="mailto:support@ourloveconnection.com" 
