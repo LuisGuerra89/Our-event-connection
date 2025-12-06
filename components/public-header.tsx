@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
-import { createClient } from "@/lib/supabase/server"
+import { createServerClient } from "@/lib/supabase/server"
 import { UserMenu } from "@/components/user-menu"
 import { NotificationBell } from "@/components/notification-bell"
 import { ChatButton } from "@/components/chat-button"
@@ -9,7 +9,7 @@ import { PublicHeaderNav } from "@/components/public-header-nav"
 import { MobileMenu } from "@/components/mobile-menu"
 
 export async function PublicHeader() {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
 
   // Check if user is authenticated
   const { data } = await supabase.auth.getUser()
@@ -27,16 +27,40 @@ export async function PublicHeader() {
     profile = profileData
   }
 
+  // Fetch page statuses from CMS
+  const { data: pages } = await supabase.from("cms_content").select("page_key, status")
+
+  // Create a map of active pages
+  const activePages: Record<string, boolean> = {}
+  if (pages) {
+    pages.forEach((page) => {
+      activePages[page.page_key] = page.status === "active"
+    })
+  }
+
+  // Define nav items with their page keys
+  const allNavItems = [
+    { href: "/events", label: "Events", pageKey: "events" },
+    { href: "/matchmaking", label: "Matchmaking", pageKey: "matchmaking" },
+    { href: "/membership", label: "Membership", pageKey: "membership" },
+    { href: "/affiliates", label: "Affiliates", pageKey: "affiliates" },
+    { href: "/about", label: "About Us", pageKey: "about_us" },
+    { href: "/contact", label: "Contact Us", pageKey: "contact_us" },
+  ]
+
+  // Filter to only active pages (default to true if not in CMS)
+  const navItems = allNavItems.filter((item) => activePages[item.pageKey] !== false)
+
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-2 md:gap-4">
         {/* Mobile Menu */}
-        <MobileMenu isAuthenticated={!!user} />
+        <MobileMenu isAuthenticated={!!user} navItems={navItems} />
         
         <Logo />
 
         {/* Desktop Navigation */}
-        <PublicHeaderNav />
+        <PublicHeaderNav navItems={navItems} />
 
         {/* Auth Section */}
         <div className="flex items-center gap-2 md:gap-4 ml-auto">

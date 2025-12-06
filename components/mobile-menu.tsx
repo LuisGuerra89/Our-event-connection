@@ -8,20 +8,18 @@ import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const navItems = [
-  { href: "/events", label: "Events" },
-  { href: "/matchmaking", label: "Matchmaking" },
-  { href: "/membership", label: "Membership" },
-  { href: "/affiliates", label: "Affiliates" },
-  { href: "/about", label: "About Us" },
-  { href: "/contact", label: "Contact Us" },
-]
+interface NavItem {
+  href: string
+  label: string
+  pageKey?: string
+}
 
 interface MobileMenuProps {
   isAuthenticated: boolean
+  navItems?: NavItem[]
 }
 
-export function MobileMenu({ isAuthenticated }: MobileMenuProps) {
+export function MobileMenu({ isAuthenticated, navItems = [] }: MobileMenuProps) {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
 
