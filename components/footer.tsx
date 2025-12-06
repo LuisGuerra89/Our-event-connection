@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Logo } from "@/components/logo"
-import { Facebook, Twitter, Instagram, Linkedin, Youtube, Mail } from "lucide-react"
+import { Facebook, Instagram, Linkedin, Youtube, Mail } from "lucide-react"
 import { createServerClient } from "@/lib/supabase/server"
 
 interface PageStatus {
@@ -62,7 +62,7 @@ export async function Footer() {
             {/* Social Media Links */}
             <div className="flex gap-4 mt-6">
               <a
-                href="https://facebook.com"
+                href="https://www.facebook.com/oureventconnection/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"
@@ -75,9 +75,11 @@ export async function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"
-                aria-label="Twitter"
+                aria-label="X"
               >
-                <Twitter className="h-5 w-5" />
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.6l-5.165-6.75-5.906 6.75h-3.31l7.73-8.835L.424 2.25h6.7l4.681 6.15 5.439-6.15zM17.55 19.5h1.833L5.75 3.75H3.81l13.74 15.75z" />
+                </svg>
               </a>
               <a
                 href="https://instagram.com"

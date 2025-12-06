@@ -392,6 +392,39 @@ export default async function MatchmakingPage() {
             </div>
           </section>
         )}
+
+        {/* Internal Linking Section */}
+        <section className="py-12 md:py-16 bg-slate-50">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Explore More Connection Options</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <Heart className="h-6 w-6 text-rose-600 mb-2" />
+                  <CardTitle>Attend Social Events</CardTitle>
+                  <CardDescription>Meet singles in person at our curated social events</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link href="/events">Browse Events →</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <Zap className="h-6 w-6 text-yellow-600 mb-2" />
+                  <CardTitle>Upgrade Your Membership</CardTitle>
+                  <CardDescription>Get unlimited matches and premium features</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link href="/membership">See Membership Plans →</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
       </main>
 
       <Footer />
