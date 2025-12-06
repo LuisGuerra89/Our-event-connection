@@ -13,12 +13,17 @@ export default async function DashboardPage() {
     redirect("/auth/login")
   }
 
-  // Fetch profile with referral count
+  // Fetch profile with referral count and role
   const { data: profile } = await supabase
     .from("profiles")
     .select("role_id, full_name, referral_count, roles(role_name)")
     .eq("id", data.user.id)
     .single()
+
+  // Redirect admins to /admin
+  if (profile?.roles?.role_name && profile.roles.role_name !== 'user') {
+    redirect("/admin")
+  }
 
   // Check if user signed waiver
   const { data: waiver } = await supabase.from("waivers").select("id").eq("user_id", data.user.id).maybeSingle()
