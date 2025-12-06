@@ -1,7 +1,9 @@
 import { redirect, notFound } from "next/navigation"
+import Script from "next/script"
 import { createClient } from "@/lib/supabase/server"
 import { EventDetails } from "@/components/event-details"
 import { PublicPageLayout } from "@/components/public-page-layout"
+import { eventSchema } from "@/components/schema-org"
 
 export default async function EventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -50,8 +52,29 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
     registration = reg
   }
 
+  // Build Event Schema for SEO
+  const eventSchemaData = eventSchema({
+    name: event.title,
+    description: event.description,
+    startDate: event.start_date,
+    endDate: event.end_date,
+    location: {
+      name: event.venue_name || `${event.city_name || event.location_city}, ${event.state_name || event.location_state}`,
+      address: event.venue_address || `${event.location_city}, ${event.location_state}, ${event.country_name}`,
+    },
+    image: event.image_url || 'https://ourloveconnection.com/og-image.png',
+    url: `https://ourloveconnection.com/events/${id}`,
+  })
+
   return (
     <PublicPageLayout>
+      <Script
+        id="event-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(eventSchemaData),
+        }}
+      />
       <EventDetails
         event={event}
         userId={user?.id || null}

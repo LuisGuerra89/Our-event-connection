@@ -1,9 +1,38 @@
+import type { Metadata } from 'next'
 import { createServerClient } from "@/lib/supabase/server"
 import { PublicPageLayout } from "@/components/public-page-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Heart, Users, Target, Lightbulb, Shield, Zap } from "lucide-react"
 import Link from "next/link"
+
+export const metadata: Metadata = {
+  title: 'About Us | Our Story | Our Love Connection',
+  description: 'Learn about Our Love Connection, our mission to create meaningful connections through shared experiences and community events.',
+  keywords: 'about us, our mission, dating company, singles community, event-based dating, love connection',
+  openGraph: {
+    title: 'About Us | Our Story | Our Love Connection',
+    description: 'Learn about Our Love Connection and our mission to create meaningful connections through shared experiences.',
+    url: 'https://ourloveconnection.com/about',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'About Our Love Connection',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'About Us | Our Story | Our Love Connection',
+    description: 'Learn about Our Love Connection and our mission to create meaningful connections.',
+    images: ['/og-image.png'],
+  },
+  alternates: {
+    canonical: 'https://ourloveconnection.com/about',
+  },
+}
 
 export default async function AboutPage() {
   const supabase = await createServerClient()
@@ -61,7 +90,7 @@ export default async function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4 text-balance">
-              {content?.title || "About Our Love Connection"}
+              {content?.title || "Our Story - Building Meaningful Connections"}
             </h1>
             {content?.subtitle && (
               <p className="text-lg md:text-xl text-muted-foreground text-pretty leading-relaxed">

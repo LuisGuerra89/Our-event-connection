@@ -68,8 +68,8 @@ export function PricingPlansList({ initialPlans }: PricingPlansListProps) {
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">{"Choose Your Plan"}</h1>
-        <p className="text-xl text-muted-foreground">{"Select the perfect subscription for your needs"}</p>
+        <h1 className="text-4xl font-bold mb-4">{"Affordable Pricing Plans for Every Budget"}</h1>
+        <p className="text-xl text-muted-foreground">{"Choose the perfect subscription plan to start your dating journey today"}</p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
