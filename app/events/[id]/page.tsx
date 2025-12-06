@@ -83,3 +83,4 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
       />
     </PublicPageLayout>
   )
+}
