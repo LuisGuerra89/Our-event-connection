@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from '@/components/ui/toaster'
@@ -82,6 +83,25 @@ export default function RootLayout({
         <meta name="color-scheme" content="light dark" />
         <link rel="canonical" href="https://ourloveconnection.com" />
         <link rel="alternate" hrefLang="en" href="https://ourloveconnection.com" />
+        
+        {/* Google Analytics */}
+        <Script 
+          async 
+          src="https://www.googletagmanager.com/gtag/js?id=G-D4QLGD09FV"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-D4QLGD09FV');
+            `,
+          }}
+        />
       </head>
       <body className={`font-sans antialiased`}>
         {children}
