@@ -156,24 +156,33 @@ export async function MatchmakingHomeSection() {
       const attrs = user.user_attributes
 
       const checks = [
-        { pref: preferences.hair_color_importance, attr: attrs.hair_color },
-        { pref: preferences.hair_length_importance, attr: attrs.hair_length },
-        { pref: preferences.eye_color_importance, attr: attrs.eye_color },
-        { pref: preferences.body_type_importance, attr: attrs.body_type },
-        { pref: preferences.race_importance, attr: attrs.race },
-        { pref: preferences.religion_importance, attr: attrs.religion },
+        { importance: preferences.hair_color_importance, preferenceArr: preferences.hair_color_preference, attr: attrs.hair_color },
+        { importance: preferences.hair_length_importance, preferenceArr: preferences.hair_length_preference, attr: attrs.hair_length },
+        { importance: preferences.eye_color_importance, preferenceArr: preferences.eye_color_preference, attr: attrs.eye_color },
+        { importance: preferences.body_type_importance, preferenceArr: preferences.body_type_preference, attr: attrs.body_type },
+        { importance: preferences.race_importance, preferenceArr: preferences.race_preference, attr: attrs.race },
+        { importance: preferences.religion_importance, preferenceArr: preferences.religion_preference, attr: attrs.religion },
       ]
 
-      checks.forEach(({ pref, attr }) => {
-        if (pref === "important" && attr) {
+      checks.forEach(({ importance, preferenceArr, attr }) => {
+        if (importance === "important") {
           totalImportant++
-          calculatedScore++
-        } else if (pref === "open_to_all") {
-          calculatedScore += 0.5
+          // Check if the user's attribute matches any of the preferred values
+          if (attr && preferenceArr && Array.isArray(preferenceArr) && preferenceArr.includes(attr)) {
+            calculatedScore++
+          }
+        } else if (importance === "open_to_all") {
+          // If open_to_all and the match has this attribute, give full point
+          // If open_to_all but match doesn't have it, give partial point
+          calculatedScore += attr ? 1 : 0.5
         }
       })
 
-      score = totalImportant > 0 ? Math.round((calculatedScore / totalImportant) * 100) : 50
+      // If there are important preferences, calculate percentage based on matches
+      // If no important preferences, use average of open_to_all scores (out of total checks)
+      score = totalImportant > 0 
+        ? Math.round((calculatedScore / totalImportant) * 100) 
+        : Math.round((calculatedScore / checks.length) * 100)
     }
 
     // Parse display_name to get first and last name
