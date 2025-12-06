@@ -33,20 +33,21 @@ export function MatchesPageContent({
 
       if (!response.ok) {
         console.error("Failed to calculate matches");
+        setIsSearching(false);
+        return;
       }
 
-      // Re-fetch matches after calculation
-      const supabaseResponse = await fetch("/api/matches", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
+      const result = await response.json();
+      console.log("✅ Matches recalculated:", result.topMatches?.length || 0, "found");
 
-      if (supabaseResponse.ok) {
-        const { matches: updatedMatches } = await supabaseResponse.json();
-        setMatches(updatedMatches || []);
-      }
+      // Wait a moment for database to finish all writes
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Reload the page to fetch fresh matches from server
+      window.location.reload();
     } catch (error) {
       console.error("Error searching for matches:", error);
+      setIsSearching(false);
     }
   };
 

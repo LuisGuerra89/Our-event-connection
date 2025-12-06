@@ -33,7 +33,7 @@ export default async function MatchesPage() {
         location_state,
         gender,
         profile_image_url,
-        user_attributes (*)
+        role_id
       )
     `)
     .eq("user_id", data.user.id)
@@ -47,11 +47,20 @@ export default async function MatchesPage() {
 
   const isProfileComplete = userProfile?.questionnaire_completed === true
 
-  // Transform matches data to match the expected format
-  const matchedUsers = matches?.map((match: any) => ({
-    ...match.profiles,
-    matchId: match.id
-  })) || []
+  // Known admin/moderator role IDs to exclude
+  const adminRoleId = "28136400-463b-437d-9a95-835e830e5067"; // Moderator/editor role
+  
+  // Filter out admin/moderator users by role_id
+  const matchedUsers = matches
+    ?.filter((match: any) => {
+      if (!match.profiles) return false;
+      // Exclude if role_id matches known admin/moderator roles
+      return match.profiles.role_id !== adminRoleId;
+    })
+    .map((match: any) => ({
+      ...match.profiles,
+      matchId: match.id
+    })) || []
 
   return (
     <div className="min-h-full">

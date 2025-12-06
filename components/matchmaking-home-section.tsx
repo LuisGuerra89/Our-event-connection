@@ -121,7 +121,7 @@ export async function MatchmakingHomeSection() {
     )
   }
 
-  // Get top 4 matches for the user using same query as matchmaking page
+  // Get matches for the user (fetch more than 4 to account for admin filtering)
   const { data: matchesData } = await supabase
     .from("matches")
     .select(`
@@ -134,20 +134,30 @@ export async function MatchmakingHomeSection() {
         location_city,
         location_state,
         gender,
+        role_id,
         user_attributes (*)
       )
     `)
     .eq("user_id", user.id)
-    .limit(4)
+    .limit(20)
 
-  // Transform and calculate match scores
-  const matchedUsers = matchesData?.map((match: any) => ({
-    ...match.profiles,
-    matchId: match.id
-  })) || []
+  // Known admin/moderator role IDs to exclude
+  const adminRoleId = "28136400-463b-437d-9a95-835e830e5067"; // Moderator/editor role
+  
+  // Transform and calculate match scores, filtering out admin users, then limit to top 4
+  const allMatchedUsers = matchesData
+    ?.filter((match: any) => {
+      if (!match.profiles) return false;
+      // Exclude if role_id matches known admin/moderator roles
+      return match.profiles.role_id !== adminRoleId;
+    })
+    .map((match: any) => ({
+      ...match.profiles,
+      matchId: match.id
+    })) || []
 
   // Calculate match scores (same logic as matchmaking page)
-  const matchUsers: MatchUser[] = matchedUsers.map((user: any) => {
+  const matchUsers: MatchUser[] = allMatchedUsers.map((user: any) => {
     let score = 50 // Default score
     
     if (preferences && user.user_attributes) {
@@ -202,6 +212,7 @@ export async function MatchmakingHomeSection() {
       compatibility_score: score
     }
   }).sort((a: any, b: any) => (b.compatibility_score || 0) - (a.compatibility_score || 0))
+  .slice(0, 4) // Limit to top 4 after filtering admins and sorting
 
   if (matchUsers.length === 0) {
     return (

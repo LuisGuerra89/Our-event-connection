@@ -148,7 +148,8 @@ export async function POST(request: NextRequest) {
 
     // Get all potential matches (other users)
     // CHANGED: Fetch profiles and attributes separately to ensure data integrity
-    const { data: profiles, error: profilesError } = await supabase
+    // Fetch with role information to filter out admins/moderators
+    const { data: allProfiles, error: profilesError } = await supabase
       .from("profiles")
       .select(
         `
@@ -159,13 +160,17 @@ export async function POST(request: NextRequest) {
         gender,
         location_city,
         location_state,
-        location_country
+        location_country,
+        role_id,
+        roles!profiles_role_id_fkey (
+          role_name
+        )
       `
       )
       .neq("id", user.id)
       .limit(500); // Get enough to filter
 
-    if (profilesError || !profiles) {
+    if (profilesError || !allProfiles) {
       console.error("Error fetching profiles:", profilesError);
       return NextResponse.json(
         { error: "Failed to fetch potential matches" },
@@ -173,7 +178,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`Fetched ${profiles.length} potential profiles`);
+    // Filter out admin/moderator users (keep only 'user' role or null role)
+    const profiles = allProfiles.filter((profile: any) => {
+      const roleName = profile.roles?.role_name;
+      return !roleName || roleName === 'user';
+    });
+
+    console.log(`Fetched ${allProfiles.length} total profiles, ${profiles.length} regular user profiles`);
 
     // Get attributes for all profiles
     const { data: allAttributes, error: allAttributesError } = await supabase

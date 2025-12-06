@@ -54,6 +54,7 @@ export default async function MatchmakingPage() {
             location_state,
             gender,
             profile_image_url,
+            role_id,
             user_attributes (*)
           )
         `)
@@ -66,11 +67,20 @@ export default async function MatchmakingPage() {
         .eq("user_id", user.id)
         .maybeSingle()
 
-      // Transform matches data
-      const matchedUsers = matchesData?.map((match: any) => ({
-        ...match.profiles,
-        matchId: match.id
-      })) || []
+      // Known admin/moderator role IDs to exclude
+      const adminRoleId = "28136400-463b-437d-9a95-835e830e5067"; // Moderator/editor role
+      
+      // Transform matches data and filter out admin/moderator users
+      const matchedUsers = matchesData
+        ?.filter((match: any) => {
+          if (!match.profiles) return false;
+          // Exclude if role_id matches known admin/moderator roles
+          return match.profiles.role_id !== adminRoleId;
+        })
+        .map((match: any) => ({
+          ...match.profiles,
+          matchId: match.id
+        })) || []
 
       // Calculate match scores (same logic as MatchList component)
       matches = matchedUsers.map((user: any) => {
