@@ -10,7 +10,7 @@ export function MembershipHero() {
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center space-y-6">
           <h1 className="text-5xl font-bold tracking-tight">
-            Join Our Exclusive Membership
+            Premium Membership Plans with Exclusive Benefits
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Unlock premium benefits, exclusive events, and connect with like-minded individuals. 

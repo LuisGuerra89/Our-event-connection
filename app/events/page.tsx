@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -5,6 +6,34 @@ import { Button } from "@/components/ui/button"
 import { Calendar, MapPin, Users, Heart, Shield } from "lucide-react"
 import Link from "next/link"
 import { PublicPageLayout } from "@/components/public-page-layout"
+
+export const metadata: Metadata = {
+  title: 'Social Events for Singles | Our Love Connection',
+  description: 'Discover and attend curated social events designed for singles to meet and connect. Browse upcoming events, networking opportunities, and group activities in your area.',
+  keywords: 'social events for singles, dating events, networking events, singles gatherings, group activities, speed dating events, social meetups',
+  openGraph: {
+    title: 'Social Events for Singles | Our Love Connection',
+    description: 'Discover and attend curated social events designed for singles to meet and connect.',
+    url: 'https://ourloveconnection.com/events',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Social Events for Singles',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Social Events for Singles | Our Love Connection',
+    description: 'Discover and attend curated social events designed for singles to meet and connect.',
+    images: ['/og-image.png'],
+  },
+  alternates: {
+    canonical: 'https://ourloveconnection.com/events',
+  },
+}
 
 export default async function EventsPage({
   searchParams,
@@ -106,9 +135,9 @@ export default async function EventsPage({
         <section className="bg-gradient-to-b from-primary/5 to-background py-12">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">Browse Events</h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">Discover Social Events for Singles</h1>
               <p className="text-lg text-muted-foreground">
-                Discover exciting events and connect with like-minded people
+                Find and attend amazing events designed for meaningful connections with like-minded singles
               </p>
             </div>
           </div>

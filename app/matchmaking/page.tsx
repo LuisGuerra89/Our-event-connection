@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { createServerClient } from "@/lib/supabase/server"
 import { PublicHeader } from "@/components/public-header"
 import { Footer } from "@/components/footer"
@@ -6,6 +7,34 @@ import { Button } from "@/components/ui/button"
 import { Heart, Sparkles, Users, ArrowRight, Star, Zap, Target, Shield, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import { PaginatedMatchesGrid } from "@/components/paginated-matches-grid"
+
+export const metadata: Metadata = {
+  title: 'Smart Matchmaking for Singles | Our Love Connection',
+  description: 'Find your perfect match through our AI-powered matchmaking system. Browse compatible profiles, view match scores, and connect with like-minded singles.',
+  keywords: 'matchmaking, compatible matches, dating matches, find soulmate, personality matching, dating algorithm, compatible singles',
+  openGraph: {
+    title: 'Smart Matchmaking for Singles | Our Love Connection',
+    description: 'Find your perfect match through our AI-powered matchmaking system. Browse compatible profiles and connect with like-minded singles.',
+    url: 'https://ourloveconnection.com/matchmaking',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Smart Matchmaking',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Smart Matchmaking for Singles | Our Love Connection',
+    description: 'Find your perfect match through our AI-powered matchmaking system.',
+    images: ['/og-image.png'],
+  },
+  alternates: {
+    canonical: 'https://ourloveconnection.com/matchmaking',
+  },
+}
 
 interface MatchUser {
   id: string
@@ -145,7 +174,7 @@ export default async function MatchmakingPage() {
               <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 mb-6">
                 <Sparkles className="hidden md:block h-8 w-8 md:h-10 md:w-10 text-pink-500 flex-shrink-0" />
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-rose-600 bg-clip-text text-transparent">
-                  Smart Matchmaking
+                  Smart Matchmaking - Find Your Perfect Match
                 </h1>
                 <Sparkles className="hidden md:block h-8 w-8 md:h-10 md:w-10 text-pink-500 flex-shrink-0" />
               </div>

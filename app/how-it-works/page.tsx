@@ -1,5 +1,34 @@
+import type { Metadata } from 'next'
 import { createServerClient } from "@/lib/supabase/server"
 import { PublicPageLayout } from "@/components/public-page-layout"
+
+export const metadata: Metadata = {
+  title: 'How It Works | Step-by-Step Guide | Our Love Connection',
+  description: 'Discover how Our Love Connection works. Learn the simple steps to create your profile, find matches, attend events, and start making meaningful connections.',
+  keywords: 'how it works, dating guide, getting started, find matches, attend events, step by step guide',
+  openGraph: {
+    title: 'How It Works | Step-by-Step Guide | Our Love Connection',
+    description: 'Discover how Our Love Connection works with our simple step-by-step guide to finding meaningful connections.',
+    url: 'https://ourloveconnection.com/how-it-works',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'How It Works',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'How It Works | Step-by-Step Guide | Our Love Connection',
+    description: 'Discover how Our Love Connection works with our simple step-by-step guide.',
+    images: ['/og-image.png'],
+  },
+  alternates: {
+    canonical: 'https://ourloveconnection.com/how-it-works',
+  },
+}
 
 export default async function HowItWorksPage() {
   const supabase = await createServerClient()
@@ -21,7 +50,7 @@ export default async function HowItWorksPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance">
-              {content?.title || "How It Works"}
+              {content?.title || "How Our Love Connection Works - Your Guide to Finding Love"}
             </h1>
             {content?.subtitle && (
               <p className="text-xl md:text-2xl text-muted-foreground text-pretty">
