@@ -13,6 +13,31 @@ import { AffiliatesSlider } from "@/components/affiliates-slider"
 import { DomesticEventsSection } from "@/components/domestic-events-section"
 import { UpcomingEventsPagination } from "@/components/upcoming-events-pagination"
 import { MatchmakingHomeSection } from "@/components/matchmaking-home-section"
+import { SchemaOrg, organizationSchema } from "@/components/schema-org"
+import { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: 'Our Love Connection - Meet Singles Through Social Events',
+  description: 'Discover authentic connections through curated social events. Join Our Love Connection to meet like-minded singles at meaningful gatherings and networking events.',
+  keywords: 'dating events, singles events, meet singles, social dating, event dating, speed dating, networking events, singles networking',
+  openGraph: {
+    title: 'Our Love Connection - Meet Singles Through Social Events',
+    description: 'Discover authentic connections through curated social events. Join Our Love Connection today.',
+    url: 'https://ourloveconnection.com',
+    type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Our Love Connection - Dating Events',
+      },
+    ],
+  },
+  alternates: {
+    canonical: 'https://ourloveconnection.com',
+  },
+}
 
 export default async function HomePage() {
   const supabase = await createServerClient()
@@ -42,6 +67,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-svh bg-background">
+      <SchemaOrg data={organizationSchema} />
       <PublicHeader />
 
       <main>

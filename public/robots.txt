@@ -1,0 +1,23 @@
+# robots.txt for Our Love Connection
+
+# Allow all bots
+User-agent: *
+Allow: /
+
+# Disallow private areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /debug-*
+Disallow: /_next/
+Disallow: /private/
+
+# Specific rules for Google
+User-agent: Googlebot
+Allow: /
+
+# Crawl delay (in seconds)
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://ourloveconnection.com/sitemap.xml
+Sitemap: https://ourloveconnection.com/sitemap-0.xml
