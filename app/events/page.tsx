@@ -144,6 +144,8 @@ export default async function EventsPage({
       },
       image: event.image_url || 'https://ourloveconnection.com/og-image.png',
       url: `https://ourloveconnection.com/events/${event.id}`,
+      price: event.price || 0,
+      priceCurrency: 'USD',
     })
   ) || []
 

@@ -45,6 +45,8 @@ export const eventSchema = (event: {
   location?: { name?: string; address?: string }
   image?: string
   url?: string
+  price?: number
+  priceCurrency?: string
 }) => ({
   '@context': 'https://schema.org',
   '@type': 'Event',
@@ -54,6 +56,8 @@ export const eventSchema = (event: {
   endDate: event.endDate || event.startDate,
   image: event.image || 'https://ourloveconnection.com/og-image.png',
   url: event.url || 'https://ourloveconnection.com/events',
+  eventStatus: 'https://schema.org/EventScheduled',
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
   location: {
     '@type': 'Place',
     name: event.location?.name || 'Our Love Connection',
@@ -63,6 +67,18 @@ export const eventSchema = (event: {
     '@type': 'Organization',
     name: 'Our Love Connection',
     url: 'https://ourloveconnection.com',
+  },
+  performer: {
+    '@type': 'Organization',
+    name: 'Our Love Connection',
+    url: 'https://ourloveconnection.com',
+  },
+  offers: {
+    '@type': 'Offer',
+    url: event.url || 'https://ourloveconnection.com/events',
+    price: event.price || '0',
+    priceCurrency: event.priceCurrency || 'USD',
+    availability: 'https://schema.org/InStock',
   },
 })
 
