@@ -64,6 +64,8 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
     },
     image: event.image_url || 'https://ourloveconnection.com/og-image.png',
     url: `https://ourloveconnection.com/events/${id}`,
+    price: event.price || 0,
+    priceCurrency: 'USD',
   })
 
   return (
