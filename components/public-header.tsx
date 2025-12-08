@@ -53,17 +53,19 @@ export async function PublicHeader() {
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-2 md:gap-4">
+      <div className="container mx-auto px-4 py-4 flex items-center gap-2 md:gap-8 relative">
         {/* Mobile Menu */}
         <MobileMenu isAuthenticated={!!user} navItems={navItems} />
         
         <Logo />
-
-        {/* Desktop Navigation */}
-        <PublicHeaderNav navItems={navItems} />
+        
+        {/* Desktop Navigation - Centered */}
+        <div className="flex-1 flex justify-center">
+          <PublicHeaderNav navItems={navItems} />
+        </div>
 
         {/* Auth Section */}
-        <div className="flex items-center gap-2 md:gap-4 ml-auto">
+        <div className="flex items-center gap-2 md:gap-4">
           {user && profile ? (
             <>
               <ChatButton userId={user.id} />

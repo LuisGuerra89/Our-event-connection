@@ -288,11 +288,11 @@ export function AppSidebar({ userRole, userName, userEmail, userImage, userPrivi
       >
         <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className="flex items-center justify-start p-4 border-b border-sidebar-border">
+          <div className="flex items-center justify-start p-4 border-b border-sidebar-border min-w-[280px]">
             {isCollapsed ? (
-              <Logo className="h-8 w-8" />
+              <Logo className="h-8 w-auto" />
             ) : (
-              <Logo className="h-12 w-auto" />
+              <Logo />
             )}
           </div>
 
