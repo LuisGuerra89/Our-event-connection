@@ -43,12 +43,20 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, description, plan_type, price, duration_days, auto_renewal, status } = body
+    const { name, description, plan_type, price, duration_days, auto_renewal, status, features } = body
 
     // Validate required fields
-    if (!name || !plan_type || price === undefined) {
+    if (!name || !plan_type || price === undefined || price === null) {
       return NextResponse.json(
         { error: "Name, plan_type, and price are required" },
+        { status: 400 }
+      )
+    }
+
+    // Validate price is a number
+    if (typeof price !== 'number' || price < 0) {
+      return NextResponse.json(
+        { error: "Price must be a non-negative number" },
         { status: 400 }
       )
     }
@@ -79,16 +87,34 @@ export async function POST(request: Request) {
       active: status === "active",
     })
 
-    // Create price in Stripe (recurring subscription)
-    const stripePrice = await stripe.prices.create({
-      product: stripeProduct.id,
-      unit_amount: Math.round(price * 100), // Convert to cents
-      currency: "usd",
-      recurring: {
-        interval: stripeInterval,
-        interval_count: intervalCount,
-      },
-    })
+    // Create price in Stripe - handle free plans differently
+    let stripePriceId: string | null = null
+    
+    if (price === 0) {
+      // For free plans, create a $0 price
+      const stripePrice = await stripe.prices.create({
+        product: stripeProduct.id,
+        unit_amount: 0,
+        currency: "usd",
+        recurring: {
+          interval: stripeInterval,
+          interval_count: intervalCount,
+        },
+      })
+      stripePriceId = stripePrice.id
+    } else {
+      // For paid plans, create normal price
+      const stripePrice = await stripe.prices.create({
+        product: stripeProduct.id,
+        unit_amount: Math.round(price * 100), // Convert to cents
+        currency: "usd",
+        recurring: {
+          interval: stripeInterval,
+          interval_count: intervalCount,
+        },
+      })
+      stripePriceId = stripePrice.id
+    }
 
     // Insert into database
     const { data: plan, error } = await supabase
@@ -101,8 +127,9 @@ export async function POST(request: Request) {
         duration_days: plan_type === "custom" ? duration_days : null,
         auto_renewal: auto_renewal || false,
         status: status || "active",
+        features: Array.isArray(features) ? features : [],
         stripe_product_id: stripeProduct.id,
-        stripe_price_id: stripePrice.id,
+        stripe_price_id: stripePriceId,
       })
       .select()
       .single()

@@ -113,7 +113,9 @@ export function MembershipPlansList({ initialPlans }: MembershipPlansListProps) 
             <Card key={plan.id} className={`flex flex-col ${isCurrentPlan ? 'ring-2 ring-primary' : ''}`}>
               <CardHeader>
                 <div className="flex items-start justify-between mb-2">
-                  <Badge variant="secondary">{getPlanTypeLabel(plan.plan_type)}</Badge>
+                  <Badge variant="secondary">
+                    {plan.price === 0 ? "Free" : getPlanTypeLabel(plan.plan_type)}
+                  </Badge>
                   <div className="flex gap-2">
                     {isCurrentPlan && (
                       <Badge variant="default" className="bg-green-600">Current Plan</Badge>
@@ -138,14 +140,17 @@ export function MembershipPlansList({ initialPlans }: MembershipPlansListProps) 
                 </div>
 
                 {plan.features && Array.isArray(plan.features) && plan.features.length > 0 && (
-                  <ul className="space-y-2">
-                    {plan.features.map((feature: string, index: number) => (
-                      <li key={index} className="flex items-start gap-2 text-sm">
-                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="space-y-3 pt-2">
+                    <h4 className="font-semibold text-sm text-foreground">What's Included</h4>
+                    <ul className="space-y-2.5">
+                      {plan.features.map((feature: string, index: number) => (
+                        <li key={index} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                          <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                          <span className="leading-relaxed">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </CardContent>
 

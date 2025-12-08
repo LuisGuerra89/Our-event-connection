@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { createServerClient } from "@/lib/supabase/server"
 import { PublicPageLayout } from "@/components/public-page-layout"
-import { PricingPlansList } from "@/components/pricing-plans-list"
+import { PricingCards } from "@/components/pricing-cards"
+import { PricingComparisonTable } from "@/components/pricing-comparison-table"
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -46,7 +47,12 @@ export default async function PricingPage() {
 
   return (
     <PublicPageLayout>
-      <PricingPlansList initialPlans={plans || []} />
+      <PricingCards initialPlans={plans || []} />
+      
+      {/* Comparison Table */}
+      {plans && plans.length > 0 && (
+        <PricingComparisonTable plans={plans} />
+      )}
       
       {/* Internal Linking Section */}
       <section className="py-12 md:py-16 bg-slate-50">

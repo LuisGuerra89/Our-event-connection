@@ -25,6 +25,7 @@ export function CreateSubscriptionPlanForm() {
     duration_days: "",
     auto_renewal: false,
     status: "active",
+    features: "",
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,14 +33,21 @@ export function CreateSubscriptionPlanForm() {
     setLoading(true)
 
     try {
+      // Parse features from textarea (one per line, non-empty)
+      const featuresArray = formData.features
+        .split('\n')
+        .map(f => f.trim())
+        .filter(f => f.length > 0)
+
       const payload = {
         name: formData.name,
         description: formData.description,
         plan_type: formData.plan_type,
         price: parseFloat(formData.price),
-        duration_days: formData.plan_type === "custom" ? parseInt(formData.duration_days) : null,
+        duration_days: formData.duration_days ? parseInt(formData.duration_days) : null,
         auto_renewal: formData.auto_renewal,
         status: formData.status,
+        features: featuresArray,
       }
 
       const response = await fetch("/api/admin/subscription-plans", {
@@ -132,20 +140,23 @@ export function CreateSubscriptionPlanForm() {
               </Select>
             </div>
 
-            {formData.plan_type === "custom" && (
-              <div className="space-y-2">
-                <Label htmlFor="duration_days">Duration (Days) *</Label>
-                <Input
-                  id="duration_days"
-                  type="number"
-                  min="1"
-                  value={formData.duration_days}
-                  onChange={(e) => setFormData({ ...formData, duration_days: e.target.value })}
-                  placeholder="e.g., 90"
-                  required={formData.plan_type === "custom"}
-                />
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="duration_days">Duration (Days) {formData.plan_type === "custom" && "*"}</Label>
+              <Input
+                id="duration_days"
+                type="number"
+                min="1"
+                value={formData.duration_days}
+                onChange={(e) => setFormData({ ...formData, duration_days: e.target.value })}
+                placeholder={formData.plan_type === "custom" ? "e.g., 90" : "Leave empty for unlimited duration"}
+                required={formData.plan_type === "custom"}
+              />
+              <p className="text-sm text-muted-foreground">
+                {formData.plan_type === "custom" 
+                  ? "Required for custom plans" 
+                  : "Optional. Leave empty for plans without duration limit (e.g., free plans)"}
+              </p>
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="price">Price (USD) *</Label>
@@ -173,6 +184,20 @@ export function CreateSubscriptionPlanForm() {
                 checked={formData.auto_renewal}
                 onCheckedChange={(checked) => setFormData({ ...formData, auto_renewal: checked })}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="features">Features (One per line)</Label>
+              <Textarea
+                id="features"
+                value={formData.features}
+                onChange={(e) => setFormData({ ...formData, features: e.target.value })}
+                placeholder="AI Notification Match&#10;Browse Profile&#10;Like Profile&#10;Send Messages"
+                rows={6}
+              />
+              <p className="text-sm text-muted-foreground">
+                Enter each feature on a new line. Empty lines will be ignored.
+              </p>
             </div>
 
             <div className="space-y-2">
