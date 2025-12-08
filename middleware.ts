@@ -6,7 +6,7 @@ import { cookies } from "next/headers"
 
 export async function middleware(request: NextRequest) {
   let response = await updateSession(request)
-  
+
   // Check if user is trying to access /dashboard routes
   if (request.nextUrl.pathname.startsWith('/dashboard')) {
     try {
@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
 
       // Get authenticated user
       const { data: { user } } = await supabase.auth.getUser()
-      
+
       if (user) {
         // Fetch user profile with role
         const { data: profile } = await supabase
@@ -56,5 +56,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|BingSiteAuth.xml|google.*\\.(?:xml|html)|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|BingSiteAuth.xml|google.*\\.(?:xml|html)|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webmanifest)$).*)"],
 }
