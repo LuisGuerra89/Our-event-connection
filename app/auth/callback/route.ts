@@ -45,14 +45,14 @@ export async function GET(request: Request) {
       if (user) {
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("questionnaire_completed, questionnaire_skipped, role_id, roles(role_name)")
+        .select("is_profile_complete, role_id, roles(role_name)")
         .eq("id", user.id)
         .maybeSingle()
 
       console.log("[v0] User profile retrieved:", { user_id: user.id, profile, error: profileError })
 
       // If user is admin or moderator, redirect to admin dashboard directly
-      const profileWithRole = profile as { questionnaire_completed: boolean; questionnaire_skipped: boolean; roles: { role_name: string } | null } | null
+      const profileWithRole = profile as { is_profile_complete: boolean; roles: { role_name: string } | null } | null
       const roleName = profileWithRole?.roles?.role_name
       
       if (profile && (roleName === "admin" || roleName === "moderator")) {
@@ -60,10 +60,10 @@ export async function GET(request: Request) {
         return NextResponse.redirect(new URL("/admin", request.url))
       }
 
-      // If profile is not complete (social login) or was skipped, redirect to login for new email signups
-      if (profile && (profile.questionnaire_completed === false || profile.questionnaire_skipped === true)) {
-        console.log("[v0] Profile incomplete or skipped, redirecting to /auth/login")
-        return NextResponse.redirect(new URL("/auth/login?message=Email confirmed successfully. Please log in.", request.url))
+      // If profile is not complete (social login), redirect to complete profile page
+      if (profile && profile.is_profile_complete === false) {
+        console.log("[v0] Profile incomplete, redirecting to /onboarding/complete-profile")
+        return NextResponse.redirect(new URL("/onboarding/complete-profile", request.url))
       }
 
         // Check if user has completed waiver
