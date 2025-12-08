@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { isAdmin } from "@/lib/auth-utils"
 import { createServerClient } from "@/lib/supabase/server"
-import { AdminEventList } from "@/components/admin/admin-event-list"
+import { AdminEventListWrapper } from "@/components/admin/admin-event-list-wrapper"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Plus } from "lucide-react"
@@ -34,7 +34,7 @@ export default async function AdminEventsPage() {
         </Link>
       </div>
 
-      <AdminEventList events={events || []} />
+      <AdminEventListWrapper events={events || []} />
     </div>
   )
 }
