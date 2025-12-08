@@ -68,7 +68,7 @@ export function UserMenu({ userName, userPhoto }: UserMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full">
-          <Avatar className="h-9 w-9 cursor-pointer">
+          <Avatar className="h-11 w-11 cursor-pointer border-2 border-red-500">
             {userPhoto ? (
               <AvatarImage src={userPhoto} alt={userName} />
             ) : (

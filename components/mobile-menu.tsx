@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Logo } from "@/components/logo"
 
 interface NavItem {
   href: string
@@ -36,10 +37,11 @@ export function MobileMenu({ isAuthenticated, navItems = [] }: MobileMenuProps) 
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-[280px] sm:w-[350px]">
-        <SheetHeader>
-          <SheetTitle>Menu</SheetTitle>
+        <SheetHeader className="mb-6">
+          <Logo className="h-16 w-auto" />
         </SheetHeader>
-        <nav className="flex flex-col gap-4 mt-8">
+        <div className="border-t mb-6" />
+        <nav className="flex flex-col gap-4">
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`)
             
