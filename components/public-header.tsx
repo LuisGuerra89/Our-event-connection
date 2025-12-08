@@ -52,20 +52,21 @@ export async function PublicHeader() {
   const navItems = allNavItems.filter((item) => activePages[item.pageKey] !== false)
 
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-1 flex items-center gap-2 md:gap-8 relative">
-        {/* Mobile Menu */}
-        <MobileMenu isAuthenticated={!!user} navItems={navItems} />
-        
-        <Logo className="hidden md:flex" />
+    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full overflow-hidden">
+      <div className="flex items-center justify-between gap-1 md:gap-8 py-1 px-2 md:px-4 relative h-auto md:container md:mx-auto md:py-2">
+        {/* Mobile Menu and Logo */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <MobileMenu isAuthenticated={!!user} navItems={navItems} />
+          <Logo className="hidden md:flex flex-shrink-0 md:py-1" />
+        </div>
         
         {/* Desktop Navigation - Centered */}
-        <div className="flex-1 flex justify-center">
+        <div className="hidden md:flex flex-1 justify-center min-w-0">
           <PublicHeaderNav navItems={navItems} />
         </div>
 
         {/* Auth Section */}
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-1 md:gap-4 flex-shrink-0">
           {user && profile ? (
             <>
               <ChatButton userId={user.id} />

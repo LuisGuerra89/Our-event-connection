@@ -3,6 +3,16 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 :root {
   /* Updated color palette to red/pink theme */
   --background: oklch(1 0 0);
