@@ -151,7 +151,7 @@ export function ChatWindow({ conversationId, currentUserId, otherUser, currentUs
                     if (payload.payload.sender_id !== currentUserId) {
                         setMessages(prev => prev.map(msg =>
                             msg.id === payload.payload.message_id
-                                ? { ...msg, message_text: '[message deleted]', message_type: 'deleted' }
+                                ? { ...msg, message_text: '[message deleted]' }
                                 : msg
                         ))
                     }
@@ -263,15 +263,14 @@ export function ChatWindow({ conversationId, currentUserId, otherUser, currentUs
         const { error } = await supabase
             .from('chat_messages')
             .update({
-                message_text: '[message deleted]',
-                message_type: 'deleted'
+                message_text: '[message deleted]'
             })
             .eq('id', messageId)
 
         if (!error) {
             setMessages(prev => prev.map(msg =>
                 msg.id === messageId
-                    ? { ...msg, message_text: '[message deleted]', message_type: 'deleted' }
+                    ? { ...msg, message_text: '[message deleted]' }
                     : msg
             ))
             setMessageToDelete(null)
@@ -417,7 +416,7 @@ export function ChatWindow({ conversationId, currentUserId, otherUser, currentUs
                                             </Avatar>
                                         )}
                                         <div className="flex flex-col gap-1">
-                                            {message.message_type === 'deleted' ? (
+                                            {message.message_text === '[message deleted]' ? (
                                                 <p className="text-sm italic text-muted-foreground">
                                                     Message deleted
                                                 </p>

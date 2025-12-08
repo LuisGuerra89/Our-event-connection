@@ -33,9 +33,16 @@ export function EventCategoriesSlider({ categories }: EventCategoriesSliderProps
   }
 
   useEffect(() => {
-    checkScrollability()
+    // Check scrollability after a short delay to ensure DOM is rendered
+    const timer = setTimeout(() => {
+      checkScrollability()
+    }, 100)
+    
     window.addEventListener("resize", checkScrollability)
-    return () => window.removeEventListener("resize", checkScrollability)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener("resize", checkScrollability)
+    }
   }, [])
 
   const scroll = (direction: "left" | "right") => {
@@ -52,13 +59,13 @@ export function EventCategoriesSlider({ categories }: EventCategoriesSliderProps
   }
 
   return (
-    <div className="relative group">
+    <div className="relative group -mx-4 md:mx-0">
       {/* Left Arrow */}
       {canScrollLeft && (
         <Button
           variant="outline"
           size="icon"
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity ml-4 md:ml-0"
           onClick={() => scroll("left")}
         >
           <ChevronLeft className="h-6 w-6" />
@@ -69,7 +76,7 @@ export function EventCategoriesSlider({ categories }: EventCategoriesSliderProps
       <div
         ref={scrollContainerRef}
         onScroll={checkScrollability}
-        className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4 mx-auto justify-center"
+        className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-4 md:px-0"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {categories.map((category) => (
@@ -113,7 +120,7 @@ export function EventCategoriesSlider({ categories }: EventCategoriesSliderProps
         <Button
           variant="outline"
           size="icon"
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity mr-4 md:mr-0"
           onClick={() => scroll("right")}
         >
           <ChevronRight className="h-6 w-6" />
