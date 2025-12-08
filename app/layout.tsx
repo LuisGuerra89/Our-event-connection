@@ -25,10 +25,13 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: '/favicon.ico', sizes: 'any', type: 'image/x-icon' },
       { url: '/favicon.png', sizes: '256x256', type: 'image/png' },
+      { url: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' },
       { url: '/icon-light-32x32.png', sizes: '32x32', type: 'image/png' },
     ],
     apple: '/apple-icon.png',
+    shortcut: '/favicon.ico',
   },
   manifest: '/site.webmanifest',
   openGraph: {
@@ -83,6 +86,9 @@ export default function RootLayout({
         <meta name="color-scheme" content="light dark" />
         <link rel="canonical" href="https://ourloveconnection.com" />
         <link rel="alternate" hrefLang="en" href="https://ourloveconnection.com" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
         
         {/* Google Analytics */}
         <Script 

@@ -59,6 +59,19 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: '/favicon.ico',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=604800, must-revalidate',
+          },
+          {
+            key: 'Content-Type',
+            value: 'image/x-icon',
+          },
+        ],
+      },
     ]
   },
   // Rewrites para mejorar crawlability
