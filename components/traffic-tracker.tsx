@@ -1,9 +1,21 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useTrafficSource } from '@/hooks/use-traffic-source'
 import { ReactNode } from 'react'
 
-export function TrafficTracker({ children }: { children: ReactNode }) {
+function TrafficTrackerContent() {
   useTrafficSource()
-  return <>{children}</>
+  return null
+}
+
+export function TrafficTracker({ children }: { children: ReactNode }) {
+  return (
+    <>
+      <Suspense fallback={null}>
+        <TrafficTrackerContent />
+      </Suspense>
+      {children}
+    </>
+  )
 }
