@@ -21,6 +21,7 @@ interface SubscriptionPlan {
   price: number
   duration_days: number | null
   auto_renewal: boolean
+  features?: string[]
   status: string
   stripe_product_id: string | null
   stripe_price_id: string | null
@@ -38,6 +39,7 @@ export function EditSubscriptionPlanForm({ plan }: EditSubscriptionPlanFormProps
     name: plan.name,
     description: plan.description || "",
     auto_renewal: plan.auto_renewal,
+    features: (plan.features || []).join("\n"),
     status: plan.status,
   })
 
@@ -46,10 +48,18 @@ export function EditSubscriptionPlanForm({ plan }: EditSubscriptionPlanFormProps
     setLoading(true)
 
     try {
+      const featuresArray = formData.features
+        .split('\n')
+        .map(f => f.trim())
+        .filter(f => f.length > 0)
+
       const response = await fetch(`/api/admin/subscription-plans/${plan.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          features: featuresArray,
+        }),
       })
 
       const data = await response.json()
@@ -140,6 +150,20 @@ export function EditSubscriptionPlanForm({ plan }: EditSubscriptionPlanFormProps
                 <Input value={plan.duration_days} disabled className="bg-muted" />
               </div>
             )}
+
+            <div className="space-y-2">
+              <Label htmlFor="features">Features</Label>
+              <Textarea
+                id="features"
+                value={formData.features}
+                onChange={(e) => setFormData({ ...formData, features: e.target.value })}
+                placeholder="AI Notification Match&#10;Browse Profile&#10;Like Profile"
+                rows={6}
+              />
+              <p className="text-sm text-muted-foreground">
+                Enter each feature on a new line. Empty lines will be ignored.
+              </p>
+            </div>
 
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">

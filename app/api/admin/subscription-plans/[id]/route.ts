@@ -47,7 +47,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     }
 
     const body = await request.json()
-    const { name, description, status, auto_renewal } = body
+    const { name, description, status, auto_renewal, features } = body
 
     // Update Stripe product if needed
     if (existingPlan.stripe_product_id) {
@@ -66,6 +66,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         description: description !== undefined ? description : existingPlan.description,
         status: status || existingPlan.status,
         auto_renewal: auto_renewal !== undefined ? auto_renewal : existingPlan.auto_renewal,
+        features: Array.isArray(features) ? features : existingPlan.features,
         updated_at: new Date().toISOString(),
       })
       .eq("id", params.id)

@@ -190,7 +190,9 @@ export function MembershipDetailCard({
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between mb-2">
-              <Badge variant="secondary">{getPlanTypeLabel(plan.plan_type)}</Badge>
+              <Badge variant="secondary">
+                {plan.price === 0 ? "Free" : getPlanTypeLabel(plan.plan_type)}
+              </Badge>
               {plan.auto_renewal && <Badge variant="outline" className="text-xs">Auto-Renew</Badge>}
             </div>
             <CardTitle className="text-2xl">{plan.name}</CardTitle>
@@ -208,13 +210,13 @@ export function MembershipDetailCard({
             </div>
 
             {plan.features && Array.isArray(plan.features) && plan.features.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-3">What's Included</h3>
-                <ul className="space-y-2">
+              <div className="space-y-3 pt-2 border-t">
+                <h3 className="font-semibold text-foreground">What's Included</h3>
+                <ul className="space-y-2.5">
                   {plan.features.map((feature: string, index: number) => (
-                    <li key={index} className="flex items-start gap-2 text-sm">
+                    <li key={index} className="flex items-start gap-2.5 text-sm text-muted-foreground">
                       <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span>{feature}</span>
+                      <span className="leading-relaxed">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -225,104 +227,118 @@ export function MembershipDetailCard({
 
         {/* Subscription Form or Status */}
         <Card>
-          <CardHeader>
-            <CardTitle>
-              {existingSubscription ? "Subscription Active" : "Subscribe Now"}
-            </CardTitle>
-            <CardDescription>
-              {existingSubscription
-                ? "Manage your active subscription"
-                : "Enter your payment details to subscribe"}
-            </CardDescription>
-          </CardHeader>
+            <CardHeader>
+              <CardTitle>
+                {existingSubscription ? "Subscription Active" : plan.price === 0 ? "Basic Plan" : "Subscribe Now"}
+              </CardTitle>
+              <CardDescription>
+                {existingSubscription
+                  ? "Manage your active subscription"
+                  : plan.price === 0
+                  ? "This is your default free plan"
+                  : "Enter your payment details to subscribe"}
+              </CardDescription>
+            </CardHeader>
 
-          <CardContent>
-            {existingSubscription ? (
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium">Status</p>
-                  <Badge variant="secondary" className="mt-1 capitalize">
-                    {existingSubscription.status}
-                  </Badge>
-                </div>
-
-                {existingSubscription.start_date && (
+            <CardContent>
+              {existingSubscription ? (
+                <div className="space-y-4">
                   <div>
-                    <p className="text-sm font-medium">Start Date</p>
+                    <p className="text-sm font-medium">Status</p>
+                    <Badge variant="secondary" className="mt-1 capitalize">
+                      {existingSubscription.status}
+                    </Badge>
+                  </div>
+
+                  {existingSubscription.start_date && (
+                    <div>
+                      <p className="text-sm font-medium">Start Date</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(existingSubscription.start_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+
+                  {existingSubscription.end_date && (
+                    <div>
+                      <p className="text-sm font-medium">End Date</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(existingSubscription.end_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-sm font-medium">Auto-Renewal</p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(existingSubscription.start_date).toLocaleDateString()}
+                      {existingSubscription.auto_renew ? "Enabled" : "Disabled"}
                     </p>
                   </div>
-                )}
 
-                {existingSubscription.end_date && (
-                  <div>
-                    <p className="text-sm font-medium">End Date</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(existingSubscription.end_date).toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
-
-                <div>
-                  <p className="text-sm font-medium">Auto-Renewal</p>
-                  <p className="text-sm text-muted-foreground">
-                    {existingSubscription.auto_renew ? "Enabled" : "Disabled"}
-                  </p>
-                </div>
-
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Your subscription will {existingSubscription.auto_renew ? "automatically renew" : "expire"}{" "}
-                    {existingSubscription.end_date &&
-                      `on ${new Date(existingSubscription.end_date).toLocaleDateString()}`}
-                  </AlertDescription>
-                </Alert>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                {isLoading && !clientSecret ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <span className="ml-2">Initializing checkout...</span>
-                  </div>
-                ) : clientSecret ? (
-                  <Elements
-                    stripe={stripePromise}
-                    options={{
-                      clientSecret,
-                      appearance: {
-                        theme: "stripe",
-                      },
-                    }}
-                  >
-                    <StripeCheckoutForm
-                      clientSecret={clientSecret}
-                      planName={plan.name}
-                      planPrice={parseFloat(plan.price)}
-                      onSuccess={handlePaymentSuccess}
-                      onError={handlePaymentError}
-                    />
-                  </Elements>
-                ) : (
-                  <Alert variant="destructive">
+                  <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      Failed to initialize payment. Please refresh the page.
+                      Your subscription will {existingSubscription.auto_renew ? "automatically renew" : "expire"}{" "}
+                      {existingSubscription.end_date &&
+                        `on ${new Date(existingSubscription.end_date).toLocaleDateString()}`}
                     </AlertDescription>
                   </Alert>
-                )}
-              </div>
-            )}
-          </CardContent>
+                </div>
+              ) : plan.price === 0 ? (
+                <div className="space-y-4">
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      This is your default free plan. You automatically have access to all features.
+                    </AlertDescription>
+                  </Alert>
+                  <p className="text-sm text-muted-foreground">
+                    You can upgrade to a paid plan anytime to unlock premium features.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {isLoading && !clientSecret ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <span className="ml-2">Initializing checkout...</span>
+                    </div>
+                  ) : clientSecret ? (
+                    <Elements
+                      stripe={stripePromise}
+                      options={{
+                        clientSecret,
+                        appearance: {
+                          theme: "stripe",
+                        },
+                      }}
+                    >
+                      <StripeCheckoutForm
+                        clientSecret={clientSecret}
+                        planName={plan.name}
+                        planPrice={parseFloat(plan.price)}
+                        onSuccess={handlePaymentSuccess}
+                        onError={handlePaymentError}
+                      />
+                    </Elements>
+                  ) : (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Failed to initialize payment. Please refresh the page.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              )}
+            </CardContent>
 
           <CardFooter>
             {existingSubscription && (
