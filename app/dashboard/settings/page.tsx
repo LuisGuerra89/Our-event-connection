@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog"
 import { ChangePasswordForm } from "@/components/settings/change-password-form"
+import { CancelSubscriptionButton } from "@/components/cancel-subscription-button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { User, Mail, Calendar, CreditCard, AlertTriangle, Lock } from "lucide-react"
@@ -23,17 +24,31 @@ export default async function SettingsPage() {
         .single()
 
     // Get active subscription
-    const { data: subscription } = await supabase
+    const { data: subscription, error: subError } = await supabase
         .from("user_subscriptions")
         .select(`
-      *,
-      plan:subscription_plans(name, price, billing_cycle)
+      id,
+      user_id,
+      plan_id,
+      start_date,
+      end_date,
+      auto_renew,
+      status,
+      stripe_subscription_id,
+      plan:subscription_plans(id, name, price, plan_type, duration_days)
     `)
         .eq("user_id", user.id)
         .eq("status", "active")
         .maybeSingle()
 
     const hasActiveSubscription = !!subscription
+
+    console.log("Settings page - Subscription data:", {
+        userId: user.id,
+        subscription,
+        subError,
+        hasActiveSubscription,
+    })
 
     return (
         <div className="container mx-auto py-8 max-w-4xl">
@@ -107,24 +122,58 @@ export default async function SettingsPage() {
                         <CardContent className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium">{subscription.plan?.name}</p>
+                                    <p className="text-sm font-medium">{(subscription.plan as any)?.name}</p>
                                     <p className="text-sm text-muted-foreground">
-                                        ${subscription.plan?.price} / {subscription.plan?.billing_cycle}
+                                        ${(subscription.plan as any)?.price} / month
                                     </p>
                                 </div>
-                                <Badge variant="default">Active</Badge>
+                                <Badge variant="default" className="bg-green-600">Active</Badge>
+                            </div>
+
+                            <Separator />
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-sm font-medium">Start Date</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {subscription.start_date
+                                            ? new Date(subscription.start_date).toLocaleDateString()
+                                            : "N/A"}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium">End Date / Renewal</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {subscription.start_date ? (() => {
+                                            const startDate = new Date(subscription.start_date)
+                                            // If plan has duration_days, add it to start_date
+                                            // Otherwise, assume monthly (30 days)
+                                            const durationDays = (subscription.plan as any)?.duration_days || 30
+                                            const renewalDate = new Date(startDate)
+                                            renewalDate.setDate(renewalDate.getDate() + durationDays)
+                                            return renewalDate.toLocaleDateString()
+                                        })() : "N/A"}
+                                    </p>
+                                </div>
                             </div>
 
                             <Separator />
 
                             <div>
-                                <p className="text-sm font-medium">Next Billing Date</p>
-                                <p className="text-sm text-muted-foreground">
-                                    {subscription.end_date
-                                        ? new Date(subscription.end_date).toLocaleDateString()
-                                        : "N/A"}
-                                </p>
+                                <p className="text-sm font-medium mb-2">Auto-Renewal Status</p>
+                                <Badge variant={subscription.auto_renew ? "default" : "secondary"}>
+                                    {subscription.auto_renew ? "Enabled" : "Disabled"}
+                                </Badge>
                             </div>
+
+                            {subscription.auto_renew && (
+                                <div className="mt-4">
+                                    <CancelSubscriptionButton
+                                        subscriptionId={subscription.id}
+                                        planName={(subscription.plan as any)?.name || "Subscription"}
+                                    />
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 )}
