@@ -17,12 +17,12 @@ import { SchemaOrg, organizationSchema } from "@/components/schema-org"
 import { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: 'Our Love Connection - Meet Singles Through Social Events',
-  description: 'Discover authentic connections through curated social events. Join Our Love Connection to meet like-minded singles at meaningful gatherings and networking events.',
-  keywords: 'dating events, singles events, meet singles, social dating, event dating, speed dating, networking events, singles networking',
+  title: 'Our Love Connection - It all starts with one Event to find a perfect Match',
+  description: 'It all starts with one Event to find a perfect Match. Discover authentic connections through curated social events with Our Love Connection.',
+  keywords: 'dating events, singles events, meet singles, social dating, event dating, speed dating, networking events, singles networking, find love',
   openGraph: {
-    title: 'Our Love Connection - Meet Singles Through Social Events',
-    description: 'Discover authentic connections through curated social events. Join Our Love Connection today.',
+    title: 'Our Love Connection - It all starts with one Event to find a perfect Match',
+    description: 'It all starts with one Event to find a perfect Match. Join Our Love Connection today.',
     url: 'https://ourloveconnection.com',
     type: 'website',
     images: [
@@ -76,7 +76,7 @@ export default async function HomePage() {
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto mb-12">
               <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance">
-                Find Your Perfect Match at Amazing Events
+                It all starts with one Event to find a perfect Match
               </h1>
               <p className="text-xl text-muted-foreground mb-8 text-pretty">
                 Join curated social events and connect with compatible singles based on your preferences. Real

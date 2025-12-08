@@ -55,7 +55,7 @@ export async function Footer() {
           <div className="col-span-2 md:col-span-1 lg:col-span-2">
             <Logo />
             <p className="text-sm text-muted-foreground mt-4 max-w-md">
-              Find your perfect match at amazing events. Join thousands of singles attending our curated social events
+              It all starts with one Event to find a perfect Match. Join thousands of singles attending our curated social events
               and connect with compatible people based on your preferences.
             </p>
             
