@@ -2,9 +2,12 @@ import { redirect } from "next/navigation"
 import { isAdmin, hasPrivilege, getCurrentUser } from "@/lib/auth-utils"
 import { createServerClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Calendar, DollarSign, Ticket, UserCircle2, CalendarCheck, CalendarClock, CalendarX } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Users, Calendar, DollarSign, Ticket, UserCircle2, CalendarCheck, CalendarClock, CalendarX, BarChart3 } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
+import { TrafficAnalyticsPanel } from "@/components/admin/traffic-analytics-panel"
+import { RegistrationTrendsChart } from "@/components/admin/registration-trends-chart"
 
 export default async function AdminDashboard() {
   const admin = await isAdmin()
@@ -103,11 +106,23 @@ export default async function AdminDashboard() {
         <p className="text-muted-foreground">Overview of platform metrics and statistics</p>
       </div>
 
-      {/* Events Summary */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            <span>Overview</span>
+          </TabsTrigger>
+          <TabsTrigger value="traffic" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            <span>Traffic Analytics</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
       <div className="mb-6">
         <h2 className="text-2xl font-semibold mb-4">Events Summary</h2>
         <div className="grid gap-4 md:grid-cols-3">
-          <Link href="/admin/events">
+          <Link href="/admin/events?tab=upcoming">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
@@ -120,7 +135,7 @@ export default async function AdminDashboard() {
             </Card>
           </Link>
 
-          <Link href="/admin/events">
+          <Link href="/admin/events?tab=ongoing">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Ongoing Events</CardTitle>
@@ -133,7 +148,7 @@ export default async function AdminDashboard() {
             </Card>
           </Link>
 
-          <Link href="/admin/events">
+          <Link href="/admin/events?tab=past">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Past Events</CardTitle>
@@ -148,76 +163,14 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* Customer Registrations */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold mb-4">Customer Registrations</h2>
-        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center justify-between">
-                Today
-                <Badge variant="outline">{customersToday}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{customersToday}</div>
-              <p className="text-xs text-muted-foreground">New registrations today</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center justify-between">
-                This Week
-                <Badge variant="outline">{customersThisWeek}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{customersThisWeek}</div>
-              <p className="text-xs text-muted-foreground">Last 7 days</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center justify-between">
-                This Month
-                <Badge variant="outline">{customersThisMonth}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{customersThisMonth}</div>
-              <p className="text-xs text-muted-foreground">Last 30 days</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center justify-between">
-                Half Year
-                <Badge variant="outline">{customersHalfYear}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{customersHalfYear}</div>
-              <p className="text-xs text-muted-foreground">Last 6 months</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center justify-between">
-                This Year
-                <Badge variant="outline">{customersThisYear}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{customersThisYear}</div>
-              <p className="text-xs text-muted-foreground">Last 12 months</p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      {/* Customer Registrations Chart */}
+      <RegistrationTrendsChart
+        customersToday={customersToday}
+        customersThisWeek={customersThisWeek}
+        customersThisMonth={customersThisMonth}
+        customersHalfYear={customersHalfYear}
+        customersThisYear={customersThisYear}
+      />
 
       {/* Key Metrics */}
       <div className="mb-6">
@@ -328,6 +281,12 @@ export default async function AdminDashboard() {
           </Card>
         </div>
       </div>
+        </TabsContent>
+
+        <TabsContent value="traffic" className="space-y-6">
+          <TrafficAnalyticsPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
