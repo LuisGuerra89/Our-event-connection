@@ -11,9 +11,9 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://ourloveconnection.com'),
-  title: 'Our Love Connection - Connect Through Shared Experiences',
-  description: 'Meet meaningful connections through carefully curated social events. Our Love Connection brings singles together for unforgettable experiences.',
-  keywords: 'dating events, singles networking, social events dating, meet singles, dating events near me, event-based dating, connections',
+  title: 'Our Love Connection - It all starts with one Event to find a perfect Match',
+  description: 'It all starts with one Event to find a perfect Match. Meet meaningful connections through carefully curated social events at Our Love Connection.',
+  keywords: 'dating events, singles networking, social events dating, meet singles, dating events near me, event-based dating, connections, find love',
   applicationName: 'Our Love Connection',
   authors: [{ name: 'Our Love Connection Team' }],
   creator: 'Our Love Connection',
@@ -32,8 +32,8 @@ export const metadata: Metadata = {
   },
   manifest: '/site.webmanifest',
   openGraph: {
-    title: 'Our Love Connection - Connect Through Shared Experiences',
-    description: 'Meet meaningful connections through carefully curated social events',
+    title: 'Our Love Connection - It all starts with one Event to find a perfect Match',
+    description: 'It all starts with one Event to find a perfect Match. Meet meaningful connections through carefully curated social events',
     url: 'https://ourloveconnection.com',
     siteName: 'Our Love Connection',
     images: [
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Our Love Connection - Dating through Events',
+        alt: 'Our Love Connection - It all starts with one Event to find a perfect Match',
         type: 'image/png',
       },
     ],

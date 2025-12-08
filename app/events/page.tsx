@@ -10,9 +10,9 @@ import { PublicPageLayout } from "@/components/public-page-layout"
 import { eventSchema } from "@/components/schema-org"
 
 export const metadata: Metadata = {
-  title: 'Social Events for Singles | Our Love Connection',
-  description: 'Discover and attend curated social events designed for singles to meet and connect. Browse upcoming events, networking opportunities, and group activities in your area.',
-  keywords: 'social events for singles, dating events, networking events, singles gatherings, group activities, speed dating events, social meetups',
+  title: 'Social Events for Singles - It all starts with one Event to find a perfect Match',
+  description: 'Discover and attend curated social events designed for singles to meet and connect. It all starts with one Event to find a perfect Match. Browse upcoming events in your area.',
+  keywords: 'social events for singles, dating events, networking events, singles gatherings, group activities, speed dating events, social meetups, find love',
   openGraph: {
     title: 'Social Events for Singles | Our Love Connection',
     description: 'Discover and attend curated social events designed for singles to meet and connect.',
