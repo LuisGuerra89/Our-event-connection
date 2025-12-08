@@ -122,7 +122,7 @@ export default async function AdminDashboard() {
       <div className="mb-6">
         <h2 className="text-2xl font-semibold mb-4">Events Summary</h2>
         <div className="grid gap-4 md:grid-cols-3">
-          <Link href="/admin/events">
+          <Link href="/admin/events?tab=upcoming">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
@@ -135,7 +135,7 @@ export default async function AdminDashboard() {
             </Card>
           </Link>
 
-          <Link href="/admin/events">
+          <Link href="/admin/events?tab=ongoing">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Ongoing Events</CardTitle>
@@ -148,7 +148,7 @@ export default async function AdminDashboard() {
             </Card>
           </Link>
 
-          <Link href="/admin/events">
+          <Link href="/admin/events?tab=past">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Past Events</CardTitle>
