@@ -27,7 +27,7 @@ export async function MatchmakingHomeSection() {
   if (!user) {
     // Show info section for non-authenticated users
     return (
-      <section className="py-16 bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 dark:from-pink-950/20 dark:via-purple-950/20 dark:to-rose-950/20">
+      <section className="py-16 bg-transparent">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 mb-4">
@@ -101,7 +101,7 @@ export async function MatchmakingHomeSection() {
   // If no preferences, show message to update profile
   if (!preferences) {
     return (
-      <section className="py-16 bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 dark:from-pink-950/20 dark:via-purple-950/20 dark:to-rose-950/20">
+      <section className="py-16 bg-transparent">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto">
             <Sparkles className="h-16 w-16 text-pink-500 mx-auto mb-6" />
@@ -229,7 +229,7 @@ export async function MatchmakingHomeSection() {
 
   if (matchUsers.length === 0) {
     return (
-      <section className="py-16 bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 dark:from-pink-950/20 dark:via-purple-950/20 dark:to-rose-950/20">
+      <section className="py-16 bg-transparent">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto">
             <Heart className="h-16 w-16 text-pink-500 mx-auto mb-6" />
@@ -249,7 +249,7 @@ export async function MatchmakingHomeSection() {
   }
 
   return (
-    <section className="py-16 bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 dark:from-pink-950/20 dark:via-purple-950/20 dark:to-rose-950/20">
+    <section className="py-16 bg-transparent">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 mb-4">

@@ -10,6 +10,7 @@ import { EventSearchBar } from "@/components/event-search-bar"
 import { RotatingHeroBackground } from "@/components/rotating-hero-background"
 import { EventsNearYou } from "@/components/events-near-you"
 import { AffiliatesGrid } from "@/components/affiliates-grid"
+import { HomeAnimatedBackground } from "@/components/home-animated-background"
 import { DomesticEventsSection } from "@/components/domestic-events-section"
 import { UpcomingEventsPagination } from "@/components/upcoming-events-pagination"
 import { MatchmakingHomeSection } from "@/components/matchmaking-home-section"
@@ -66,11 +67,12 @@ export default async function HomePage() {
   const internationalEvents = events?.filter(event => event.location_country && event.location_country !== 'USA').slice(0, 6) || []
 
   return (
-    <div className="min-h-svh bg-background">
+    <div className="min-h-svh bg-background relative">
       <SchemaOrg data={organizationSchema} />
+      <HomeAnimatedBackground />
       <PublicHeader />
 
-      <main className="pt-16 md:pt-20">
+      <main className="pt-16 md:pt-20 relative z-10">
         {/* Hero Section with Search Bar and Rotating Background */}
         <RotatingHeroBackground>
           <div className="container mx-auto px-4">
