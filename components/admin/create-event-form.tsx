@@ -356,9 +356,30 @@ export default function CreateEventForm() {
       console.log("Event Status Value:", eventData.status)
       console.log("Full Event Data:", eventData)
 
-      const { error } = await supabase.from("events").insert([eventData])
+      const { data: insertedEvent, error } = await supabase
+        .from("events")
+        .insert([eventData])
+        .select()
 
       if (error) throw error
+
+      // Also create mapping in event_category_mapping if category is selected
+      if (selectedCategory && insertedEvent && insertedEvent.length > 0) {
+        const eventId = insertedEvent[0].id
+        const { error: mappingError } = await supabase
+          .from("event_category_mapping")
+          .insert([
+            {
+              event_id: eventId,
+              category_id: selectedCategory,
+            },
+          ])
+
+        if (mappingError) {
+          console.error("Error creating event category mapping:", mappingError)
+          // Don't throw, just log since the event was created successfully
+        }
+      }
 
       toast({
         title: "Success",

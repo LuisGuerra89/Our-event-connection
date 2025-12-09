@@ -40,52 +40,54 @@ export async function PublicHeader() {
 
   // Define nav items with their page keys
   const allNavItems = [
-    { href: "/events", label: "Events", pageKey: "events" },
-    { href: "/matchmaking", label: "Matchmaking", pageKey: "matchmaking" },
-    { href: "/membership", label: "Membership", pageKey: "membership" },
-    { href: "/affiliates", label: "Affiliates", pageKey: "affiliates" },
-    { href: "/about", label: "About Us", pageKey: "about_us" },
-    { href: "/contact", label: "Contact Us", pageKey: "contact_us" },
+    { href: "/categories/after-work-activities", label: "After Work Activities", pageKey: "after_work_activities" },
+    { href: "/categories/extreme-sports", label: "Extreme Sports", pageKey: "extreme_sports" },
+    { href: "/categories/water-sports", label: "Water Sports", pageKey: "water_sports" },
+    { href: "/categories/weekend-activities", label: "Weekend Activities", pageKey: "weekend_activities" },
+    { href: "/categories/winter-sports", label: "Winter Sports", pageKey: "winter_sports" },
+    { href: "/categories/travel", label: "Travel – Domestic / International", pageKey: "travel" },
   ]
 
   // Filter to only active pages (default to true if not in CMS)
   const navItems = allNavItems.filter((item) => activePages[item.pageKey] !== false)
 
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full overflow-hidden">
-      <div className="flex items-center justify-between gap-1 md:gap-8 py-1 px-2 md:px-4 relative h-auto md:container md:mx-auto md:py-2">
-        {/* Mobile Menu and Logo */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <MobileMenu isAuthenticated={!!user} navItems={navItems} />
-          <Logo className="hidden md:flex flex-shrink-0 md:py-1" />
-        </div>
-        
-        {/* Desktop Navigation - Centered */}
-        <div className="hidden md:flex flex-1 justify-center min-w-0">
-          <PublicHeaderNav navItems={navItems} />
-        </div>
+    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full">
+      <div className="mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-3 md:gap-4">
+          {/* Logo and Mobile Menu */}
+          <div className="flex items-center gap-1 flex-shrink-0 min-w-fit">
+            <MobileMenu isAuthenticated={!!user} navItems={navItems} />
+            <Logo className="hidden md:flex flex-shrink-0 h-9 md:h-10" />
+          </div>
+          
+          {/* Desktop Navigation - Centered and expanded */}
+          <div className="hidden md:flex flex-1 justify-center min-w-0">
+            <PublicHeaderNav navItems={navItems} />
+          </div>
 
-        {/* Auth Section */}
-        <div className="flex items-center gap-1 md:gap-4 flex-shrink-0">
-          {user && profile ? (
-            <>
-              <ChatButton userId={user.id} />
-              <NotificationBell userId={user.id} />
-              <UserMenu
-                userName={profile.full_name || user.email || "User"}
-                userPhoto={profile.profile_image_url || profile.profile_photo_url}
-              />
-            </>
-          ) : (
-            <>
-              <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
-                <Link href="/auth/login">Sign In</Link>
-              </Button>
-              <Button size="sm" asChild className="hidden sm:flex">
-                <Link href="/auth/sign-up">Get Started</Link>
-              </Button>
-            </>
-          )}
+          {/* Auth Section */}
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-2 lg:gap-3 flex-shrink-0 min-w-fit">
+            {user && profile ? (
+              <>
+                <ChatButton userId={user.id} />
+                <NotificationBell userId={user.id} />
+                <UserMenu
+                  userName={profile.full_name || user.email || "User"}
+                  userPhoto={profile.profile_image_url || profile.profile_photo_url}
+                />
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
+                  <Link href="/auth/login">Sign In</Link>
+                </Button>
+                <Button size="sm" asChild className="hidden sm:flex">
+                  <Link href="/auth/sign-up">Get Started</Link>
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </header>

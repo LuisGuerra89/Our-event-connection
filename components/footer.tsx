@@ -29,10 +29,12 @@ export async function Footer() {
       { label: "How It Works", href: "/how-it-works", pageKey: "how_it_works" },
       { label: "Pricing", href: "/pricing", pageKey: "pricing" },
       { label: "Contact Us", href: "/contact", pageKey: "contact_us" },
+      { label: "Affiliates", href: "/affiliates", pageKey: "affiliates" },
     ],
     events: [
       { label: "All Events", href: "/events", pageKey: "events" },
       { label: "Membership", href: "/membership", pageKey: "membership" },
+      { label: "Matchmaking", href: "/matchmaking", pageKey: "matchmaking" },
     ],
     legal: [
       { label: "Privacy Policy", href: "/privacy", pageKey: "privacy_policy" },
