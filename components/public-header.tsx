@@ -52,7 +52,7 @@ export async function PublicHeader() {
   const navItems = allNavItems.filter((item) => activePages[item.pageKey] !== false)
 
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
       <div className="mx-auto px-2 sm:px-3 md:px-4 py-4 sm:py-5 md:py-6">
         <div className="flex items-center justify-between gap-1.5 sm:gap-3 md:gap-4">
           {/* Logo and Mobile Menu */}

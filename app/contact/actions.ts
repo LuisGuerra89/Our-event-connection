@@ -52,6 +52,7 @@ export async function submitContactForm(formData: FormData) {
   const email = formData.get("email") as string
   const subject = (formData.get("subject") as string) || "No Subject"
   const message = formData.get("message") as string
+  const suggestEvent = formData.get("suggest_event") === "on"
 
   // Rate limiting: Check if user has sent a message in the last 5 minutes
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
@@ -73,6 +74,7 @@ export async function submitContactForm(formData: FormData) {
     email,
     subject,
     message,
+    suggest_event: suggestEvent,
     status: "new",
   })
 
@@ -81,55 +83,6 @@ export async function submitContactForm(formData: FormData) {
     redirect("/contact?error=Failed to submit form")
   }
 
-  // Send emails using SMTP settings
-  try {
-    const smtpSettings = await getSMTPSettings()
-    
-    if (!smtpSettings?.host || !smtpSettings?.auth?.user || !smtpSettings?.auth?.pass) {
-      console.warn("SMTP settings incomplete, skipping email notification")
-      redirect("/contact/success")
-    }
-
-    const transporter = nodemailer.createTransport({
-      host: smtpSettings.host,
-      port: smtpSettings.port,
-      secure: smtpSettings.secure,
-      auth: smtpSettings.auth,
-      tls: {
-        rejectUnauthorized: false,
-      },
-    })
-
-    // Send email to admin
-    await transporter.sendMail({
-      from: smtpSettings.from_email,
-      to: "admin@ourloveconnection.com",
-      subject: `New Contact Form Submission: ${subject}`,
-      html: `
-        <h2>New Contact Form Submission</h2>
-        <p><strong>From:</strong> ${name} (${email})</p>
-        <p><strong>Subject:</strong> ${subject}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message.replace(/\n/g, "<br>")}</p>
-      `,
-    })
-
-    // Load and send confirmation email using template
-    const confirmationTemplate = loadEmailTemplate("contact-confirmation-email", {
-      USER_NAME: name,
-      USER_MESSAGE: message,
-    })
-
-    await transporter.sendMail({
-      from: smtpSettings.from_email,
-      to: email,
-      subject: "We received your message - Our Love Connection",
-      html: confirmationTemplate,
-    })
-  } catch (emailError) {
-    console.error("Email sending error:", emailError)
-    // Don't fail the form submission if email fails
-  }
-
+  // Redirect to success page
   redirect("/contact/success")
 }

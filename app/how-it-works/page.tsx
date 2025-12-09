@@ -46,30 +46,28 @@ export default async function HowItWorksPage() {
   return (
     <PublicPageLayout>
       {/* Hero Banner */}
-      <section className="relative bg-gradient-to-b from-primary/10 via-primary/5 to-background py-20 md:py-32">
-        <div className="container mx-auto px-4">
+      <section 
+        className="relative bg-cover bg-center bg-no-repeat py-20 md:py-32"
+        style={{
+          backgroundImage: `url('/how-it-works.jpg')`
+        }}
+      >
+        {/* Overlays for text readability */}
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/30" />
+        
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance text-white drop-shadow-lg">
               {content?.title || "How Our Love Connection Works - Your Guide to Finding Love"}
             </h1>
             {content?.subtitle && (
-              <p className="text-xl md:text-2xl text-muted-foreground text-pretty">
+              <p className="text-xl md:text-2xl text-white/90 text-pretty drop-shadow-md">
                 {content.subtitle}
               </p>
             )}
           </div>
         </div>
-        
-        {/* Optional Banner Image */}
-        {content?.banner_image && (
-          <div className="absolute inset-0 -z-10 opacity-20">
-            <img 
-              src={content.banner_image} 
-              alt="How It Works Banner" 
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
       </section>
 
       {/* Step-by-Step Informational Section with HTML Support */}

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import { PublicPageLayout } from "@/components/public-page-layout"
+import { CategoryHeroBanner } from "@/components/category-hero-banner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { EventList } from "@/components/event-list"
@@ -68,13 +69,13 @@ export default async function WeekendActivitiesPage() {
 
   return (
     <PublicPageLayout>
+      <CategoryHeroBanner
+        categorySlug="weekend-activities"
+        title="Weekend Activities"
+        description="Discover fun weekend activities and events designed for singles to meet and connect."
+      />
+      
       <div className="w-full max-w-4xl mx-auto px-4 py-8 sm:py-12 md:py-16">
-        <div className="text-center mb-8 sm:mb-12">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">Weekend Activities</h1>
-          <p className="text-base sm:text-lg md:text-xl text-muted-foreground">
-            Explore weekend activities and events perfect for meeting other singles who enjoy similar hobbies and interests.
-          </p>
-        </div>
 
         {events.length > 0 ? (
           <div className="mb-12">

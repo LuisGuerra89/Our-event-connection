@@ -80,11 +80,27 @@ export default async function FAQPage() {
           }),
         }}
       />
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">{content?.title || "Frequently Asked Questions - Get Answers About Our Love Connection"}</h1>
-          <p className="text-xl text-muted-foreground">Find comprehensive answers to common questions about our platform, events, and membership</p>
+      
+      {/* Hero Banner */}
+      <section 
+        className="relative bg-cover bg-center bg-no-repeat py-20 md:py-32"
+        style={{
+          backgroundImage: `url('/faq.jpg')`
+        }}
+      >
+        {/* Overlays for text readability */}
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/30" />
+        
+        <div className="container mx-auto px-4 relative z-10 max-w-4xl">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold mb-4 text-white drop-shadow-lg">{content?.title || "Frequently Asked Questions - Get Answers About Our Love Connection"}</h1>
+            <p className="text-xl text-white/90 drop-shadow-md">Find comprehensive answers to common questions about our platform, events, and membership</p>
+          </div>
         </div>
+      </section>
+
+      <div className="container mx-auto px-4 py-16 max-w-4xl">
 
         {htmlContent && (
           <article className="prose prose-lg dark:prose-invert mx-auto mb-8">
