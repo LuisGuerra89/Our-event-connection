@@ -9,7 +9,7 @@ import { HeroEventsCarousel } from "@/components/hero-events-carousel"
 import { EventSearchBar } from "@/components/event-search-bar"
 import { RotatingHeroBackground } from "@/components/rotating-hero-background"
 import { EventsNearYou } from "@/components/events-near-you"
-import { AffiliatesSlider } from "@/components/affiliates-slider"
+import { AffiliatesGrid } from "@/components/affiliates-grid"
 import { DomesticEventsSection } from "@/components/domestic-events-section"
 import { UpcomingEventsPagination } from "@/components/upcoming-events-pagination"
 import { MatchmakingHomeSection } from "@/components/matchmaking-home-section"
@@ -167,15 +167,7 @@ export default async function HomePage() {
 
         {/* Affiliates Showcase */}
         {affiliates && affiliates.length > 0 && (
-          <section className="py-16 bg-background">
-            <div className="container mx-auto px-4">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold mb-4">Our Partners & Affiliates</h2>
-                <p className="text-muted-foreground">Trusted partners making your events extraordinary</p>
-              </div>
-              <AffiliatesSlider affiliates={affiliates} />
-            </div>
-          </section>
+          <AffiliatesGrid affiliates={affiliates} />
         )}
       </main>
 
