@@ -7,7 +7,6 @@ import { PublicHeader } from "@/components/public-header"
 import { Footer } from "@/components/footer"
 import { FeaturedEventsCarousel } from "@/components/featured-events-carousel"
 import { EventSearchBar } from "@/components/event-search-bar"
-import { EventCategoriesSlider } from "@/components/event-categories-slider"
 import { EventsNearYou } from "@/components/events-near-you"
 import { AffiliatesSlider } from "@/components/affiliates-slider"
 import { DomesticEventsSection } from "@/components/domestic-events-section"
@@ -108,19 +107,6 @@ export default async function HomePage() {
                 <p className="text-muted-foreground">Don't miss these extreme and exciting events</p>
               </div>
               <FeaturedEventsCarousel events={carouselEvents} />
-            </div>
-          </section>
-        )}
-
-        {/* Event Categories Slider */}
-        {allCategories && allCategories.length > 0 && (
-          <section className="py-16 bg-muted/30">
-            <div className="container mx-auto px-4">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold mb-4">Event Categories</h2>
-                <p className="text-muted-foreground">Explore events by category</p>
-              </div>
-              <EventCategoriesSlider categories={allCategories} />
             </div>
           </section>
         )}
