@@ -53,7 +53,7 @@ export async function PublicHeader() {
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full">
-      <div className="mx-auto px-2 sm:px-3 md:px-4 py-2 sm:py-3">
+      <div className="mx-auto px-2 sm:px-3 md:px-4 py-4 sm:py-5 md:py-6">
         <div className="flex items-center justify-between gap-1.5 sm:gap-3 md:gap-4">
           {/* Logo and Mobile Menu */}
           <div className="flex items-center gap-1 flex-shrink-0 min-w-fit">
