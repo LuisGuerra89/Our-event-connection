@@ -5,8 +5,29 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get("code")
   const ref = requestUrl.searchParams.get("ref") // Get referral code from URL
+  const error = requestUrl.searchParams.get("error")
+  const errorCode = requestUrl.searchParams.get("error_code")
+  const errorDescription = requestUrl.searchParams.get("error_description")
 
-  console.log("[v0] Auth callback received, code:", code ? "present" : "missing", "referral:", ref || "none")
+  console.log("[v0] Auth callback received, code:", code ? "present" : "missing", "referral:", ref || "none", "error:", error, "error_code:", errorCode)
+
+  // Handle OAuth/OTP errors
+  if (error || errorCode) {
+    console.log("[v0] Authentication error detected:", { error, errorCode, errorDescription })
+    
+    // For OTP/email verification errors, redirect to login to resend email
+    // instead of signup, since user likely already signed up
+    if (errorCode === "otp_expired" || errorCode === "access_denied") {
+      console.log("[v0] Token expired, redirecting to login to resend email")
+      return NextResponse.redirect(new URL(`/auth/login?show_resend=true&token_expired=true`, request.url))
+    }
+    
+    // For other errors, redirect to signup with error info
+    const errorParams = new URLSearchParams()
+    if (errorCode) errorParams.append("error_code", errorCode)
+    if (errorDescription) errorParams.append("error_description", errorDescription)
+    return NextResponse.redirect(new URL(`/auth/sign-up?${errorParams.toString()}`, request.url))
+  }
 
   if (code) {
     const supabase = await createServerClient()
@@ -16,7 +37,7 @@ export async function GET(request: Request) {
 
       if (error) {
         console.log("[v0] Error exchanging code for session:", error.message)
-        return NextResponse.redirect(new URL("/auth/error", request.url))
+        return NextResponse.redirect(new URL("/auth/error?error=code_exchange_failed", request.url))
       }
 
       console.log("[v0] Successfully exchanged code for session")
