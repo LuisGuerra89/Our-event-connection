@@ -18,7 +18,7 @@ export function PublicHeaderNav({ navItems = [] }: PublicHeaderNavProps) {
   const pathname = usePathname()
 
   return (
-    <nav className="hidden md:flex items-center gap-8">
+    <nav className="flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4 justify-center flex-wrap">
       {navItems.map((item) => {
         const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`)
         
@@ -27,9 +27,9 @@ export function PublicHeaderNav({ navItems = [] }: PublicHeaderNavProps) {
             key={item.href}
             href={item.href}
             className={cn(
-              "text-base font-semibold transition-colors relative",
+              "text-xs sm:text-sm md:text-xs lg:text-sm font-medium transition-colors relative whitespace-nowrap px-1.5 sm:px-2.5 py-1 rounded hover:bg-muted",
               isActive 
-                ? "text-primary after:absolute after:bottom-[-8px] after:left-0 after:right-0 after:h-0.5 after:bg-primary" 
+                ? "text-primary after:absolute after:bottom-[-12px] after:left-0 after:right-0 after:h-0.5 after:bg-primary" 
                 : "text-muted-foreground hover:text-primary"
             )}
           >

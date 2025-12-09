@@ -38,6 +38,7 @@ export function MobileMenu({ isAuthenticated, navItems = [] }: MobileMenuProps) 
       </SheetTrigger>
       <SheetContent side="left" className="w-[280px] sm:w-[350px]">
         <SheetHeader className="mb-6">
+          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
           <Logo className="h-16 w-auto" />
         </SheetHeader>
         <div className="border-t mb-6" />

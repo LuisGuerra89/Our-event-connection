@@ -83,7 +83,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
         <meta name="color-scheme" content="light dark" />
         <link rel="canonical" href="https://ourloveconnection.com" />
         <link rel="alternate" hrefLang="en" href="https://ourloveconnection.com" />

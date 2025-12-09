@@ -31,13 +31,22 @@ export default async function PastEventsPage() {
   return (
     <PublicPageLayout>
       {/* Hero Banner */}
-      <section className="relative bg-gradient-to-b from-muted/50 to-background py-20 md:py-32">
-        <div className="container mx-auto px-4">
+      <section 
+        className="relative bg-cover bg-center bg-no-repeat py-20 md:py-32"
+        style={{
+          backgroundImage: `url('/past-events.jpg')`
+        }}
+      >
+        {/* Overlays for text readability */}
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/30" />
+        
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance text-white drop-shadow-lg">
               Past Events
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground text-pretty">
+            <p className="text-xl md:text-2xl text-white/90 text-pretty drop-shadow-md">
               Relive the memories! Browse photos and videos from our previous events and see the amazing connections that were made.
             </p>
           </div>

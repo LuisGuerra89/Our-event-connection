@@ -86,14 +86,23 @@ export default async function AboutPage() {
   return (
     <PublicPageLayout>
       {/* Hero Banner */}
-      <section className="relative bg-gradient-to-b from-primary/8 via-primary/4 to-background py-16 md:py-24">
-        <div className="container mx-auto px-4">
+      <section 
+        className="relative bg-cover bg-center bg-no-repeat py-20 md:py-32"
+        style={{
+          backgroundImage: `url('/about-us.jpg')`
+        }}
+      >
+        {/* Overlays for text readability */}
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/30" />
+        
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-balance">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-balance text-white drop-shadow-lg">
               {content?.title || "Our Story - Building Meaningful Connections"}
             </h1>
             {content?.subtitle && (
-              <p className="text-lg md:text-xl text-muted-foreground text-pretty leading-relaxed">
+              <p className="text-lg md:text-xl text-white/90 text-pretty leading-relaxed drop-shadow-md">
                 {content.subtitle}
               </p>
             )}

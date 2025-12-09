@@ -28,6 +28,7 @@ interface Category {
   is_featured: boolean
   status: string
   display_order: number
+  is_protected?: boolean
 }
 
 export function CategoriesTable({ categories: initialCategories }: { categories: Category[] }) {
@@ -152,12 +153,35 @@ export function CategoriesTable({ categories: initialCategories }: { categories:
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" asChild>
-                        <Link href={`/admin/categories/${category.id}`}>
+                      {category.is_protected ? (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          disabled
+                          className="opacity-50 cursor-not-allowed"
+                          title="System category - cannot be edited"
+                        >
                           <Edit className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeleteId(category.id)}>
+                        </Button>
+                      ) : (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          asChild
+                          title="Edit"
+                        >
+                          <Link href={`/admin/categories/${category.id}`}>
+                            <Edit className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      )}
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => !category.is_protected && setDeleteId(category.id)}
+                        disabled={category.is_protected}
+                        title={category.is_protected ? "System category - cannot be deleted" : "Delete"}
+                      >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>

@@ -53,6 +53,28 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
+    // Check if category is protected
+    const { data: category, error: fetchError } = await supabase
+      .from("event_categories")
+      .select("is_protected")
+      .eq("id", id)
+      .single()
+
+    if (fetchError) {
+      return NextResponse.json({ error: fetchError.message }, { status: 500 })
+    }
+
+    if (!category) {
+      return NextResponse.json({ error: "Category not found" }, { status: 404 })
+    }
+
+    if (category.is_protected) {
+      return NextResponse.json(
+        { error: "System categories cannot be edited" },
+        { status: 403 }
+      )
+    }
+
     const body = await request.json()
     const { name, slug, description, image_url, display_order, is_featured, status } = body
 
@@ -148,6 +170,28 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const adminCheck = await isAdmin(user.id)
     if (!adminCheck) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    // Check if category is protected
+    const { data: category, error: fetchError } = await supabase
+      .from("event_categories")
+      .select("is_protected")
+      .eq("id", id)
+      .single()
+
+    if (fetchError) {
+      return NextResponse.json({ error: fetchError.message }, { status: 500 })
+    }
+
+    if (!category) {
+      return NextResponse.json({ error: "Category not found" }, { status: 404 })
+    }
+
+    if (category.is_protected) {
+      return NextResponse.json(
+        { error: "System categories cannot be deleted" },
+        { status: 403 }
+      )
     }
 
     const { error } = await supabase.from("event_categories").delete().eq("id", id)

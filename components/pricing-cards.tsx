@@ -75,7 +75,7 @@ export function PricingCards({ initialPlans }: PricingCardsProps) {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
         {sortedPlans.map((plan, index) => {
           const isCurrentPlan = hasActivePlan(plan.id)
           const isPopular = index === middlePlanIndex && sortedPlans.length > 1
@@ -85,7 +85,7 @@ export function PricingCards({ initialPlans }: PricingCardsProps) {
               key={plan.id}
               className={`relative rounded-2xl border transition-all duration-300 ${
                 isPopular
-                  ? "border-primary md:scale-105 md:shadow-2xl md:shadow-primary/20 bg-gradient-to-br from-background via-background to-primary/5"
+                  ? "border-primary lg:scale-105 lg:shadow-2xl lg:shadow-primary/20 bg-gradient-to-br from-background via-background to-primary/5"
                   : "border-border bg-background hover:border-primary/50"
               }`}
             >

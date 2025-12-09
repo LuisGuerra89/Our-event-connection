@@ -104,38 +104,52 @@ export function AffiliatesSlider({ affiliates }: AffiliatesSliderProps) {
         {affiliates.map((affiliate) => (
           <div
             key={affiliate.id}
-            className="flex-shrink-0 w-56 group/card cursor-pointer"
+            className="flex-shrink-0 w-64 group/card cursor-pointer"
             onClick={() => {
               setSelectedAffiliate(affiliate)
               setDetailsModalOpen(true)
             }}
           >
-            <div className="bg-background border rounded-xl p-6 h-full flex flex-col items-center justify-center hover:shadow-lg transition-shadow">
-              {affiliate.image_url ? (
-                <img
-                  src={affiliate.image_url}
-                  alt={affiliate.name}
-                  className="h-20 object-contain mb-4 grayscale group-hover/card:grayscale-0 transition-all"
-                />
-              ) : (
-                <div className="h-20 flex items-center justify-center mb-4">
-                  <p className="font-bold text-lg text-center">{affiliate.name}</p>
-                </div>
-              )}
-              
-              <h3 className="font-semibold text-center text-sm mb-2 line-clamp-2">
-                {affiliate.name}
-              </h3>
-              
-              {affiliate.description && (
-                <p className="text-xs text-muted-foreground text-center line-clamp-2 mb-3">
-                  {affiliate.description}
-                </p>
-              )}
+            <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden h-full flex flex-col hover:shadow-xl hover:border-primary/50 transition-all duration-300">
+              {/* Header with Image Background */}
+              <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6 flex items-center justify-center min-h-32 relative overflow-hidden">
+                {affiliate.image_url ? (
+                  <img
+                    src={affiliate.image_url}
+                    alt={affiliate.name}
+                    className="h-24 object-contain grayscale group-hover/card:grayscale-0 transition-all duration-300"
+                  />
+                ) : (
+                  <Award className="h-12 w-12 text-primary/40" />
+                )}
+              </div>
 
-              <Button variant="ghost" size="sm" className="mt-auto text-xs">
-                View Details
-              </Button>
+              {/* Content */}
+              <div className="p-6 flex flex-col flex-1">
+                <h3 className="font-bold text-center text-base mb-2 line-clamp-2 text-slate-900 dark:text-white">
+                  {affiliate.name}
+                </h3>
+                
+                {affiliate.description && (
+                  <p className="text-sm text-muted-foreground text-center line-clamp-3 mb-4 flex-1">
+                    {affiliate.description}
+                  </p>
+                )}
+
+                {affiliate.website_url && (
+                  <div className="flex items-center justify-center gap-2 mb-4 text-xs text-primary">
+                    <ExternalLink className="h-3 w-3" />
+                    <span>Visit Website</span>
+                  </div>
+                )}
+
+                <Button 
+                  size="sm" 
+                  className="w-full mt-auto bg-primary hover:bg-primary/90 text-white font-medium"
+                >
+                  View Details
+                </Button>
+              </div>
             </div>
           </div>
         ))}

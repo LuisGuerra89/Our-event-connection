@@ -166,19 +166,28 @@ export default async function MatchmakingPage() {
     <div className="min-h-svh bg-background">
       <PublicHeader />
 
-      <main>
+      <main className="pt-16 md:pt-20">
         {/* Hero Section */}
-        <section className="relative bg-gradient-to-br from-pink-100 via-purple-100 to-rose-100 dark:from-pink-950/40 dark:via-purple-950/40 dark:to-rose-950/40 py-12 md:py-20">
-          <div className="container mx-auto px-4">
+        <section 
+          className="relative bg-cover bg-center bg-no-repeat py-20 md:py-32"
+          style={{
+            backgroundImage: `url('/matchmaking.jpg')`
+          }}
+        >
+          {/* Overlays for text readability */}
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 bg-black/30" />
+          
+          <div className="container mx-auto px-4 relative z-10">
             <div className="text-center max-w-4xl mx-auto">
               <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 mb-6">
-                <Sparkles className="hidden md:block h-8 w-8 md:h-10 md:w-10 text-pink-500 flex-shrink-0" />
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-rose-600 bg-clip-text text-transparent">
+                <Sparkles className="hidden md:block h-8 w-8 md:h-10 md:w-10 text-white flex-shrink-0" />
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white drop-shadow-lg">
                   Smart Matchmaking - Find Your Perfect Match
                 </h1>
-                <Sparkles className="hidden md:block h-8 w-8 md:h-10 md:w-10 text-pink-500 flex-shrink-0" />
+                <Sparkles className="hidden md:block h-8 w-8 md:h-10 md:w-10 text-white flex-shrink-0" />
               </div>
-              <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground mb-6 md:mb-8 text-pretty px-4">
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-6 md:mb-8 text-pretty px-4 drop-shadow-md">
                 Find your perfect match using our advanced compatibility algorithm. Real connections, real chemistry, real love.
               </p>
               {!user && (

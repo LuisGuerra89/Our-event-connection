@@ -40,51 +40,54 @@ export async function PublicHeader() {
 
   // Define nav items with their page keys
   const allNavItems = [
-    { href: "/events", label: "Events", pageKey: "events" },
-    { href: "/matchmaking", label: "Matchmaking", pageKey: "matchmaking" },
-    { href: "/membership", label: "Membership", pageKey: "membership" },
-    { href: "/affiliates", label: "Affiliates", pageKey: "affiliates" },
-    { href: "/about", label: "About Us", pageKey: "about_us" },
-    { href: "/contact", label: "Contact Us", pageKey: "contact_us" },
+    { href: "/categories/after-work-activities", label: "After Work Activities", pageKey: "after_work_activities" },
+    { href: "/categories/extreme-sports", label: "Extreme Sports", pageKey: "extreme_sports" },
+    { href: "/categories/water-sports", label: "Water Sports", pageKey: "water_sports" },
+    { href: "/categories/weekend-activities", label: "Weekend Activities", pageKey: "weekend_activities" },
+    { href: "/categories/winter-sports", label: "Winter Sports", pageKey: "winter_sports" },
+    { href: "/categories/travel", label: "Travel – Domestic / International", pageKey: "travel" },
   ]
 
   // Filter to only active pages (default to true if not in CMS)
   const navItems = allNavItems.filter((item) => activePages[item.pageKey] !== false)
 
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-1 flex items-center gap-2 md:gap-8 relative">
-        {/* Mobile Menu */}
-        <MobileMenu isAuthenticated={!!user} navItems={navItems} />
-        
-        <Logo className="hidden md:flex" />
-        
-        {/* Desktop Navigation - Centered */}
-        <div className="flex-1 flex justify-center">
-          <PublicHeaderNav navItems={navItems} />
-        </div>
+    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
+      <div className="mx-auto px-2 sm:px-3 md:px-4 py-4 sm:py-5 md:py-6">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-3 md:gap-4">
+          {/* Logo and Mobile Menu */}
+          <div className="flex items-center gap-1 flex-shrink-0 min-w-fit">
+            <MobileMenu isAuthenticated={!!user} navItems={navItems} />
+            <Logo className="hidden md:flex flex-shrink-0 h-9 md:h-10" />
+          </div>
+          
+          {/* Desktop Navigation - Centered and expanded */}
+          <div className="hidden md:flex flex-1 justify-center min-w-0">
+            <PublicHeaderNav navItems={navItems} />
+          </div>
 
-        {/* Auth Section */}
-        <div className="flex items-center gap-2 md:gap-4">
-          {user && profile ? (
-            <>
-              <ChatButton userId={user.id} />
-              <NotificationBell userId={user.id} />
-              <UserMenu
-                userName={profile.full_name || user.email || "User"}
-                userPhoto={profile.profile_image_url || profile.profile_photo_url}
-              />
-            </>
-          ) : (
-            <>
-              <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
-                <Link href="/auth/login">Sign In</Link>
-              </Button>
-              <Button size="sm" asChild className="hidden sm:flex">
-                <Link href="/auth/sign-up">Get Started</Link>
-              </Button>
-            </>
-          )}
+          {/* Auth Section */}
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-2 lg:gap-3 flex-shrink-0 min-w-fit">
+            {user && profile ? (
+              <>
+                <ChatButton userId={user.id} />
+                <NotificationBell userId={user.id} />
+                <UserMenu
+                  userName={profile.full_name || user.email || "User"}
+                  userPhoto={profile.profile_image_url || profile.profile_photo_url}
+                />
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
+                  <Link href="/auth/login">Sign In</Link>
+                </Button>
+                <Button size="sm" asChild className="hidden sm:flex">
+                  <Link href="/auth/sign-up">Get Started</Link>
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </header>

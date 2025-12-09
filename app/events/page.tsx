@@ -164,11 +164,20 @@ export default async function EventsPage({
         ))}
         
         {/* Hero Section */}
-        <section className="bg-gradient-to-b from-primary/5 to-background py-12">
-          <div className="container mx-auto px-4">
+        <section 
+          className="relative bg-cover bg-center bg-no-repeat py-20 md:py-32"
+          style={{
+            backgroundImage: `url('/events.jpg')`
+          }}
+        >
+          {/* Overlays for text readability */}
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 bg-black/30" />
+          
+          <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">Discover Social Events for Singles</h1>
-              <p className="text-lg text-muted-foreground">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-lg">Discover Social Events for Singles</h1>
+              <p className="text-lg text-white/90 drop-shadow-md">
                 Find and attend amazing events designed for meaningful connections with like-minded singles
               </p>
             </div>
