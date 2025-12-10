@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export const revalidate = 3600 // Revalidate every hour
+export const dynamic = 'force-dynamic' // Mark this route as dynamic to avoid build-time evaluation
 
 export async function GET(): Promise<NextResponse<MetadataRoute.Sitemap>> {
   const baseUrl = 'https://ourloveconnection.com'
