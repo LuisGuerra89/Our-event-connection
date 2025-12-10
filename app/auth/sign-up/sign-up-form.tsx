@@ -12,13 +12,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { Chrome, Facebook, Upload, Loader2 } from "lucide-react"
+import { Chrome, Facebook, Upload, Loader2, AlertCircle } from "lucide-react"
 
 interface SignUpFormProps {
   initialReferralCode?: string
+  initialErrorCode?: string
+  initialErrorDescription?: string
 }
 
-export function SignUpForm({ initialReferralCode = "" }: SignUpFormProps) {
+export function SignUpForm({ 
+  initialReferralCode = "",
+  initialErrorCode = "",
+  initialErrorDescription = ""
+}: SignUpFormProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
@@ -27,7 +33,7 @@ export function SignUpForm({ initialReferralCode = "" }: SignUpFormProps) {
   const [profileImage, setProfileImage] = useState<File | null>(null)
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null)
   const [imageUploadLoading, setImageUploadLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(initialErrorCode ? "Your signup link expired. Please create a new account below." : null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
@@ -81,7 +87,7 @@ export function SignUpForm({ initialReferralCode = "" }: SignUpFormProps) {
     console.log("[v0] Sign up attempt started")
 
     try {
-      // Check if email already exists in profiles table
+      // Check if email already exists with confirmed status in profiles table
       const { data: existingProfile } = await supabase
         .from("profiles")
         .select("id, email")
@@ -102,6 +108,7 @@ export function SignUpForm({ initialReferralCode = "" }: SignUpFormProps) {
 
       console.log("[v0] Email redirect URL:", redirectUrl)
 
+      // Attempt to sign up - this will handle both new users and unconfirmed existing users
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -115,8 +122,19 @@ export function SignUpForm({ initialReferralCode = "" }: SignUpFormProps) {
       })
 
       if (error) {
-        console.log("[v0] Sign up error:", error.message)
-        throw error
+        console.log("[v0] Sign up error:", error.message, "error code:", error.code)
+        
+        // Handle specific error cases
+        if (error.message.includes("already registered") || error.code === "user_already_exists") {
+          console.log("[v0] User already registered, redirecting to login to resend confirmation")
+          
+          // Store the email and redirect to login with a flag to show resend option
+          setError(null)
+          router.push(`/auth/login?email=${encodeURIComponent(email)}&show_resend=true`)
+          return
+        } else {
+          throw error
+        }
       }
 
       console.log("[v0] Sign up successful:", data.user?.id, "email confirmed:", data.user?.email_confirmed_at)
@@ -181,6 +199,18 @@ export function SignUpForm({ initialReferralCode = "" }: SignUpFormProps) {
           <CardContent>
             <form onSubmit={handleSignUp}>
               <div className="flex flex-col gap-6">
+                {initialErrorCode && (
+                  <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-amber-900">Your signup link expired</p>
+                      <p className="text-xs text-amber-800 mt-1">
+                        {initialErrorDescription ? decodeURIComponent(initialErrorDescription) : "Please create a new account below or contact support if you need help."}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Profile Picture Upload */}
                 <div className="flex justify-center">
                   <div className="relative">
@@ -270,7 +300,7 @@ export function SignUpForm({ initialReferralCode = "" }: SignUpFormProps) {
                   />
                   {referralCode && <p className="text-xs text-muted-foreground">You were referred by a friend!</p>}
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
+                {error && !initialErrorCode && <p className="text-sm text-red-500">{error}</p>}
                 <Button type="submit" className="w-full" disabled={isLoading || imageUploadLoading}>
                   {isLoading ? "Creating account..." : "Sign Up"}
                 </Button>

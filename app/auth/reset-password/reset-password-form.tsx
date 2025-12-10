@@ -1,146 +1,26 @@
 'use client'
 
-import type React from "react"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { Suspense } from "react"
+import { ResetPasswordContent } from "./reset-password-content"
 
 export function ResetPasswordForm() {
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [isValidSession, setIsValidSession] = useState<boolean | null>(null)
-  const router = useRouter()
-
-  useEffect(() => {
-    const checkSession = async () => {
-      const supabase = createClient()
-      
-      // Give Supabase a moment to process the callback URL token
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      const { data } = await supabase.auth.getSession()
-      setIsValidSession(!!data.session)
-    }
-    checkSession()
-  }, [])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError(null)
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      setIsLoading(false)
-      return
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters long")
-      setIsLoading(false)
-      return
-    }
-
-    const supabase = createClient()
-
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: password,
-      })
-
-      if (error) throw error
-
-      router.push("/auth/login?message=Password updated successfully")
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to reset password")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  if (isValidSession === null) {
-    return (
-      <div className="flex min-h-svh w-full items-center justify-center p-6">
-        <Card className="w-full max-w-sm">
-          <CardHeader>
-            <CardTitle className="text-2xl">Loading...</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-    )
-  }
-
-  if (!isValidSession) {
-    return (
-      <div className="flex min-h-svh w-full items-center justify-center p-6">
-        <Card className="w-full max-w-sm">
-          <CardHeader>
-            <CardTitle className="text-2xl">Invalid or Expired Link</CardTitle>
-            <CardDescription>
-              This password reset link is invalid or has expired. Please request a new one.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="w-full">
-              <a href="/auth/forgot-password">Request New Link</a>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6">
-      <div className="w-full max-w-sm">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Reset Password</CardTitle>
-            <CardDescription>Enter your new password below</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit}>
-              <div className="flex flex-col gap-6">
-                <div className="grid gap-2">
-                  <Label htmlFor="password">New Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    required
-                    minLength={6}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    required
-                    minLength={6}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
-                </div>
-
-                {error && <p className="text-sm text-red-500">{error}</p>}
-
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Resetting..." : "Reset Password"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+    <Suspense fallback={
+      <div className="flex min-h-svh w-full items-center justify-center p-6">
+        <div className="w-full max-w-sm">
+          <div className="animate-pulse space-y-4">
+            <div className="h-10 bg-gray-200 rounded"></div>
+            <div className="h-6 bg-gray-200 rounded w-2/3"></div>
+            <div className="space-y-3">
+              <div className="h-10 bg-gray-200 rounded"></div>
+              <div className="h-10 bg-gray-200 rounded"></div>
+              <div className="h-10 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   )
 }
