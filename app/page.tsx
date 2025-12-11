@@ -59,22 +59,6 @@ export default async function HomePage() {
     supabase.from("affiliates").select("*").eq("approval_status", "approved").limit(12),
   ])
 
-  const slideshowImages = [
-    "/slideshow/1.jpg",
-    "/slideshow/2.jpg",
-    "/slideshow/3.jpg",
-    "/slideshow/4.jpg",
-    "/slideshow/5.jpg",
-    "/slideshow/6.jpg",
-    "/slideshow/7.jpg",
-    "/slideshow/8.jpg",
-    "/slideshow/9.jpg",
-    "/slideshow/10.jpg",
-    "/slideshow/11.jpg",
-    "/slideshow/12.jpg",
-    "/slideshow/13.jpg",
-    "/slideshow/14.jpg",
-  ]
 
   const carouselEvents = events?.slice(0, 5) || []
   const upcomingEvents = events?.slice(0, 6) || []
@@ -91,7 +75,7 @@ export default async function HomePage() {
 
       <main className="pt-16 md:pt-20 relative z-10">
         {/* Hero Section with Search Bar and Rotating Background */}
-        <RotatingHeroBackground images={slideshowImages.length > 0 ? slideshowImages : undefined}>
+        <RotatingHeroBackground>
           <div className="container mx-auto px-4">
             <div className="text-center max-w-3xl mx-auto mb-12">
               <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance text-white drop-shadow-lg">
