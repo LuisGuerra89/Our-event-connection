@@ -29,67 +29,83 @@ const DEFAULT_IMAGES = [
 const ROTATION_INTERVAL = 8000 // 8 seconds
 
 export function RotatingHeroBackground({ children, images = DEFAULT_IMAGES }: RotatingHeroBackgroundProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [nextImageIndex, setNextImageIndex] = useState(1)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [nextLoaded, setNextLoaded] = useState(false)
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
 
+  const nextIndex = (currentIndex + 1) % images.length
+  const currentImage = images[currentIndex]
+  const nextImage = images[nextIndex]
+
+  // Reset nextLoaded when the target image changes
   useEffect(() => {
-    const interval = setInterval(() => {
+    setNextLoaded(false)
+  }, [nextIndex])
+
+  // Timer for minimum display duration
+  useEffect(() => {
+    setMinTimeElapsed(false)
+    const timer = setTimeout(() => {
+      setMinTimeElapsed(true)
+    }, 6000) // 6 seconds minimum display time
+    return () => clearTimeout(timer)
+  }, [currentIndex])
+
+  // Trigger transition when both constraints are met
+  useEffect(() => {
+    if (minTimeElapsed && nextLoaded && !isTransitioning) {
       setIsTransitioning(true)
-      setTimeout(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % images.length)
-        setNextImageIndex((prev) => (prev + 1) % images.length)
+
+      const transitionTimer = setTimeout(() => {
+        setCurrentIndex(nextIndex)
         setIsTransitioning(false)
-      }, 500)
-    }, ROTATION_INTERVAL)
+      }, 1000) // Match CSS duration
 
-    return () => clearInterval(interval)
-  }, [images.length])
-
-  const currentImage = images[currentImageIndex]
-  const nextImage = images[nextImageIndex]
+      return () => clearTimeout(transitionTimer)
+    }
+  }, [minTimeElapsed, nextLoaded, isTransitioning, nextIndex])
 
   return (
-    <section className="relative bg-gradient-to-b from-primary/5 to-background py-20 md:py-32 overflow-hidden" suppressHydrationWarning>
-      {/* Current background image */}
-      <div
-        className={cn(
-          "absolute inset-0 transition-opacity duration-500",
-          isTransitioning ? "opacity-0" : "opacity-100"
-        )}
-      >
-        <Image
-          src={currentImage}
-          alt="Hero background"
-          fill
-          className="object-cover"
-          priority
-          quality={60}
-          sizes="100vw"
-        />
-      </div>
+    <section className="relative bg-gradient-to-b from-primary/5 to-background py-20 md:py-32 overflow-hidden">
+      {/* Background container */}
+      <div className="absolute inset-0 z-0">
+        {/* Current Image (Bottom Layer) */}
+        <div className="absolute inset-0">
+          <Image
+            src={currentImage}
+            alt="Hero background"
+            fill
+            className="object-cover"
+            priority
+            quality={60}
+            unoptimized
+          />
+        </div>
 
-      {/* Next background image (preloaded for smooth transition) */}
-      <div
-        className={cn(
-          "absolute inset-0 transition-opacity duration-500",
-          isTransitioning ? "opacity-100" : "opacity-0"
-        )}
-      >
-        <Image
-          src={nextImage}
-          alt="Hero background next"
-          fill
-          className="object-cover"
-          priority={false}
-          quality={60}
-          sizes="100vw"
-        />
-      </div>
+        {/* Next Image (Top Layer) - Fades in */}
+        <div
+          className={cn(
+            "absolute inset-0 transition-opacity duration-1000 ease-in-out",
+            isTransitioning ? "opacity-100" : "opacity-0"
+          )}
+        >
+          <Image
+            src={nextImage}
+            alt="Hero background next"
+            fill
+            className="object-cover"
+            priority // Preload the next image
+            quality={60}
+            unoptimized
+            onLoadingComplete={() => setNextLoaded(true)}
+          />
+        </div>
 
-      {/* Overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/40" />
-      <div className="absolute inset-0 bg-black/30" />
+        {/* Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/40" />
+        <div className="absolute inset-0 bg-black/30" />
+      </div>
 
       {/* Content */}
       <div className="relative z-10">
