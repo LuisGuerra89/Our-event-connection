@@ -29,45 +29,54 @@ const DEFAULT_IMAGES = [
 const ROTATION_INTERVAL = 8000 // 8 seconds
 
 export function RotatingHeroBackground({ children, images = DEFAULT_IMAGES }: RotatingHeroBackgroundProps) {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [nextLoaded, setNextLoaded] = useState(false)
-  const [minTimeElapsed, setMinTimeElapsed] = useState(false)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [nextImageIndex, setNextImageIndex] = useState(1)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [isAutoplay, setIsAutoplay] = useState(true)
 
-  const nextIndex = (currentIndex + 1) % images.length
-  const currentImage = images[currentIndex]
-  const nextImage = images[nextIndex]
+  const ROTATION_INTERVAL = 30000 // 30 seconds
 
-  // Reset nextLoaded when the target image changes
   useEffect(() => {
-    setNextLoaded(false)
-  }, [nextIndex])
+    if (!isAutoplay) return
 
-  // Timer for minimum display duration
-  useEffect(() => {
-    setMinTimeElapsed(false)
-    const timer = setTimeout(() => {
-      setMinTimeElapsed(true)
-    }, 6000) // 6 seconds minimum display time
-    return () => clearTimeout(timer)
-  }, [currentIndex])
+    const interval = setInterval(() => {
+      triggerTransition()
+    }, ROTATION_INTERVAL)
 
-  // Trigger transition when both constraints are met
-  useEffect(() => {
-    if (minTimeElapsed && nextLoaded && !isTransitioning) {
-      setIsTransitioning(true)
+    return () => clearInterval(interval)
+  }, [isAutoplay, images.length])
 
-      const transitionTimer = setTimeout(() => {
-        setCurrentIndex(nextIndex)
-        setIsTransitioning(false)
-      }, 1000) // Match CSS duration
+  const triggerTransition = () => {
+    if (isTransitioning) return
 
-      return () => clearTimeout(transitionTimer)
+    setIsTransitioning(true)
+    setTimeout(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % images.length)
+      setNextImageIndex((prev) => (prev + 1) % images.length)
+      setIsTransitioning(false)
+    }, 1000)
+  }
+
+  const handleManualNext = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement
+    if (target.closest("button, a, input, textarea, [role='button']")) {
+      return
     }
-  }, [minTimeElapsed, nextLoaded, isTransitioning, nextIndex])
+
+    // Reset autoplay timer by toggling it
+    setIsAutoplay(false)
+    triggerTransition()
+    setTimeout(() => setIsAutoplay(true), 100)
+  }
+
+  const currentImage = images[currentImageIndex]
+  const nextImage = images[nextImageIndex]
 
   return (
-    <section className="relative bg-gradient-to-b from-primary/5 to-background py-20 md:py-32 overflow-hidden">
+    <section
+      className="relative bg-gradient-to-b from-primary/5 to-background py-20 md:py-32 overflow-hidden cursor-pointer"
+      onClick={handleManualNext}
+    >
       {/* Background container */}
       <div className="absolute inset-0 z-0">
         {/* Current Image (Bottom Layer) */}
@@ -78,7 +87,6 @@ export function RotatingHeroBackground({ children, images = DEFAULT_IMAGES }: Ro
             fill
             className="object-cover"
             priority
-            quality={60}
             unoptimized
           />
         </div>
@@ -96,9 +104,7 @@ export function RotatingHeroBackground({ children, images = DEFAULT_IMAGES }: Ro
             fill
             className="object-cover"
             priority // Preload the next image
-            quality={60}
             unoptimized
-            onLoadingComplete={() => setNextLoaded(true)}
           />
         </div>
 
