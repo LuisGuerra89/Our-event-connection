@@ -9,9 +9,20 @@ interface RotatingHeroBackgroundProps {
 }
 
 const DEFAULT_IMAGES = [
-  "/background.jpg",
-  "/background1.jpg",
-  "/background2.jpg",
+  "/slideshow/1.jpg",
+  "/slideshow/2.jpg",
+  "/slideshow/3.jpg",
+  "/slideshow/4.jpg",
+  "/slideshow/5.jpg",
+  "/slideshow/6.jpg",
+  "/slideshow/7.jpg",
+  "/slideshow/8.jpg",
+  "/slideshow/9.jpg",
+  "/slideshow/10.jpg",
+  "/slideshow/11.jpg",
+  "/slideshow/12.jpg",
+  "/slideshow/13.jpg",
+  "/slideshow/14.jpg",
 ]
 
 const ROTATION_INTERVAL = 8000 // 8 seconds
