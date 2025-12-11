@@ -5,9 +5,10 @@ import { cn } from "@/lib/utils"
 
 interface RotatingHeroBackgroundProps {
   children: React.ReactNode
+  images?: string[]
 }
 
-const BACKGROUND_IMAGES = [
+const DEFAULT_IMAGES = [
   "/background.jpg",
   "/background1.jpg",
   "/background2.jpg",
@@ -15,7 +16,7 @@ const BACKGROUND_IMAGES = [
 
 const ROTATION_INTERVAL = 8000 // 8 seconds
 
-export function RotatingHeroBackground({ children }: RotatingHeroBackgroundProps) {
+export function RotatingHeroBackground({ children, images = DEFAULT_IMAGES }: RotatingHeroBackgroundProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [nextImageIndex, setNextImageIndex] = useState(1)
   const [isTransitioning, setIsTransitioning] = useState(false)
@@ -24,8 +25,8 @@ export function RotatingHeroBackground({ children }: RotatingHeroBackgroundProps
     const interval = setInterval(() => {
       setIsTransitioning(true)
       setTimeout(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % BACKGROUND_IMAGES.length)
-        setNextImageIndex((prev) => (prev + 1) % BACKGROUND_IMAGES.length)
+        setCurrentImageIndex((prev) => (prev + 1) % images.length)
+        setNextImageIndex((prev) => (prev + 1) % images.length)
         setIsTransitioning(false)
       }, 500)
     }, ROTATION_INTERVAL)
@@ -33,8 +34,8 @@ export function RotatingHeroBackground({ children }: RotatingHeroBackgroundProps
     return () => clearInterval(interval)
   }, [])
 
-  const currentImage = BACKGROUND_IMAGES[currentImageIndex]
-  const nextImage = BACKGROUND_IMAGES[nextImageIndex]
+  const currentImage = images[currentImageIndex]
+  const nextImage = images[nextImageIndex]
 
   return (
     <section className="relative bg-gradient-to-b from-primary/5 to-background py-20 md:py-32 overflow-hidden">
@@ -45,7 +46,7 @@ export function RotatingHeroBackground({ children }: RotatingHeroBackgroundProps
           isTransitioning ? "opacity-0" : "opacity-100"
         )}
         style={{
-          backgroundImage: `url(${currentImage})`,
+          backgroundImage: `url('${currentImage}')`,
         }}
       />
 
@@ -56,7 +57,7 @@ export function RotatingHeroBackground({ children }: RotatingHeroBackgroundProps
           isTransitioning ? "opacity-100" : "opacity-0"
         )}
         style={{
-          backgroundImage: `url(${nextImage})`,
+          backgroundImage: `url('${nextImage}')`,
         }}
       />
 
