@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
@@ -43,34 +44,48 @@ export function RotatingHeroBackground({ children, images = DEFAULT_IMAGES }: Ro
     }, ROTATION_INTERVAL)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [images.length])
 
   const currentImage = images[currentImageIndex]
   const nextImage = images[nextImageIndex]
 
   return (
-    <section className="relative bg-gradient-to-b from-primary/5 to-background py-20 md:py-32 overflow-hidden">
+    <section className="relative bg-gradient-to-b from-primary/5 to-background py-20 md:py-32 overflow-hidden" suppressHydrationWarning>
       {/* Current background image */}
       <div
         className={cn(
-          "absolute inset-0 bg-cover bg-center transition-opacity duration-500",
+          "absolute inset-0 transition-opacity duration-500",
           isTransitioning ? "opacity-0" : "opacity-100"
         )}
-        style={{
-          backgroundImage: `url('${currentImage}')`,
-        }}
-      />
+      >
+        <Image
+          src={currentImage}
+          alt="Hero background"
+          fill
+          className="object-cover"
+          priority
+          quality={60}
+          sizes="100vw"
+        />
+      </div>
 
       {/* Next background image (preloaded for smooth transition) */}
       <div
         className={cn(
-          "absolute inset-0 bg-cover bg-center transition-opacity duration-500",
+          "absolute inset-0 transition-opacity duration-500",
           isTransitioning ? "opacity-100" : "opacity-0"
         )}
-        style={{
-          backgroundImage: `url('${nextImage}')`,
-        }}
-      />
+      >
+        <Image
+          src={nextImage}
+          alt="Hero background next"
+          fill
+          className="object-cover"
+          priority={false}
+          quality={60}
+          sizes="100vw"
+        />
+      </div>
 
       {/* Overlay for text readability */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/40" />
