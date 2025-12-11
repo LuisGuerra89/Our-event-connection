@@ -26,25 +26,23 @@ const DEFAULT_IMAGES = [
   "/slideshow/14.jpg",
 ]
 
-const ROTATION_INTERVAL = 8000 // 8 seconds
+const ROTATION_INTERVAL = 8000 // 30 seconds
 
 export function RotatingHeroBackground({ children, images = DEFAULT_IMAGES }: RotatingHeroBackgroundProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [nextImageIndex, setNextImageIndex] = useState(1)
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const [isAutoplay, setIsAutoplay] = useState(true)
 
-  const ROTATION_INTERVAL = 30000 // 30 seconds
+  // Derived state for the next image
+  const nextImageIndex = (currentImageIndex + 1) % images.length
 
   useEffect(() => {
-    if (!isAutoplay) return
-
-    const interval = setInterval(() => {
+    // Start timer for the next transition
+    const timer = setTimeout(() => {
       triggerTransition()
     }, ROTATION_INTERVAL)
 
-    return () => clearInterval(interval)
-  }, [isAutoplay, images.length])
+    return () => clearTimeout(timer)
+  }, [currentImageIndex, images.length]) // Re-run when index changes (resets timer)
 
   const triggerTransition = () => {
     if (isTransitioning) return
@@ -52,7 +50,6 @@ export function RotatingHeroBackground({ children, images = DEFAULT_IMAGES }: Ro
     setIsTransitioning(true)
     setTimeout(() => {
       setCurrentImageIndex((prev) => (prev + 1) % images.length)
-      setNextImageIndex((prev) => (prev + 1) % images.length)
       setIsTransitioning(false)
     }, 1000)
   }
@@ -63,10 +60,7 @@ export function RotatingHeroBackground({ children, images = DEFAULT_IMAGES }: Ro
       return
     }
 
-    // Reset autoplay timer by toggling it
-    setIsAutoplay(false)
     triggerTransition()
-    setTimeout(() => setIsAutoplay(true), 100)
   }
 
   const currentImage = images[currentImageIndex]
