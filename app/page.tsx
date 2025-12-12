@@ -59,11 +59,10 @@ export default async function HomePage() {
     supabase.from("affiliates").select("*").eq("approval_status", "approved").limit(12),
   ])
 
-
   const carouselEvents = events?.slice(0, 5) || []
   const upcomingEvents = events?.slice(0, 6) || []
   const nearbyEventsFallback = events?.slice(0, 6) || []
-
+  
   // Filter international events (not USA)
   const internationalEvents = events?.filter(event => event.location_country && event.location_country !== 'USA').slice(0, 6) || []
 
