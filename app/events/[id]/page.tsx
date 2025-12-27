@@ -29,6 +29,20 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
     notFound()
   }
 
+  // Fetch event photos
+  const { data: eventPhotos } = await supabase
+    .from("event_photos")
+    .select("*")
+    .eq("event_id", id)
+    .order("display_order", { ascending: true })
+
+  // Combine photos from event_photos table and banner_images field
+  const allPhotos = [
+    ...(eventPhotos?.filter((p) => p.photo_type === "photo").map((p) => p.photo_url) || []),
+    ...(event.banner_images && Array.isArray(event.banner_images) ? event.banner_images : []),
+    ...(event.image_url ? [event.image_url] : [])
+  ].filter(Boolean) // Remove any undefined/null values
+
   // Add location names to event object for display
   if (event.country) {
     event.country_name = event.country.name
@@ -82,6 +96,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
         userId={user?.id || null}
         isRegistered={!!registration}
         registrationStatus={registration?.status}
+        eventPhotos={allPhotos}
       />
     </PublicPageLayout>
   )

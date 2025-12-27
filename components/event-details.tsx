@@ -12,15 +12,17 @@ import Link from "next/link"
 import Image from "next/image"
 import { MembershipRequiredModal } from "@/components/membership-required-modal"
 import { EventMap } from "@/components/event-map"
+import { EventImageCarousel } from "@/components/event-image-carousel"
 
 interface EventDetailsProps {
   event: any
   userId: string | null
   isRegistered: boolean
   registrationStatus?: string
+  eventPhotos?: string[]
 }
 
-export function EventDetails({ event, userId, isRegistered, registrationStatus }: EventDetailsProps) {
+export function EventDetails({ event, userId, isRegistered, registrationStatus, eventPhotos = [] }: EventDetailsProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [registered, setRegistered] = useState(isRegistered)
   const [status, setStatus] = useState(registrationStatus)
@@ -200,19 +202,27 @@ export function EventDetails({ event, userId, isRegistered, registrationStatus }
       </Button>
 
       <Card>
-        {/* Event Banner */}
-        <div className="aspect-video bg-muted relative">
-          {event.image_url ? (
-            <img src={event.image_url || "/placeholder.svg"} alt={event.title} className="object-cover w-full h-full" />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <Calendar className="h-16 w-16 text-muted-foreground" />
-            </div>
-          )}
-          {event.event_type && (
-            <Badge className="absolute top-4 right-4 capitalize text-base">{event.event_type.replace("_", " ")}</Badge>
-          )}
-        </div>
+        {/* Event Banner - Carousel or Single Image */}
+        {eventPhotos && eventPhotos.length > 0 ? (
+          <EventImageCarousel 
+            images={eventPhotos}
+            title={event.title}
+            eventType={event.event_type}
+          />
+        ) : (
+          <div className="aspect-video bg-muted relative">
+            {event.image_url ? (
+              <img src={event.image_url || "/placeholder.svg"} alt={event.title} className="object-cover w-full h-full" />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <Calendar className="h-16 w-16 text-muted-foreground" />
+              </div>
+            )}
+            {event.event_type && (
+              <Badge className="absolute top-4 right-4 capitalize text-base">{event.event_type.replace("_", " ")}</Badge>
+            )}
+          </div>
+        )}
 
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
